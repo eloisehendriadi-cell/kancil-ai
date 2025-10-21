@@ -1,0 +1,28 @@
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+*.sqlite3
+
+# App runtime/cache
+workspace_store/
+uploads/
+convos/
+*.mp3
+*.wav
+*.m4a
+*.pdf
+
+# OS / misc
+.DS_Store
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+EOF
+

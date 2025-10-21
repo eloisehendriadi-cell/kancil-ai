@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}✏️ Workspace{% endblock %}
+
+{% block content %}
+<style>
+  /* Workspace chrome */
+  .ws-wrap{display:flex;min-height:60vh}
+  .ws-side{
+    width:220px;padding:12px;border-right:1px solid var(--border);
+    display:flex;flex-direction:column;gap:10px
+  }
+  .ws-side .tab-btn{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 14px;border:1px solid var(--border);border-radius:12px;
+    background:#fff;font-size:18px;font-weight:700;cursor:pointer;
+    box-shadow:var(--shadow)
+  }
+  .ws-side .tab-btn:hover{background:#f9fafb}
+  .ws-side .tab-btn.active{background:#eef2ff;border-color:#e0e7ff;color:#111827}
+
+  .ws-main{flex:1;padding:16px 18px}
+  .ws-toolbar{display:flex;justify-content:space-between;align-items:center;width:100%}
+  .ws-toolbar .src-wrap{display:flex;align-items:center;gap:10px}
+  .ws-toolbar input{width:480px;max-width:60ch}
+
+  .ws-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+  .ws-actions{display:flex;gap:.5rem;margin-bottom:.75rem}
+  .ws-muted{color:var(--muted)}
+
+  /* Embedded quiz frame */
+  .quiz-frame-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px}
+  .quiz-frame{width:100%;border:0;height:720px}
+</style>
+
+<header class="toolbar" style="justify-content:flex-start;gap:12px;margin-bottom:10px">
+  <a class="btn" href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+  <div class="ws-toolbar" style="margin:0;">
+    <div class="src-wrap">
+      <span class="ws-muted">Source:</span>
+      <input id="ws_title" type="text" value="{{ session.get('shared_source_title','Untitled') }}">
+    </div>
+  </div>
+</header>
+
+<!-- Source setter -->
+<section class="ws-card" style="margin-bottom:12px;">
+  <details open>
+    <summary><strong>Set source</strong> (paste text or upload PDF)</summary>
+    <div style="display:grid;gap:10px;margin-top:8px">
+      <textarea id="ws_source_text" rows="6" placeholder="Paste source text here…" style="width:100%"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="file" id="ws_pdf" accept="application/pdf">
+        <button id="ws_seed" class="btn">Use as Source</button>
+        <button id="ws_reset" class="btn" style="background:#fff;border:1px solid var(--border);">Reset Workspace</button>
+      </div>
+      <small class="ws-muted">This posts to <code>/workspace/seed</code>. If text is provided, it’s used; otherwise a selected PDF is uploaded.</small>
+    </div>
+  </details>
+</section>
+
+<div class="ws-wrap card" style="padding:0;">
+  <!-- Left sidebar -->
+  <aside class="ws-side">
+    <button class="tab-btn active" data-tab="notes">📝 <span>Notes</span></button>
+    <button class="tab-btn" data-tab="podcast">🎙️ <span>Podcast</span></button>
+    <button class="tab-btn" data-tab="quiz">❓ <span>Quiz</span></button>
+    <button class="tab-btn" data-tab="flashcards">🧠 <span>Flashcards</span></button>
+  </aside>
+
+  <!-- Main pane -->
+  <main class="ws-main">
+    <div id="status" class="ws-muted" style="margin-bottom:.5rem;"></div>
+
+    <!-- Notes -->
+    <section id="tab-notes" class="tab">
+      <div class="ws-actions">
+        <button id="regen-notes" class="btn">↻ Regenerate notes</button>
+      </div>
+      <div id="notes_html" class="prose ws-card"></div>
+    </section>
+
+    <!-- Podcast -->
+    <section id="tab-podcast" class="tab" style="display:none;">
+      <div class="ws-actions">
+        <button id="regen-podcast" class="btn">↻ Regenerate podcast script</button>
+      </div>
+      <pre id="podcast_script" class="ws-card" style="white-space:pre-wrap;margin:0"></pre>
+    </section>
+
+    <!-- Quiz (embedded quiz.html player) -->
+    <section id="tab-quiz" class="tab" style="display:none;">
+      <div class="ws-actions">
+        <button id="regen-quiz" class="btn">↻ Regenerate quiz</button>
+      </div>
+      <div class="quiz-frame-wrap">
+        <iframe
+          id="quiz-frame"
+          class="quiz-frame"
+          loading="lazy"
+          src="{{ url_for('quiz.quiz_player',
+                          topic=session.get('shared_source_title','Topic'),
+                          embed=1) }}"
+        ></iframe>
+      </div>
+    </section>
+
+    <!-- Flashcards -->
+    <section id="tab-flashcards" class="tab" style="display:none;">
+      <div class="ws-actions">
+        <button id="regen-flash" class="btn">↻ Regenerate flashcards</button>
+      </div>
+      <div id="cards_grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // Endpoints
+  const WS = {
+    title:      "{{ url_for('workspace.api_update_title') }}",
+    notes:      "{{ url_for('workspace.api_generate_notes') }}",
+    podcast:    "{{ url_for('workspace.api_generate_podcast') }}",
+    quiz:       "{{ url_for('workspace.api_generate_quiz') }}",
+    flashcards: "{{ url_for('workspace.api_generate_flashcards') }}",
+    seed:       "/workspace/seed",
+    reset:      "/workspace/reset"
+  };
+
+  const statusEl = document.getElementById('status');
+
+  // Tabs
+  document.querySelectorAll('.ws-side .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ws-side .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(s => s.style.display = 'none');
+      document.getElementById('tab-' + tab).style.display = 'block';
+    });
+  });
+
+  async function postJSON(url, body){
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body || {})
+    });
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok || j.ok === false) throw new Error(j.error || ('HTTP ' + r.status));
+    return j;
+  }
+
+  // ===== Source seed & reset =====
+  async function seedSource(){
+    statusEl.textContent = 'Setting source…';
+    const title = (document.getElementById('ws_title').value || 'Untitled').trim();
+    const txt = (document.getElementById('ws_source_text').value || '').trim();
+    const file = document.getElementById('ws_pdf').files[0];
+
+    try{
+      if (txt) {
+        await postJSON(WS.seed, { type:'text', title, content: txt });
+      } else if (file) {
+        // Try multipart upload first (most common server implementation)
+        const fd = new FormData();
+        fd.append('title', title);
+        fd.append('file', file);
+        let r = await fetch(WS.seed, { method:'POST', body: fd });
+        if (!r.ok) {
+          // Fallback: base64 JSON (if your seed endpoint expects JSON only)
+          const buf = await file.arrayBuffer();
+          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          await postJSON(WS.seed, { type:'pdf_base64', title, filename:file.name, content:b64 });
+        }
+      } else {
+        throw new Error('Provide text or choose a PDF.');
+      }
+      statusEl.textContent = 'Source set ✅';
+    }catch(e){
+      statusEl.textContent = 'Source failed: ' + e.message;
+    }
+  }
+
+  async function resetWorkspace(){
+    statusEl.textContent = 'Resetting…';
+    try{
+      await fetch(WS.reset, { method:'POST' });
+      document.getElementById('ws_source_text').value = '';
+      document.getElementById('ws_pdf').value = '';
+      document.getElementById('notes_html').innerHTML = '';
+      document.getElementById('podcast_script').textContent = '';
+      document.getElementById('cards_grid').innerHTML = '';
+      // reload quiz iframe to clear cache
+      const base = quizFrame.src.replace(/([?&])t=\d+$/,'');
+      quizFrame.src = base + (base.includes('?') ? '&' : '?') + 't=' + Date.now();
+      statusEl.textContent = 'Workspace reset ✅';
+    }catch(e){
+      statusEl.textContent = 'Reset failed: ' + e.message;
+    }
+  }
+
+  document.getElementById('ws_seed').addEventListener('click', seedSource);
+  document.getElementById('ws_reset').addEventListener('click', resetWorkspace);
+
+  // ===== Notes =====
+  async function loadNotes(force=false){
+    try{
+      statusEl.textContent = force ? 'Regenerating notes…' : 'Loading notes…';
+      const j = await postJSON(WS.notes, { force });
+      document.getElementById('notes_html').innerHTML = (j && j.html) ? j.html : '<p class="ws-muted">No notes.</p>';
+    }catch(e){
+      document.getElementById('notes_html').innerHTML = '';
+      statusEl.textContent = 'Error: ' + e.message;
+      return;
+    }finally{
+      if(!statusEl.textContent.startsWith('Error:')) statusEl.textContent = '';
+    }
+  }
+
+  // ===== Podcast =====
+  async function loadPodcast(force=false){
+    try{
+      statusEl.textContent = force ? 'Regenerating podcast…' : 'Loading podcast…';
+      const j = await postJSON(WS.podcast, { force });
+      document.getElementById('podcast_script').textContent = (j && j.script) ? j.script : 'No script.';
+    }catch(e){
+      document.getElementById('podcast_script').textContent = '';
+      statusEl.textContent = 'Error: ' + e.message;
+      return;
+    }finally{
+      if(!statusEl.textContent.startsWith('Error:')) statusEl.textContent = '';
+    }
+  }
+
+  // ===== Quiz (embedded) =====
+  const quizFrame = document.getElementById('quiz-frame');
+  async function regenQuiz(){
+    try{
+      statusEl.textContent = 'Regenerating quiz…';
+      await postJSON(WS.quiz, { force: true });
+      const base = quizFrame.src.replace(/([?&])t=\d+$/,'');
+      quizFrame.src = base + (base.includes('?') ? '&' : '?') + 't=' + Date.now();
+    }catch(e){
+      statusEl.textContent = 'Error: ' + e.message;
+      return;
+    }finally{
+      if(!statusEl.textContent.startsWith('Error:')) statusEl.textContent = '';
+    }
+  }
+  document.getElementById('regen-quiz').addEventListener('click', regenQuiz);
+
+  // Auto-resize iframe height (if the player posts it)
+  window.addEventListener('message', (e) => {
+    if (e.origin !== window.location.origin) return;
+    if (e.data && e.data.type === 'quiz-embed-height') {
+      const h = Math.min(Math.max(e.data.value, 560), 2400);
+      quizFrame.style.height = h + 'px';
+    }
+  });
+
+  // ===== Flashcards =====
+  async function loadFlash(force=false){
+    try{
+      statusEl.textContent = force ? 'Regenerating flashcards…' : 'Loading flashcards…';
+      const j = await postJSON(WS.flashcards, { force });
+      const grid = document.getElementById('cards_grid');
+      grid.innerHTML = '';
+      (j.cards || []).forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'ws-card';
+        card.style.cursor = 'pointer';
+        card.innerHTML = `
+          <div class="front" style="font-weight:700;margin-bottom:.35rem;">${(c.front || '').replace(/</g,'&lt;')}</div>
+          <div class="back"  style="display:none;color:#065f46">${(c.back || '').replace(/</g,'&lt;')}</div>
+        `;
+        card.onclick = () => {
+          const f = card.querySelector('.front');
+          const b = card.querySelector('.back');
+          const show = f.style.display !== 'none';
+          f.style.display = show ? 'none' : 'block';
+          b.style.display = show ? 'block' : 'none';
+        };
+        grid.appendChild(card);
+      });
+    }catch(e){
+      document.getElementById('cards_grid').innerHTML = '';
+      statusEl.textContent = 'Error: ' + e.message;
+      return;
+    }finally{
+      if(!statusEl.textContent.startsWith('Error:')) statusEl.textContent = '';
+    }
+  }
+
+  // Title sync
+  document.getElementById('ws_title').addEventListener('change', async (ev) => {
+    try { await postJSON(WS.title, { title: ev.target.value || 'Untitled' }); }
+    catch(e){ statusEl.textContent = 'Error: ' + e.message; }
+  });
+
+  // Regenerate buttons
+  document.getElementById('regen-notes').addEventListener('click', () => loadNotes(true));
+  document.getElementById('regen-podcast').addEventListener('click', () => loadPodcast(true));
+  document.getElementById('regen-flash').addEventListener('click', () => loadFlash(true));
+
+  // Boot
+  (async () => {
+    document.querySelector('.ws-side .tab-btn[data-tab="notes"]').click();
+    try { await loadNotes(false); } catch {}
+  })();
+</script>
+{% endblock %}
+

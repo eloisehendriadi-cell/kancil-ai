@@ -1,0 +1,25 @@
+from transformers import pipeline
+import language_tool_python
+
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+tool = language_tool_python.LanguageTool('en-US')
+
+def summarize_text(text):
+    if len(text.strip()) == 0:
+        return "Please enter some text to summarize."
+
+    # Model summarization
+    summary = summarizer(
+        text,
+        max_length=150,     # Expandable for longer input
+        min_length=40,
+        do_sample=False,
+        clean_up_tokenization_spaces=False,
+        skip_special_tokens=True
+    )[0]['summary_text']
+
+    # Grammar check
+    corrected = tool.correct(summary)
+    return corrected
+

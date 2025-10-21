@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}🧠 Note Generator{% endblock %}
+
+{% block content %}
+<div class="row" style="align-items:center; justify-content:space-between; margin-bottom:.5rem">
+  <h2 style="margin:0">🧠 Note Generator</h2>
+  <a class="btn" href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+</div>
+
+<div class="card">
+  <form method="POST" action="{{ url_for('notes.notes') }}" enctype="multipart/form-data" id="noteForm" onsubmit="startProgress()">
+    <!-- Source chooser (dashboard-like links) -->
+    <div class="toolbar" style="margin-bottom:.75rem">
+      <strong class="muted" style="margin-right:.5rem">Create from:</strong>
+      <a href="#" class="pill" data-mode="text">From text</a>
+      <a href="#" class="pill" data-mode="pdf">From PDF</a>
+      <a href="#" class="pill" data-mode="youtube">From YouTube</a>
+    </div>
+
+    <!-- Hidden real selector used by the backend -->
+    <input type="hidden" name="method" id="method" value="text" />
+
+    <!-- Text area -->
+    <div id="input-text" class="card" style="padding: .75rem; margin: .5rem 0;">
+      <label for="note_input" class="muted">Paste or type your source text</label>
+      <textarea id="note_input" name="note_input" rows="10" placeholder="Paste source text here…" style="width:100%;"></textarea>
+    </div>
+
+    <!-- PDF upload -->
+    <div id="input-pdf" class="card" style="padding: .75rem; margin: .5rem 0; display:none;">
+      <label for="note_pdf" class="muted">Choose a PDF</label>
+      <input id="note_pdf" name="note_pdf" type="file" accept=".pdf" />
+      <p class="muted" style="margin:.5rem 0 0 0;">Tip: text-based PDFs extract best. Scanned files may need OCR.</p>
+    </div>
+
+    <!-- YouTube transcript / link -->
+    <div id="input-youtube" class="card" style="padding: .75rem; margin: .5rem 0; display:none;">
+      <label for="note_youtube" class="muted">YouTube URL or transcript</label>
+      <input id="note_youtube" name="note_youtube" type="text" placeholder="Paste a YouTube link or transcript…" style="width:100%;" />
+      <p class="muted" style="margin:.5rem 0 0 0;">If a transcript is available, I’ll summarize it into notes.</p>
+    </div>
+
+    <!-- Progress hint -->
+    <div class="card" style="padding:.6rem; background:#eff6ff; border-color:#dbeafe;">
+      ⏳ This may take a minute depending on file size or text length.
+      <div id="progress-container" style="margin-top:.5rem; display:none;">
+        <div style="height: 10px; background: #e5e7eb; border-radius: 6px; overflow: hidden;">
+          <div id="progress-bar" style="height:100%; width:0%; background:#0ea5e9;"></div>
+        </div>
+        <small id="progress-label" class="muted"></small>
+      </div>
+    </div>
+
+    <div style="margin-top: .8rem;">
+      <button class="btn primary">✨ Generate Notes</button>
+    </div>
+  </form>
+</div>
+
+<!-- Rendered output (HTML returned by backend) -->
+{% if output %}
+  <div class="card" style="margin-top:1rem;">
+    {{ output | safe }}
+  </div>
+{% endif %}
+
+<script>
+  // --- Tab-style source switcher (dashboard look) ---
+  const pills = document.querySelectorAll('.pill[data-mode]');
+  const method = document.getElementById('method');
+  const blocks = {
+    text: document.getElementById('input-text'),
+    pdf: document.getElementById('input-pdf'),
+    youtube: document.getElementById('input-youtube'),
+  };
+
+  function selectMode(mode){
+    method.value = mode;
+    // visual
+    pills.forEach(p => {
+      if (p.dataset.mode === mode) { p.style.background = '#fff8d1'; p.style.borderColor = '#f5e6a7'; }
+      else { p.style.background = '#fff'; p.style.borderColor = '#e5e7eb'; }
+    });
+    // show/hide inputs
+    Object.keys(blocks).forEach(k => blocks[k].style.display = (k === mode ? 'block' : 'none'));
+  }
+
+  pills.forEach(p => p.addEventListener('click', (e) => { e.preventDefault(); selectMode(p.dataset.mode); }));
+  // default selection
+  selectMode('text');
+
+  // --- Fake progress so users see activity while server works ---
+  function startProgress(){
+    const container = document.getElementById('progress-container');
+    const bar = document.getElementById('progress-bar');
+    const label = document.getElementById('progress-label');
+    container.style.display = 'block';
+    let n = 0;
+    const tick = setInterval(()=>{
+      if (n >= 96) return; // leave a bit for server completion
+      n += Math.floor(Math.random()*7)+3;
+      if (n > 96) n = 96;
+      bar.style.width = n + '%';
+      label.textContent = n + '%';
+    }, 250);
+    // let the request finish; server response will replace page
+  }
+</script>
+{% endblock %}
+

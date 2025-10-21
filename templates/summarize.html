@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Text Summarizer</h2>
+<form method="POST">
+  <textarea name="text" class="form-control mb-3" rows="8" placeholder="Enter text...">{{ request.form.text }}</textarea>
+  <button class="btn btn-primary">Summarize</button>
+</form>
+{% if summary %}
+<h4>Summary:</h4>
+<pre>{{ summary }}</pre>
+{% endif %}
+{% endblock %}
+

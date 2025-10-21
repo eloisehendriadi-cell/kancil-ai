@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Chatbot • AI Tutor{% endblock %}
+
+{% block head %}
+<style>
+  .chat-shell{display:grid;grid-template-columns:280px 1fr;gap:16px}
+  .sidebar{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}
+  .side-head{display:flex;justify-content:space-between;align-items:center}
+  .side-title{font-weight:700}
+  .conv-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .conv-item{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--border);border-radius:10px;cursor:pointer}
+  .conv-item.active{background:#eef2ff;border-color:#c7d2fe}
+  .conv-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .conv-meta{color:var(--muted);font-size:12px}
+  .conv-actions{display:flex;gap:6px}
+  .btn.sm{padding:6px 8px;font-size:13px;border-radius:8px}
+  .chat-panel{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;min-height:70vh}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .chat-box{height:58vh;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:10px;background:#fafafa}
+  .bubble{white-space:pre-wrap;padding:10px 12px;border-radius:10px;max-width:80%;margin:6px 0}
+  .bubble.user{background:#e6efff;border:1px solid #c7d2fe;margin-left:auto}
+  .bubble.assistant{background:#fff;border:1px solid var(--border)}
+  .msg-row{display:flex}
+  form.chat-input{display:flex;gap:8px;margin-top:10px}
+  form.chat-input textarea{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;min-height:48px;resize:vertical}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="side-head">
+      <div>
+        <div class="side-title">💬 Chats</div>
+        <div class="conv-meta" id="convCount">loading…</div>
+      </div>
+      <button class="btn primary sm" id="newChatBtn">+ New</button>
+    </div>
+    <ul class="conv-list" id="convList"></ul>
+  </aside>
+
+  <!-- Main chat panel -->
+  <section class="chat-panel">
+    <div class="toolbar">
+      <label><input type="checkbox" id="stream" checked> Stream</label>
+      <label><input type="checkbox" id="fast" checked> Fast mode</label>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn sm" id="renameBtn" title="Rename chat">Rename</button>
+        <button class="btn sm" id="deleteBtn" title="Delete chat">Delete</button>
+      </div>
+    </div>
+
+    <div id="chatBox" class="chat-box" aria-live="polite"></div>
+
+    <form class="chat-input" id="chatForm">
+      <textarea id="msg" placeholder="Type your message…  (Shift+Enter for newline)"></textarea>
+      <button class="btn primary" type="submit" id="sendBtn">Send</button>
+    </form>
+
+    <div class="conv-meta">Chats auto-save after every message.</div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const chatBox     = document.getElementById('chatBox');
+  const form        = document.getElementById('chatForm');
+  const msgEl       = document.getElementById('msg');
+  const sendBtn     = document.getElementById('sendBtn');
+  const streamEl    = document.getElementById('stream');
+  const fastEl      = document.getElementById('fast');
+
+  const convListEl  = document.getElementById('convList');
+  const convCountEl = document.getElementById('convCount');
+  const newChatBtn  = document.getElementById('newChatBtn');
+  const renameBtn   = document.getElementById('renameBtn');
+  const deleteBtn   = document.getElementById('deleteBtn');
+
+  let convos = [];
+  let currentCid = null;
+  let busy = false;
+
+  // ---------- API helpers (ALL under /chatbot) ----------
+  const api = {
+    // list & create
+    list:   () => fetch('/chatbot/convos').then(r => r.json()),
+    create: (title='New chat') =>
+      fetch('/chatbot/convos', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title})
+      }).then(r => r.json()),
+
+    // get / update / delete ONE convo  (NOTE: plural /convos/)
+    get:   (cid) => fetch(`/chatbot/convos/${cid}`).then(r => r.ok ? r.json() : Promise.reject()),
+    patch: (cid, data) =>
+      fetch(`/chatbot/convos/${cid}`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data || {})
+      }).then(r => r.json()),
+    del:   (cid) => fetch(`/chatbot/convos/${cid}`, { method:'DELETE' }),
+
+    // talk to the model (singular /conv/)
+    send:   (cid, payload) =>
+      fetch(`/chatbot/conv/${cid}/send`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      }).then(r => r.json()),
+    stream: (cid, payload) =>
+      fetch(`/chatbot/conv/${cid}/stream`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      }),
+  };
+
+  // ---------- Conversations ----------
+  async function loadConvos(selectLatest = true) {
+    try {
+      convCountEl.textContent = 'loading…';
+      convos = await api.list();
+      convCountEl.textContent = `${convos.length} saved`;
+      renderConvList();
+
+      // Create one automatically if empty
+      if (!convos.length) {
+        const c = await api.create('New chat');
+        currentCid = c.id;
+        await renderOpen(currentCid);
+        return;
+      }
+
+      // Open newest if none selected yet
+      if (selectLatest && !currentCid) {
+        const latest = [...convos].sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||''))[0];
+        if (latest) {
+          currentCid = latest.id;
+          await renderOpen(currentCid);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      convCountEl.textContent = 'failed to load';
+    }
+  }
+
+  function renderConvList() {
+    convListEl.innerHTML = '';
+    [...convos]
+      .sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||''))
+      .forEach(c => {
+        const li = document.createElement('li');
+        li.className = 'conv-item' + (c.id === currentCid ? ' active' : '');
+
+        const left = document.createElement('div');
+        const name = document.createElement('div');
+        name.className = 'conv-name';
+        name.textContent = c.title || 'Chat';
+        const meta = document.createElement('div');
+        meta.className = 'conv-meta';
+        meta.textContent = c.updated_at || c.created_at || '';
+        left.append(name, meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'conv-actions';
+        const openBtn = document.createElement('button');
+        openBtn.className = 'btn sm';
+        openBtn.type = 'button';
+        openBtn.textContent = 'Open';
+        openBtn.onclick = (e) => { e.stopPropagation(); openConvo(c.id); };
+        actions.append(openBtn);
+
+        li.append(left, actions);
+        li.onclick = () => openConvo(c.id);
+        convListEl.appendChild(li);
+      });
+  }
+
+  async function renderOpen(cid) {
+    try {
+      const convo = await api.get(cid);
+      currentCid = convo.id;
+      renderConvList();
+      chatBox.innerHTML = '';
+      (convo.messages || []).forEach(m => addBubble(m.role, m.content || ''));
+      chatBox.scrollTop = chatBox.scrollHeight;
+    } catch {
+      alert('Could not open chat');
+    }
+  }
+
+  async function openConvo(cid) { await renderOpen(cid); }
+
+  async function newChat() {
+    const c = await api.create('New chat');
+    currentCid = c.id;
+    await loadConvos(false);
+    await renderOpen(currentCid);
+  }
+
+  async function renameChat() {
+    if (!currentCid) return;
+    const cur = convos.find(x => x.id === currentCid);
+    const name = prompt('New title:', (cur && cur.title) || 'Chat');
+    if (!name) return;
+    await api.patch(currentCid, { title: name });
+    await loadConvos(false);
+  }
+
+  async function deleteChat() {
+    if (!currentCid) return;
+    if (!confirm('Delete this chat?')) return;
+    await api.del(currentCid);
+    currentCid = null;
+    await loadConvos(true);
+  }
+
+  newChatBtn.onclick = newChat;
+  renameBtn.onclick  = renameChat;
+  deleteBtn.onclick  = deleteChat;
+
+  // ---------- Chat ----------
+  function addBubble(role, text) {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ' + (role === 'user' ? 'user' : 'assistant');
+    bubble.textContent = text || '';
+    row.appendChild(bubble);
+    chatBox.appendChild(row);
+  }
+
+  async function ensureChat() {
+    if (currentCid) return currentCid;
+    const c = await api.create('New chat'); // auto-create on first send
+    currentCid = c.id;
+    await loadConvos(false);
+    return currentCid;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (busy) return;
+
+    const text = (msgEl.value || '').trim();
+    if (!text) return;
+
+    busy = true; sendBtn.disabled = true;
+
+    try {
+      const cid = await ensureChat();
+      addBubble('user', text);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      msgEl.value = '';
+
+      if (streamEl.checked) {
+        const r = await api.stream(cid, { message: text, fast: !!fastEl.checked });
+        const reader  = r.body.getReader();
+        const decoder = new TextDecoder();
+
+        let acc = '';
+        const row = document.createElement('div'); row.className = 'msg-row';
+        const bubble = document.createElement('div'); bubble.className = 'bubble assistant';
+        row.appendChild(bubble); chatBox.appendChild(row);
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          acc += decoder.decode(value, { stream: true });
+          bubble.textContent = acc;
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      } else {
+        const j = await api.send(cid, { message: text, fast: !!fastEl.checked });
+        addBubble('assistant', j.reply || '(no reply)');
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      await loadConvos(false); // refresh sidebar after each turn
+    } catch (err) {
+      console.error(err);
+      addBubble('assistant', `[error] ${err && err.message ? err.message : err}`);
+    } finally {
+      busy = false; sendBtn.disabled = false;
+    }
+  });
+
+  // Shift+Enter newline; Enter to send
+  msgEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  // Initial load
+  loadConvos(true);
+})();
+</script>
+{% endblock %}
+

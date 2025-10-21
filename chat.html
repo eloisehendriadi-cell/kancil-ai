@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Tutor Chat</title>
+</head>
+<body style="font-family: sans-serif;">
+    <h1>💬 Ask the AI Tutor</h1>
+    <form method="POST" action="/chat">
+        <textarea name="user_input" rows="5" cols="60" placeholder="Ask anything...">{{ user_input }}</textarea><br><br>
+        <button type="submit">Send</button>
+    </form>
+
+    {% if bot_response %}
+    <h2>AI Tutor:</h2>
+    <p>{{ bot_response }}</p>
+    {% endif %}
+
+    <p><a href="/">← Back to Home</a></p>
+</body>
+</html>
+

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Note Generator</h2>
+
+<form method="POST" enctype="multipart/form-data" onsubmit="startProgress()">
+  <label><input type="radio" name="source_type" value="text" checked> From Text</label><br>
+  <label><input type="radio" name="source_type" value="pdf"> From PDF</label><br>
+  <label><input type="radio" name="source_type" value="youtube"> From YouTube</label><br><br>
+
+  <!-- Text Input -->
+  <div id="input-text">
+    <textarea name="note_text" class="form-control mb-3" rows="6" placeholder="Enter your notes or text..."></textarea>
+  </div>
+
+  <!-- PDF Input -->
+  <div id="input-pdf" style="display:none;">
+    <input type="file" name="note_pdf" class="form-control mb-3" accept=".pdf">
+  </div>
+
+  <!-- YouTube Input -->
+  <div id="input-youtube" style="display:none;">
+    <input type="text" name="note_youtube" class="form-control mb-3" placeholder="https://www.youtube.com/watch?v=...">
+  </div>
+
+  <button class="btn btn-primary">Generate Notes</button>
+</form>
+
+<!-- Progress Bar -->
+<div id="progress-container" style="margin-top: 20px; display: none;">
+  <div style="height: 20px; background: #eee; border-radius: 4px; overflow: hidden;">
+    <div id="progress-bar" style="height: 100%; width: 0%; background: #007bff; text-align: center; color: white;"></div>
+  </div>
+  <p id="progress-label" style="margin-top: 5px;"></p>
+</div>
+
+<!-- Output -->
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+
+{% if summary %}
+  <h4 class="mt-4">Generated Notes:</h4>
+  <div class="note-output">{{ summary | safe }}</div>
+{% endif %}
+
+<script>
+function startProgress() {
+  const container = document.getElementById('progress-container');
+  const bar = document.getElementById('progress-bar');
+  const label = document.getElementById('progress-label');
+  container.style.display = 'block';
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress >= 100) {
+      clearInterval(interval);
+      label.innerText = "Done!";
+    } else {
+      progress += Math.floor(Math.random() * 10) + 7;
+      progress = Math.min(progress, 100);
+      bar.style.width = progress + '%';
+      label.innerText = progress + '% complete';
+    }
+  }, 300);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const radios = document.querySelectorAll("input[name='source_type']");
+  const inputText = document.getElementById('input-text');
+  const inputPDF = document.getElementById('input-pdf');
+  const inputYT = document.getElementById('input-youtube');
+
+  function updateVisibility() {
+    inputText.style.display = this.value === 'text' ? 'block' : 'none';
+    inputPDF.style.display = this.value === 'pdf' ? 'block' : 'none';
+    inputYT.style.display = this.value === 'youtube' ? 'block' : 'none';
+  }
+
+  radios.forEach(radio => radio.addEventListener('change', updateVisibility));
+});
+</script>
+{% endblock %}
+

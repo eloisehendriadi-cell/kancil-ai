@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Tutor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #f8f9fa;
+      padding-top: 20px;
+      border-right: 1px solid #dee2e6;
+    }
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .nav-link {
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      color: #333;
+    }
+    .nav-link:hover, .nav-link.active {
+      background-color: #e2e6ea;
+      font-weight: bold;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+      background-color: #fdfdfd;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h4>📚 AI Tutor</h4>
+    <div class="nav flex-column">
+      <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('home') }}">🏠 Home</a>
+      <a class="nav-link {% if request.path == '/chat' %}active{% endif %}" href="{{ url_for('chat') }}">💬 Chatbot</a>
+      <a class="nav-link {% if request.path == '/summarize' %}active{% endif %}" href="{{ url_for('summarize') }}">📝 Text Summarizer</a>
+      <a class="nav-link {% if request.path == '/youtube' %}active{% endif %}" href="{{ url_for('youtube') }}">🎥 YouTube Summarizer</a>
+      <a class="nav-link {% if request.path == '/notes' %}active{% endif %}" href="{{ url_for('notes') }}">📖 Note Generator</a>
+    </div>
+  </div>
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

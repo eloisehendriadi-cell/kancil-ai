@@ -1,0 +1,41 @@
+from flask import Flask, render_template, request
+from text_summarizer import summarize_text
+from youtube_summarizer import summarize_youtube_video
+from chatbot_logic import get_chatbot_response
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/text-summarizer', methods=['GET', 'POST'])
+def text_summarizer():
+    summary = ''
+    input_text = ''
+    if request.method == 'POST':
+        input_text = request.form.get('input_text', '')
+        summary = summarize_text(input_text)
+    return render_template('text_summarizer.html', summary=summary, input_text=input_text)
+
+@app.route('/youtube-summarizer', methods=['GET', 'POST'])
+def youtube_summarizer():
+    summary = ''
+    url = ''
+    if request.method == 'POST':
+        url = request.form.get('youtube_url', '')
+        summary = summarize_youtube_video(url)
+    return render_template('youtube_summarizer.html', summary=summary, youtube_url=url)
+
+@app.route('/chatbot', methods=['GET', 'POST'])
+def chatbot():
+    response = ''
+    user_input = ''
+    if request.method == 'POST':
+        user_input = request.form.get('user_input', '')
+        response = get_chatbot_response(user_input)
+    return render_template('chatbot.html', response=response, user_input=user_input)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+

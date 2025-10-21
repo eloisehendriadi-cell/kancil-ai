@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <h1>💬 Chatbot</h1>
+  <form method="POST">
+    <input type="text" name="user_input" placeholder="Say something..." style="width: 100%; padding: 10px;"><br><br>
+    <input type="submit" value="Send" style="padding: 10px 20px;">
+  </form>
+  {% if response %}
+    <h3>Bot:</h3>
+    <p>{{ response }}</p>
+  {% endif %}
+{% endblock %}
+

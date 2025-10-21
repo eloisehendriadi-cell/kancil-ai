@@ -1,0 +1,464 @@
+{# templates/quiz.html #}
+{% set topic   = topic   or (session.get('shared_source_title') or 'Untitled') %}
+{% set api_url = api_url or url_for('workspace.api_generate_quiz') %}
+{% set embed   = embed   or false %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ topic }} — Quiz</title>
+  <style>
+    :root{
+      --ink:#0f172a; --muted:#6b7280; --border:#e5e7eb; --brand:#111827;
+      --ok:#10b981; --okbg:#ecfdf5; --okborder:#86efac;
+      --bad:#ef4444; --badbg:#fff1f2; --badborder:#fca5a5;
+      --hintbg:#fffbeb; --hintborder:#fde68a;
+    }
+    body{margin:0;background:#fff;color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+    .qz-wrap{max-width:900px;margin:0 auto;padding:{{ 0 if embed else 24 }}px;}
+    .qz-bar{display:flex;align-items:center;gap:.75rem;margin-bottom:14px}
+    .qz-pill{font-size:14px;padding:.35rem .6rem;border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+    .qz-prog{font-size:13px;color:var(--muted)}
+    .qz-score{font-size:13px;color:var(--muted)}
+
+    .qz-card{position:relative;background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+    .qz-title{font-size:28px;font-weight:800;color:#111827;margin:0 0 2px}
+    .qz-stem{font-size:20px;line-height:1.45;margin:0 0 1rem}
+    .qz-choice{display:flex;align-items:center;gap:.6rem;border:1px solid var(--border);border-radius:12px;padding:.7rem .85rem;margin:.55rem 0;cursor:pointer;background:#fff;transition:box-shadow .15s ease}
+    .qz-choice:hover{box-shadow:0 1px 0 rgba(0,0,0,.04)}
+    .qz-dot{width:22px;height:22px;border-radius:999px;border:2px solid var(--border);background:#fff;flex:0 0 22px}
+    .qz-choice.selected .qz-dot{background:var(--brand);border-color:var(--brand)}
+    .qz-choice.correct{background:var(--okbg);border-color:var(--okborder)}
+    .qz-choice.correct .qz-dot{background:var(--ok);border-color:var(--ok)}
+    .qz-choice.correct .qz-mark{color:#15803d}
+    .qz-choice.wrong{background:var(--badbg);border-color:var(--badborder)}
+    .qz-choice.wrong .qz-dot{background:var(--bad);border-color:var(--bad)}
+    .qz-choice.wrong .qz-mark{color:#b91c1c}
+    .qz-mark{width:1.25rem;display:inline-flex;justify-content:center}
+    .qz-ctrls{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+    .qz-left,.qz-right{display:flex;gap:.6rem;align-items:center}
+    .qz-btn{padding:.55rem .9rem;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer}
+    .qz-btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
+    .qz-btn[disabled]{opacity:.5;cursor:not-allowed}
+    .qz-expl{display:none;margin-top:1rem;border:1px solid var(--hintborder);background:var(--hintbg);border-radius:12px;padding:12px}
+    .qz-expl.show{display:block}
+    .qz-toprow{display:flex;align-items:center;gap:.75rem;justify-content:space-between}
+
+    /* Full-screen loader */
+    .qz-mask{position:fixed;inset:0;background:#fff;display:none;align-items:center;justify-content:center;z-index:50}
+    .qz-loader{width:90%;max-width:620px;text-align:center}
+    .qz-spinner{width:44px;height:44px;border-radius:50%;border:4px solid #e5e7eb;border-top-color:#0f172a;margin:0 auto 8px;animation:spin .9s linear infinite}
+    .qz-skel{height:58px;border-radius:12px;background:#f3f4f6;margin:8px 0}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* In-card overlay loader when fetching more items */
+    .qz-card-loading{
+      position:absolute; inset:0;
+      display:none; align-items:center; justify-content:center;
+      background:#fff; border-radius:14px;
+      z-index:5; box-shadow:inset 0 0 0 1px var(--border);
+    }
+    .qz-card-loading.show{display:flex}
+    .qz-card.busy .qz-body{opacity:.45; pointer-events:none;}
+  </style>
+</head>
+<body>
+<div class="qz-wrap">
+  <div class="qz-bar">
+    {% if not embed %}
+      <button id="qz-regenerate" class="qz-btn">↻ Regenerate quiz</button>
+    {% endif %}
+    <span class="qz-pill">{{ topic }}</span>
+    <span id="qz-status" class="qz-prog"></span>
+  </div>
+
+  <div id="qz-card" class="qz-card">
+    <div class="qz-toprow">
+      <h2 class="qz-title" id="qz-title">Loading…</h2>
+      <div class="qz-prog" id="qz-progress"></div>
+    </div>
+
+    <div class="qz-score" id="qz-score">Score: 0 / 0</div>
+
+    <div class="qz-body">
+      <p class="qz-stem" id="qz-stem"></p>
+      <div id="qz-choices"></div>
+    </div>
+
+    <!-- Overlay loader for fetch-more -->
+    <div id="qz-card-loading" class="qz-card-loading" aria-hidden="true">
+      <div class="qz-loader">
+        <div class="qz-spinner"></div>
+        <div style="font-weight:800;font-size:22px;margin:6px 0 6px">Generating questions…</div>
+        <div class="qz-skel"></div>
+        <div class="qz-skel"></div>
+        <div class="qz-skel"></div>
+        <div class="qz-skel"></div>
+      </div>
+    </div>
+
+    <div class="qz-ctrls">
+      <div class="qz-left">
+        <button id="qz-prev" class="qz-btn">← Previous</button>
+      </div>
+      <div class="qz-right">
+        <button id="qz-toggle-expl" class="qz-btn">Show explanation</button>
+        <button id="qz-next" class="qz-btn primary">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="qz-expl" class="qz-expl">
+    <h4 style="margin:0 0 .3rem">💡 Explanation</h4>
+    <div id="qz-expl-text"></div>
+  </div>
+</div>
+
+<!-- Full-screen loader mask (first load) -->
+<div id="qz-mask" class="qz-mask" aria-hidden="true">
+  <div class="qz-loader">
+    <div class="qz-spinner"></div>
+    <div style="font-weight:800;font-size:22px;margin-bottom:6px">Generating questions…</div>
+    <div class="qz-skel"></div>
+    <div class="qz-skel"></div>
+    <div class="qz-skel"></div>
+    <div class="qz-skel"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const API   = "{{ api_url }}";
+  const EMBED = {{ 'true' if embed else 'false' }};
+  const TOPIC = "{{ topic|replace('\"','\\\"') }}";
+  const STORAGE_KEY = `ai_tutor_quiz:${API}:${TOPIC}`;
+
+  const status     = document.getElementById('qz-status');
+  const titleEl    = document.getElementById('qz-title');
+  const stemEl     = document.getElementById('qz-stem');
+  const choicesEl  = document.getElementById('qz-choices');
+  const explBox    = document.getElementById('qz-expl');
+  const explTxt    = document.getElementById('qz-expl-text');
+  const prevBtn    = document.getElementById('qz-prev');
+  const nextBtn    = document.getElementById('qz-next');
+  const toggleEx   = document.getElementById('qz-toggle-expl');
+  const progress   = document.getElementById('qz-progress');
+  const scoreEl    = document.getElementById('qz-score');
+  const regenBtn   = document.getElementById('qz-regenerate');
+  const mask       = document.getElementById('qz-mask');
+  const card       = document.getElementById('qz-card');
+  const cardLoader = document.getElementById('qz-card-loading');
+
+  // state
+  let items = [];
+  let idx = 0;
+  let answered = {}; // questionIndex -> selectedOption
+  let corrects = 0, attempts = 0;
+  let explOpen = false;
+  const seen = new Set();
+
+  const BATCH = 12;
+  const PREFETCH_AT = 3;
+  let inflight = null;
+
+  function showMask(on){ mask.style.display = on ? 'flex' : 'none'; }
+  function setStatus(msg){ status.textContent = msg || ''; }
+  function postHeight(){
+    if (!EMBED) return;
+    try{
+      const h = document.documentElement.scrollHeight;
+      window.parent.postMessage({type:'quiz-embed-height', value:h}, '*');
+    }catch(_){}
+  }
+  function updateScore(){ scoreEl.textContent = `Score: ${corrects} / ${attempts}`; }
+
+  // ---------- explanations ----------
+  function sanitizeText(s){ return (s || '').toString(); }
+  function updateExplanationArea(){
+    const q = items[idx] || {};
+    const has = !!q.explanation;
+    toggleEx.disabled = !has;
+    explTxt.textContent = sanitizeText(q.explanation || '');
+  }
+  function setExplanationVisible(show){
+    explOpen = !!show;
+    explBox.classList.toggle('show', explOpen);
+    toggleEx.textContent = explOpen ? 'Hide explanation' : 'Show explanation';
+    updateExplanationArea();
+    postHeight();
+    saveState();
+  }
+  // ----------------------------------
+
+  // ---------- persistence ----------
+  function saveState(){
+    try{
+      const payload = {items, idx, answered, corrects, attempts, explOpen, topic: TOPIC, ver: 2};
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }catch(_){}
+  }
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (!s || (s.ver !== 2 && s.ver !== 1) || s.topic !== TOPIC) return false;
+      if (!Array.isArray(s.items) || s.items.length === 0) return false;
+      items = s.items;
+      idx = Math.max(0, Math.min(Number(s.idx)||0, items.length-1));
+      answered = s.answered || {};
+      corrects = Number(s.corrects)||0;
+      attempts = Number(s.attempts)||0;
+      explOpen = !!s.explOpen;
+      (items||[]).forEach(it => {
+        const key = (it.question || '').trim().toLowerCase();
+        if (key) seen.add(key);
+      });
+      return true;
+    }catch(_){ return false; }
+  }
+  window.addEventListener('beforeunload', saveState);
+  function clearState(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(_){ } }
+  // ----------------------------------
+
+  function clearMarks(nodes){
+    nodes.forEach(n => {
+      n.classList.remove('selected','correct','wrong');
+      const m = n.querySelector('.qz-mark'); if (m) m.textContent = '';
+    });
+  }
+
+  function correctIndexOf(q){
+    if (typeof q.answer_index === 'number') return q.answer_index;
+    if (q.options && typeof q.answer === 'string') return q.options.indexOf(q.answer);
+    return -1;
+  }
+
+  function applyReveal(sel, firstAttempt = false){
+    const q = items[idx];
+    const nodes = [...choicesEl.children];
+    clearMarks(nodes);
+    if (!nodes[sel]) return; // safety
+    nodes[sel].classList.add('selected');
+    const cIdx = correctIndexOf(q);
+
+    if (sel === cIdx){
+      nodes[sel].classList.add('correct');
+      const m = nodes[sel].querySelector('.qz-mark'); if (m) m.textContent = '✓';
+      if (firstAttempt){ attempts++; corrects++; updateScore(); saveState(); }
+    } else {
+      nodes[sel].classList.add('wrong');
+      const m1 = nodes[sel].querySelector('.qz-mark'); if (m1) m1.textContent = '✗';
+      if (cIdx >= 0 && nodes[cIdx]){
+        nodes[cIdx].classList.add('correct');
+        const m2 = nodes[cIdx].querySelector('.qz-mark'); if (m2) m2.textContent = '✓';
+      }
+      if (firstAttempt){ attempts++; updateScore(); saveState(); }
+    }
+
+    updateExplanationArea(); // always sync text
+  }
+
+  function select(i){
+    const firstAttempt = (answered[idx] == null);
+    answered[idx] = i;
+    applyReveal(i, firstAttempt);
+    saveState();
+  }
+
+  function render(){
+    updateScore();
+
+    if (!items.length){
+      titleEl.textContent = "No questions yet.";
+      stemEl.textContent = "";
+      choicesEl.innerHTML = "";
+      progress.textContent = "";
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      toggleEx.disabled = true;
+      setExplanationVisible(false);
+      postHeight();
+      return;
+    }
+
+    const q = items[idx];
+    titleEl.textContent = `Question ${idx+1}`;
+    stemEl.textContent  = q.question || '';
+    progress.textContent = `${idx+1} / ${items.length}`;
+    prevBtn.disabled = (idx === 0);
+    nextBtn.disabled = false;
+
+    choicesEl.innerHTML = '';
+    (q.options || []).forEach((opt, i) => {
+      const row = document.createElement('div');
+      row.className = 'qz-choice';
+      row.innerHTML = `
+        <span class="qz-dot"></span>
+        <span class="qz-mark" aria-hidden="true"></span>
+        <span class="qz-text"></span>
+      `;
+      row.querySelector('.qz-text').textContent = opt || '';
+      row.addEventListener('click', () => select(i));
+      choicesEl.appendChild(row);
+    });
+
+    if (answered[idx] != null){
+      applyReveal(answered[idx], /*firstAttempt=*/false);
+    } else {
+      updateExplanationArea();
+      if (!explOpen) explBox.classList.remove('show');
+      toggleEx.textContent = explOpen ? 'Hide explanation' : 'Show explanation';
+    }
+
+    if (items.length - (idx + 1) <= PREFETCH_AT) prefetchMore(false);
+    postHeight();
+  }
+
+  // overlay helpers for fetch-more
+  function showCardBusy(on){
+    card.classList.toggle('busy', !!on);
+    cardLoader.classList.toggle('show', !!on);
+    nextBtn.disabled = !!on;
+    prevBtn.disabled = !!on || (idx === 0);
+  }
+
+  // ----------- UPDATED FETCH + NEXT LOGIC -----------
+  async function fetchBatch(force=true, allowResetAvoid=false){
+    // allowResetAvoid=true lets us retry with empty avoid list when needed.
+    const avoid = allowResetAvoid ? [] : Array.from(seen);
+    const res = await fetch(API, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ count: BATCH, avoid, force })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || 'Quiz error');
+
+    const fresh = (j.items || []).filter(it => {
+      const key = (it.question || '').trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return fresh;
+  }
+
+  async function prefetchMore(blocking, mode='screen'){
+    if (inflight) return inflight;
+
+    if (blocking){
+      if (mode === 'card'){ showCardBusy(true); setStatus('Generating…'); }
+      else { showMask(true); }
+    } else {
+      setStatus('Generating…');
+    }
+
+    const startLen = items.length;
+
+    inflight = (async () => {
+      try{
+        // First attempt (respect avoid)
+        let more = await fetchBatch(true, /*allowResetAvoid=*/false);
+
+        // If nothing came back, retry once with an empty avoid list
+        if (!more.length){
+          more = await fetchBatch(true, /*allowResetAvoid=*/true);
+        }
+
+        if (more.length){
+          items = items.concat(more);
+          saveState();
+        }
+      } catch(e){
+        setStatus('Error: ' + e.message);
+      } finally {
+        if (mode === 'card'){ showCardBusy(false); }
+        showMask(false);
+        setStatus('');
+        inflight = null;
+        postHeight();
+      }
+    })();
+
+    await inflight;
+    return items.length - startLen; // number of new items added
+  }
+
+  async function next(){
+    // Normal move within current buffer
+    if (idx < items.length - 1){
+      idx++; render(); saveState(); return;
+    }
+
+    // End of buffer → try to fetch more and then advance
+    showCardBusy(true);
+    try{
+      const added = await prefetchMore(true, 'card');
+      if (added > 0){
+        idx++;            // advance into the newly appended question
+        render();
+        saveState();
+      } else {
+        // Still no new questions — don’t trap user on same screen
+        setStatus('No more questions available right now. Try Regenerate.');
+      }
+    } finally {
+      showCardBusy(false);
+    }
+  }
+  // --------------------------------------------------
+
+  function prev(){
+    if (idx > 0){ idx--; render(); saveState(); window.scrollTo({top:0,behavior:'smooth'}); }
+  }
+
+  // explanation toggle
+  toggleEx.addEventListener('click', () => setExplanationVisible(!explOpen));
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
+
+  // regenerate
+  if (regenBtn) regenBtn.addEventListener('click', async () => {
+    clearState();
+    items = []; idx = 0; answered = {}; attempts = 0; corrects = 0; seen.clear();
+    setExplanationVisible(false);
+    updateScore(); render();
+    showMask(true);
+    try {
+      const first = await fetchBatch(true);
+      if (first.length){ items = first; first.forEach(it => { const k=(it.question||'').trim().toLowerCase(); if(k) seen.add(k); }); }
+      render(); saveState();
+    } catch(e){
+      setStatus('Error: ' + e.message);
+    } finally { showMask(false); }
+  });
+
+  // boot
+  (async () => {
+    showMask(true);
+    try{
+      if (!loadState()){
+        const first = await fetchBatch(true);
+        items = first;
+      }
+      updateScore();
+      if (explOpen) explBox.classList.add('show');
+      toggleEx.textContent = explOpen ? 'Hide explanation' : 'Show explanation';
+      render();
+    } catch(e){
+      setStatus('Error: ' + e.message);
+      titleEl.textContent = "Error loading quiz";
+      stemEl.textContent = e.message;
+    } finally {
+      showMask(false);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Quiz Topics{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3">🧪 Quiz Topics</h2>
+
+  {% if topics and topics|length > 0 %}
+    <ul id="topic-list" class="list-unstyled">
+      {% for topic in topics %}
+        <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+          <span class="text-capitalize">{{ topic }}</span>
+          <div class="btn-row" style="display:flex;gap:8px;">
+            <a href="{{ url_for('quiz.quiz_page', topic=topic) }}" class="btn btn-sm btn-primary">Start Quiz</a>
+            <button class="btn btn-sm btn-outline-danger" data-topic="{{ topic }}" onclick="deleteQuiz(this)">Delete</button>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-muted">No quizzes yet. Generate one from your notes and it will appear here.</div>
+  {% endif %}
+</div>
+
+<script>
+async function deleteQuiz(btn) {
+  const topic = btn.getAttribute('data-topic');
+  if (!topic) return;
+  if (!confirm(`Delete the quiz for "${topic}"?`)) return;
+
+  try {
+    const res = await fetch('{{ url_for("quiz.quiz_delete") }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ topic })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      alert(data.error || 'Failed to delete quiz.');
+      return;
+    }
+    // remove the list item
+    const li = btn.closest('li');
+    if (li) li.remove();
+
+    // show empty state if needed
+    if (!document.querySelector('#topic-list li')) {
+      document.getElementById('topic-list').outerHTML =
+        '<div class="text-muted">No quizzes yet. Generate one from your notes and it will appear here.</div>';
+    }
+  } catch (e) {
+    alert('Error: ' + e);
+  }
+}
+</script>
+{% endblock %}
+

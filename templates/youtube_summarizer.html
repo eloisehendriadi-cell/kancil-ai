@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>YouTube Summarizer</h2>
+
+<form method="POST" onsubmit="startProgress()">
+  <label for="video_url">YouTube URL (or paste transcript):</label>
+  <input type="text" name="video_url" id="video_url" class="form-control mb-3"
+         placeholder="https://www.youtube.com/watch?v=..." value="{{ request.form.video_url }}">
+
+  <label for="transcript">Or paste transcript directly:</label>
+  <textarea name="transcript" id="transcript" class="form-control mb-3"
+            rows="6" placeholder="Optional transcript...">{{ request.form.transcript }}</textarea>
+
+  <button class="btn btn-primary">Summarize</button>
+</form>
+
+<!-- Progress Bar -->
+<div id="progress-container" style="margin-top: 20px; display: none;">
+  <div style="height: 20px; background: #eee; border-radius: 4px; overflow: hidden;">
+    <div id="progress-bar" style="height: 100%; width: 0%; background: #007bff; text-align: center; color: white;"></div>
+  </div>
+  <p id="progress-label" style="margin-top: 5px;"></p>
+</div>
+
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+
+{% if summary %}
+  <h4 class="mt-4">Summary:</h4>
+  <pre>{{ summary }}</pre>
+{% endif %}
+
+<script>
+function startProgress() {
+  const container = document.getElementById('progress-container');
+  const bar = document.getElementById('progress-bar');
+  const label = document.getElementById('progress-label');
+
+  container.style.display = 'block';
+  let progress = 0;
+
+  const interval = setInterval(() => {
+    if (progress >= 100) {
+      clearInterval(interval);
+      label.innerText = "Done!";
+    } else {
+      progress += Math.floor(Math.random() * 10) + 5;
+      progress = Math.min(progress, 100);
+      bar.style.width = progress + '%';
+      label.innerText = progress + '% complete';
+    }
+  }, 400);
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3">🧠 Note Generator</h2>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="radio" name="method" id="fromText" value="text" checked>
+      <label class="form-check-label" for="fromText">✍️ From Text</label>
+    </div>
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="radio" name="method" id="fromPDF" value="pdf">
+      <label class="form-check-label" for="fromPDF">📄 From PDF</label>
+    </div>
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="radio" name="method" id="fromYouTube" value="youtube">
+      <label class="form-check-label" for="fromYouTube">▶️ From YouTube</label>
+    </div>
+
+    <div id="textInput" class="mb-3">
+      <textarea name="note_input" class="form-control" rows="5" placeholder="Enter your content here..."></textarea>
+    </div>
+
+    <div id="pdfInput" class="mb-3" style="display: none;">
+      <input type="file" name="note_pdf" accept=".pdf" class="form-control">
+    </div>
+
+    <div id="youtubeInput" class="mb-3" style="display: none;">
+      <input type="text" name="note_youtube" class="form-control" placeholder="Enter YouTube transcript...">
+    </div>
+
+    <div class="alert alert-info mt-3">
+      ⏳ This may take a few minutes depending on the file size or content length...
+    </div>
+
+    <button type="submit" class="btn btn-primary">⚡ Generate Notes</button>
+  </form>
+
+  {% if output %}
+  <div class="card mt-4">
+    <div class="card-body">
+      <h5 class="card-title">📘 Your Generated Notes</h5>
+      <div class="formatted-output" style="white-space: pre-wrap;">
+        {{ output|safe }}
+      </div>
+
+      <!-- Save Note Form -->
+      <form method="POST" action="{{ url_for('save_note') }}" class="mt-4">
+        <input type="hidden" name="content" value="{{ output|tojson|safe }}">
+        <div class="mb-3">
+          <label for="note_title" class="form-label">📝 Label this note:</label>
+          <input type="text" name="title" id="note_title" class="form-control" placeholder="e.g. Photosynthesis Notes">
+        </div>
+        <button type="submit" class="btn btn-success">💾 Save to Dashboard</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  const textRadio = document.getElementById('fromText');
+  const pdfRadio = document.getElementById('fromPDF');
+  const youtubeRadio = document.getElementById('fromYouTube');
+
+  const textInput = document.getElementById('textInput');
+  const pdfInput = document.getElementById('pdfInput');
+  const youtubeInput = document.getElementById('youtubeInput');
+
+  function toggleInputs() {
+    textInput.style.display = textRadio.checked ? 'block' : 'none';
+    pdfInput.style.display = pdfRadio.checked ? 'block' : 'none';
+    youtubeInput.style.display = youtubeRadio.checked ? 'block' : 'none';
+  }
+
+  textRadio.addEventListener('change', toggleInputs);
+  pdfRadio.addEventListener('change', toggleInputs);
+  youtubeRadio.addEventListener('change', toggleInputs);
+  toggleInputs();
+</script>
+{% endblock %}
+

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Note Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --border:#e5e7eb; --muted:#64748b; --text:#0f172a; --accent:#0f172a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter:saturate(1.2) blur(6px);
+      background:rgba(255,255,255,.8);
+      border-bottom:1px solid var(--border);
+      padding:10px 16px;
+    }
+    .topbar .inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px}
+    .brand{font-weight:700}
+    .spacer{flex:1}
+    .nav a{
+      display:inline-block;padding:8px 12px;margin-left:6px;border:1px solid var(--border);
+      border-radius:10px;text-decoration:none;color:var(--text);background:#fff;
+    }
+    .nav a.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    h1{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+    h1 span.emoji{font-size:28px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
+    .row{display:grid;grid-template-columns:1fr;gap:10px}
+    label.radio{display:flex;gap:10px;align-items:center;color:var(--muted);margin:6px 0}
+    textarea,input[type="text"],input[type="file"]{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff;outline:none}
+    button{height:42px;padding:0 16px;border:0;border-radius:12px;background:var(--accent);color:#fff;cursor:pointer}
+    button.ghost{background:#fff;color:var(--text);border:1px solid var(--border)}
+    .hint{background:#e0f2fe;border:1px solid #bae6fd;color:#075985;border-radius:12px;padding:10px 12px;font-size:14px}
+    .notes{margin-top:14px}
+    .note-view{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px}
+    .note-view strong{background:#fff7cc;padding:0 .2em;border-radius:.25em}
+    .note-fig{margin:12px auto;display:block;text-align:center}
+    .note-fig img{max-width:100%;height:auto;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+    .note-fig figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+    .image-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:10px}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .muted{color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="inner">
+      <div class="brand">AI Tutor</div>
+      <div class="spacer"></div>
+      <div class="nav">
+        <a href="/" class="primary">← Home</a>
+        <a href="/chat">Chatbot</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/quiz">Quiz</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h1><span class="emoji">🧠</span> <span>Note Generator</span></h1>
+
+    <form class="card" action="/notes" method="post" enctype="multipart/form-data">
+      <div class="row">
+        <label class="radio"><input type="radio" name="method" value="text" required> ✍️ From Text</label>
+        <label class="radio"><input type="radio" name="method" value="pdf"> 📄 From PDF</label>
+        <label class="radio"><input type="radio" name="method" value="youtube"> 🎥 From YouTube</label>
+
+        <textarea name="note_input" rows="8" placeholder="Enter your text here..."></textarea>
+        <input type="file" name="note_pdf" accept=".pdf" />
+        <input type="text" name="note_youtube" placeholder="Paste YouTube transcript or link here..." />
+
+        <div class="hint">⏳ This may take a few minutes depending on the file size or text length.</div>
+
+        <div class="actions">
+          <button type="submit">✨ Generate Notes</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="notes">
+      <h3>📄 Your Generated Notes</h3>
+      <div class="note-view">
+        {% if output %}
+          {{ output|safe }}
+        {% else %}
+          <p class="muted">Your notes will appear here after generation. Include keywords, and if you upload a PDF, we’ll embed related pages/figures inline. ✨</p>
+        {% endif %}
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn" type="button" {% if not output %}disabled{% endif %}>💾 Save This Note</button>
+        <span class="muted" id="saveStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto-pick radio when the user interacts with a field
+    const methodRadios = [...document.querySelectorAll('input[name="method"]')];
+    const map = { note_input:'text', note_pdf:'pdf', note_youtube:'youtube' };
+    ['note_input','note_pdf','note_youtube'].forEach(name=>{
+      const el = document.getElementsByName(name)[0];
+      if (el) el.addEventListener('focus', ()=>{
+        const r = methodRadios.find(x=>x.value===map[name]); if (r) r.checked=true;
+      });
+    });
+
+    // Save button
+    const saveBtn = document.getElementById('saveBtn');
+    const saveStatus = document.getElementById('saveStatus');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        saveStatus.textContent = 'Saving…';
+        const container = document.querySelector('.note-view');
+        let title = (container.querySelector('h2,h3')?.textContent || '').trim() || 'Untitled Notes';
+        const content = container.innerHTML;
+        try {
+          const res = await fetch('/save_note', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ title, content })
+          });
+          const data = await res.json();
+          saveStatus.textContent = data.success ? 'Saved!' : ('Error: '+(data.error||'Unknown'));
+        } catch(e){ saveStatus.textContent='Error saving note'; }
+        finally { saveBtn.disabled = false; }
+      });
+    }
+  </script>
+</body>
+</html>
+

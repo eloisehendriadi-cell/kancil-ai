@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>YouTube Summarizer</h2>
+
+<form method="POST">
+  <label>YouTube URL (or paste transcript below):</label>
+  <input type="text" name="video_url" class="form-control mb-3" placeholder="https://www.youtube.com/watch?v=..." value="{{ request.form.video_url }}">
+  
+  <label>OR paste transcript:</label>
+  <textarea name="transcript" class="form-control mb-3" rows="6" placeholder="Optional transcript...">{{ request.form.transcript }}</textarea>
+  
+  <button class="btn btn-primary">Summarize</button>
+</form>
+
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+
+{% if summary %}
+  <h4 class="mt-4">Summary:</h4>
+  <pre>{{ summary }}</pre>
+{% endif %}
+{% endblock %}
+

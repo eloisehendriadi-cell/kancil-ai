@@ -1,0 +1,85 @@
+from flask import Flask, render_template, request
+import subprocess
+import re
+from youtube_transcript_api import YouTubeTranscriptApi
+
+app = Flask(__name__)
+
+OLLAMA_MODEL = "gemma:2b"
+
+# === Utility Functions ===
+
+def ask_ollama(prompt):
+    result = subprocess.run(
+        ["ollama", "run", OLLAMA_MODEL, prompt],
+        capture_output=True,
+        text=True
+    )
+    return result.stdout.strip()
+
+def extract_video_id(url):
+    match = re.search(r"(?:v=|youtu\.be/)([\w-]{11})", url)
+    return match.group(1) if match else None
+
+# === Routes ===
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/summarize', methods=['GET', 'POST'])
+def summarize():
+    summary = ""
+    if request.method == 'POST':
+        text = request.form.get('text', '')
+        if text:
+            prompt = f"Summarize the following text into clear, concise bullet points:\n\n{text}\n\n-"
+            summary = ask_ollama(prompt)
+    return render_template('summarize.html', summary=summary)
+
+
+@app.route('/youtube', methods=['GET', 'POST'])
+def youtube():
+    summary = ""
+    error = ""
+    if request.method == 'POST':
+        video_url = request.form.get('video_url', '')
+        transcript_input = request.form.get('transcript', '')
+
+        transcript_text = ""
+
+        if video_url:
+            video_id = extract_video_id(video_url)
+            if video_id:
+                try:
+                    transcript_data = YouTubeTranscriptApi.get_transcript(video_id)
+                    transcript_text = " ".join([entry['text'] for entry in transcript_data])
+                except Exception as e:
+                    error = f"Could not fetch transcript: {str(e)}"
+            else:
+                error = "Invalid YouTube URL."
+        elif transcript_input:
+            transcript_text = transcript_input
+
+        if transcript_text:
+            prompt = f"Summarize the YouTube transcript below into short bullet points:\n\n{transcript_text}\n\n-"
+            summary = ask_ollama(prompt)
+
+    return render_template('youtube.html', summary=summary, error=error)
+
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    response = ""
+    if request.method == 'POST':
+        user_input = request.form.get('user_input', '')
+        if user_input:
+            prompt = f"You are an AI tutor. Respond clearly and helpfully to the following:\n\n{user_input}"
+            response = ask_ollama(prompt)
+    return render_template('chat.html', response=response)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+

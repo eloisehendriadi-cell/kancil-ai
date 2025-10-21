@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Note Generator</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    <label><input type="radio" name="method" value="text" checked> From Text</label>
+    <label><input type="radio" name="method" value="pdf"> From PDF</label>
+    <label><input type="radio" name="method" value="youtube"> From YouTube</label>
+
+    <div id="input-text" style="margin-top: 15px;">
+        <textarea name="note_input" placeholder="Enter your notes or text..." rows="10" style="width: 100%; padding: 12px;"></textarea>
+    </div>
+
+    <div id="input-pdf" style="display: none; margin-top: 15px;">
+        <input type="file" name="note_pdf" accept="application/pdf">
+    </div>
+
+    <div id="input-youtube" style="display: none; margin-top: 15px;">
+        <input type="text" name="note_youtube" placeholder="Paste YouTube URL..." style="width: 100%; padding: 12px;">
+    </div>
+
+    <button type="submit">Generate Notes</button>
+</form>
+
+{% if percent > 0 %}
+    <div style="margin-top: 20px;">
+        <label>Progress:</label>
+        <div style="width: 100%; background-color: #eee; border-radius: 5px;">
+            <div style="width: {{ percent }}%; background-color: #4CAF50; height: 20px; border-radius: 5px;"></div>
+        </div>
+        <p>{{ percent }}% done</p>
+    </div>
+{% endif %}
+
+{% if output %}
+    <div style="margin-top: 30px; white-space: pre-wrap; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #ddd;">
+        <h3>Generated Notes:</h3>
+        {{ output|safe }}
+    </div>
+{% endif %}
+
+<script>
+document.querySelectorAll('input[name="method"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.getElementById('input-text').style.display = radio.value === 'text' ? 'block' : 'none';
+        document.getElementById('input-pdf').style.display = radio.value === 'pdf' ? 'block' : 'none';
+        document.getElementById('input-youtube').style.display = radio.value === 'youtube' ? 'block' : 'none';
+    });
+});
+</script>
+{% endblock %}
+

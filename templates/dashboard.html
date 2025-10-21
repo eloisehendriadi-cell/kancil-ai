@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}📚 Dashboard{% endblock %}
+
+{% block content %}
+<header class="toolbar" style="justify-content:space-between; margin-bottom:1rem;">
+  <a class="btn" href="{{ url_for('index') }}">← Back to home</a>
+  <strong class="muted">Kancil AI</strong>
+</header>
+
+<section class="card" style="margin-bottom:1rem;">
+  <h2 style="margin:0 0 .5rem 0">🧠 Note Generator</h2>
+  <p class="muted" style="margin:.25rem 0 1rem 0;">
+    Create new notes from any source and jump straight into the Workspace.
+  </p>
+
+  <form id="inline-notes-form">
+    <div style="display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:.5rem;">
+      <label><input type="radio" name="method" value="text" checked> ✍️ From Text</label>
+      <label><input type="radio" name="method" value="pdf"> 📄 From PDF</label>
+      <label><input type="radio" name="method" value="youtube"> 🎥 From YouTube</label>
+    </div>
+
+    <textarea id="note_text" rows="8" placeholder="Enter your text here…"
+              style="display:block; margin-bottom:.6rem;"></textarea>
+    <input id="note_pdf" type="file" accept=".pdf" style="display:none; margin-bottom:.6rem;">
+    <input id="note_yt" type="text" placeholder="Paste YouTube link or transcript…"
+           style="display:none; margin-bottom:.6rem;">
+
+    <div class="muted" style="background:#e6f2ff; border:1px solid #dbeafe; padding:.6rem .75rem; border-radius:10px; margin:.5rem 0 1rem;">
+      ⏳ This may take a minute depending on the file size or text length.
+    </div>
+
+    <button id="genBtn" type="submit" class="btn primary">✨ Generate & Open Workspace</button>
+  </form>
+
+  <div id="notes_result" style="margin-top:1rem;"></div>
+</section>
+
+<section class="card">
+  <h3 style="margin-top:0">💾 Saved notes</h3>
+  {% if (notes or [])|length == 0 %}
+    <p class="muted">No saved notes yet. Create some above 👆</p>
+  {% else %}
+    <div class="row" style="flex-direction:column; gap:.6rem; max-width:720px;">
+      {% for n in notes %}
+        {% set title = (n.title or 'Untitled') if n.title is defined else 'Untitled' %}
+        <div style="display:flex; gap:.5rem; align-items:center;">
+          <button class="btn"
+                  style="justify-content:flex-start; flex:1; font-size:18px; font-weight:700;"
+                  data-title="{{ title|e }}"
+                  onclick="useSaved(this)">
+            {{ title }}
+          </button>
+          <button class="btn" onclick="renameNote('{{ title|e }}')">Rename</button>
+          <button class="btn danger" onclick="deleteNote('{{ title|e }}')">Delete</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+
+<script>
+  const WS = {
+    open:   '/workspace',
+    reset:  '/workspace/reset',
+    seed:   '/workspace/seed',
+    useGen: '/workspace/use_generated',
+    useSaved: '/workspace/use_saved'
+  };
+
+  const form    = document.getElementById('inline-notes-form');
+  const resDiv  = document.getElementById('notes_result');
+  const txt     = document.getElementById('note_text');
+  const pdf     = document.getElementById('note_pdf');
+  const yt      = document.getElementById('note_yt');
+
+  function methodSel(){
+    return (form.querySelector('input[name="method"]:checked') || {}).value;
+  }
+  function updateInputs(){
+    const m = methodSel();
+    txt.style.display = (m === 'text') ? 'block' : 'none';
+    pdf.style.display = (m === 'pdf')  ? 'block' : 'none';
+    yt.style.display  = (m === 'youtube') ? 'block' : 'none';
+  }
+  form.querySelectorAll('input[name="method"]').forEach(r => r.addEventListener('change', updateInputs));
+  updateInputs();
+
+  async function postJSON(url, obj){
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(obj || {})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+  async function postForm(url, fd){
+    const r = await fetch(url, { method:'POST', body: fd });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+
+  // Submit → reset → seed → redirect
+  async function onGenerate(e){
+    e.preventDefault();
+    resDiv.innerHTML = '<p class="muted">Preparing…</p>';
+
+    const m = methodSel();
+
+    try {
+      // always clear previous workspace session
+      await postJSON(WS.reset, {});
+
+      if (m === 'text') {
+        const source = (txt.value || '').trim();
+        if (!source) { resDiv.innerHTML = '<p style="color:#b91c1c">Please enter some text.</p>'; return; }
+        const firstLine = source.split(/\n/)[0].trim();
+        const title = firstLine ? firstLine.slice(0, 80) : 'Study Notes';
+
+        const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false });
+        if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
+        location.href = WS.open;
+        return;
+      }
+
+      if (m === 'youtube') {
+        const url = (yt.value || '').trim();
+        if (!url) { resDiv.innerHTML = '<p style="color:#b91c1c">Paste a YouTube link or transcript.</p>'; return; }
+        const seed = await postJSON(WS.seed, { title: 'YouTube Notes', text: `URL: ${url}`, notes_html: '', prebuild_quiz: false });
+        if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
+        location.href = WS.open;
+        return;
+      }
+
+      if (m === 'pdf') {
+        if (!pdf.files[0]) { resDiv.innerHTML = '<p style="color:#b91c1c">Please choose a PDF file.</p>'; return; }
+        const fd = new FormData();
+        fd.append('note_pdf', pdf.files[0]);
+        const ex = await postForm("{{ url_for('notes.notes_extract_pdf') }}", fd);
+        if (!ex || !ex.ok) { resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract PDF.'}</p>`; return; }
+        if (!(ex.source || '').trim()) { resDiv.innerHTML = '<p style="color:#b91c1c">Could not read text from the PDF (likely scanned). Try a text-based PDF or paste the text.</p>'; return; }
+
+        const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false });
+        if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
+        location.href = WS.open;
+        return;
+      }
+
+      resDiv.innerHTML = '<p style="color:#b91c1c">Unsupported method.</p>';
+
+    } catch (err) {
+      console.error(err);
+      resDiv.innerHTML = `<p style="color:#b91c1c">Error: ${err.message}</p>`;
+    }
+  }
+  form.addEventListener('submit', onGenerate);
+
+  // -------- Saved notes actions ----------
+  async function postJSONCrud(url, obj){
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(obj || {})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+
+  async function useSaved(el){
+    const title = el.dataset.title || '';
+    if(!title) return;
+    try {
+      const j = await postJSONCrud(WS.useSaved, { title });
+      if (j && j.ok) { location.href = WS.open; } else { alert((j && j.error) || 'Could not open in workspace.'); }
+    } catch { alert('Network error.'); }
+  }
+  window.useSaved = useSaved;
+
+  async function renameNote(oldTitle){
+    const newTitle = prompt("Rename note:", oldTitle);
+    if(!newTitle || newTitle === oldTitle) return;
+    try{
+      const j = await postJSONCrud("{{ url_for('notes.rename_note') }}",
+                                   { old_title: oldTitle, new_title: newTitle });
+      if(j.ok){ location.reload(); } else { alert(j.error || "Rename failed."); }
+    }catch(e){ alert("Network error."); }
+  }
+  window.renameNote = renameNote;
+
+  async function deleteNote(title){
+    if(!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    try{
+      const j = await postJSONCrud("{{ url_for('notes.delete_note') }}", { title });
+      if(j.ok){ location.reload(); } else { alert(j.error || "Delete failed."); }
+    }catch(e){ alert("Network error."); }
+  }
+  window.deleteNote = deleteNote;
+</script>
+{% endblock %}
+

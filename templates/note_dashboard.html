@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+  <div class="card" style="flex:1">
+    <h3>🗂️ Note dashboard</h3>
+    <p class="muted">Choose a source. We’ll keep it as the shared context for Notes, Podcast, Quiz, and Flashcards.</p>
+
+    <details open>
+      <summary>From text</summary>
+      <form id="textForm">
+        <input type="text" name="title" placeholder="Title (optional)" />
+        <textarea name="text" rows="6" placeholder="Paste text here…"></textarea>
+        <button type="submit">Use this text</button>
+      </form>
+    </details>
+
+    <details>
+      <summary>From PDF</summary>
+      <form id="pdfForm" enctype="multipart/form-data">
+        <input type="file" name="pdf" accept=".pdf" />
+        <button type="submit">Upload PDF</button>
+      </form>
+    </details>
+
+    <details>
+      <summary>From YouTube</summary>
+      <form id="ytForm">
+        <input type="url" name="url" placeholder="https://youtube.com/..." />
+        <button type="submit">Use this video</button>
+      </form>
+    </details>
+
+    <div class="toolbar">
+      <a href="{{ url_for('dashboard.workspace') }}">Open Workspace ➜</a>
+      <span class="muted">Current: <strong>{{ session.get('shared_source_title') or 'None' }}</strong></span>
+    </div>
+
+    <hr />
+    <h4>💾 Saved notes</h4>
+    <p class="muted">Use your existing “Save Note” flow; this panel doesn’t list them yet.</p>
+  </div>
+</div>
+
+<script>
+  async function postForm(url, formData) {
+    const res = await fetch(url, { method: 'POST', body: formData });
+    return res.json();
+  }
+
+  document.getElementById('textForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const r = await postForm("{{ url_for('dashboard.set_source_text') }}", fd);
+    alert(r.ok ? "Source set!" : (r.error || "Failed"));
+  });
+
+  document.getElementById('pdfForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const r = await postForm("{{ url_for('dashboard.set_source_pdf') }}", fd);
+    alert(r.ok ? "PDF loaded!" : (r.error || "Failed"));
+  });
+
+  document.getElementById('ytForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const r = await postForm("{{ url_for('dashboard.set_source_youtube') }}", fd);
+    alert(r.ok ? "YouTube set!" : (r.error || "Failed"));
+  });
+</script>
+{% endblock %}
+

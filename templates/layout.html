@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Tutor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>🧠 AI Tutor</h2>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/text-summarizer">Text Summarizer</a></li>
+            <li><a href="/youtube-summarizer">YouTube Summarizer</a></li>
+            <li><a href="/chatbot">Chatbot</a></li>
+        </ul>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center mb-4">🧠 Choose a Quiz Topic</h2>
+  <div class="row justify-content-center">
+    {% for topic in topics %}
+    <div class="col-md-4 mb-4">
+      <a href="{{ url_for('quiz_page', topic=topic) }}" class="text-decoration-none">
+        <div class="card shadow-sm topic-card h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title">{{ topic.title() }}</h5>
+            <p class="text-muted">Click to start quiz</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.topic-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 15px;
+}
+.topic-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+</style>
+{% endblock %}
+
