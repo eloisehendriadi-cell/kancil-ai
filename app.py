@@ -6,15 +6,24 @@ import json
 import importlib
 from flask import Flask, render_template, send_from_directory, redirect
 
-# ---------- basic config ----------
-UPLOAD_FOLDER = "uploads"
-NOTES_FILE    = "saved_notes.json"
-CONVOS_DIR    = "convos"
+# ---------- writable paths (Render-safe) ----------
+def _writable_base() -> str:
+    """
+    Use the repo directory locally; fall back to /tmp on hosts where
+    the repo FS is read-only (e.g., Render). You can override with WRITE_BASE.
+    """
+    return "." if os.access(".", os.W_OK) else "/tmp"
+
+BASE = os.getenv("WRITE_BASE", _writable_base())
+
+UPLOAD_FOLDER = os.path.join(BASE, "uploads")
+NOTES_FILE    = os.path.join(BASE, "saved_notes.json")
+CONVOS_DIR    = os.path.join(BASE, "convos")
 INDEX_FILE    = os.path.join(CONVOS_DIR, "index.json")
 
 
 def ensure_dirs() -> None:
-    """Create required folders/files if missing."""
+    """Create required folders/files if missing (under the writable BASE)."""
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(CONVOS_DIR, exist_ok=True)
     os.makedirs(os.path.join(UPLOAD_FOLDER, "podcasts"), exist_ok=True)
@@ -47,13 +56,18 @@ def _try_import(*candidates):
 
 
 def create_app() -> Flask:
-    # Our templates live under the package folder:
-    app = Flask(__name__, template_folder="the_ai_tutor/templates", static_folder="static")
+    # Templates live under the package folder
+    app = Flask(
+        __name__,
+        template_folder="the_ai_tutor/templates",
+        static_folder="static",
+    )
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret")
     app.url_map.strict_slashes = False
+
     ensure_dirs()
 
-    # make paths available to blueprints
+    # Make paths available to blueprints
     app.config.update(
         UPLOAD_FOLDER=UPLOAD_FOLDER,
         NOTES_FILE=NOTES_FILE,
@@ -118,7 +132,7 @@ def create_app() -> Flask:
         ("workspace", "workspace_bp"),
     )
 
-    # Register whichever exist (with clear warnings)
+    # Register whichever exist (print clear warnings)
     if notes_bp:
         app.register_blueprint(notes_bp)
     else:
