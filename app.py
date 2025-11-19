@@ -57,11 +57,22 @@ def _try_import(*candidates):
 
 def create_app() -> Flask:
     # Templates live under the package folder
-    app = Flask(
-        __name__,
-        template_folder="the_ai_tutor/templates",
-        static_folder="static",
+    # Resolve template/static folders: prefer shared project templates if present
+    this_dir = os.path.dirname(__file__)
+    default_templates = os.path.join(this_dir, "templates")
+    alt_templates = os.path.abspath(
+        os.path.join(this_dir, "..", ".", "ai_tutor", "the_ai_tutor", "templates")
     )
+    template_folder = alt_templates if os.path.isdir(alt_templates) else default_templates
+
+    default_static = os.path.join(this_dir, "static")
+    alt_static = os.path.abspath(
+        os.path.join(this_dir, "..", ".", "ai_tutor", "the_ai_tutor", "static")
+    )
+    static_folder = alt_static if os.path.isdir(alt_static) else default_static
+
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+    print(f"[INFO] Using templates from: {template_folder}")
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret")
     app.url_map.strict_slashes = False
 

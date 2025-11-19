@@ -1,46 +1,268 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Chat with AI Tutor</h2>
+<h2 class="mb-3">Chat with AI Tutor</h2>
 
-<form method="POST" onsubmit="startProgress()">
-  <input name="user_input" class="form-control mb-3" placeholder="Ask something..." value="{{ request.form.user_input }}">
-  <button class="btn btn-success">Send</button>
+<div class="mb-3">
+  <label for="chat-session-select" class="form-label">Previous Chats:</label>
+  <div class="d-flex gap-2">
+    <select id="chat-session-select" class="form-select" style="max-width: 260px;"></select>
+    <input id="chat-session-rename" class="form-control" style="max-width: 180px;" placeholder="Rename chat…" />
+    <button id="rename-btn" class="btn btn-outline-primary" type="button">Rename</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div id="chat-log" style="white-space:pre-wrap; min-height:140px;"></div>
+</div>
+
+<form id="chat-form" class="mb-3">
+  <textarea id="user-input" class="form-control mb-2" rows="3" placeholder="Type your message…"></textarea>
+  <div class="d-flex gap-2">
+    <button id="send-btn" class="btn btn-success" type="submit">Send</button>
+    <button id="clear-btn" class="btn btn-outline-secondary" type="button">Clear</button>
+  </div>
 </form>
 
 <!-- Progress Bar -->
-<div id="progress-container" style="margin-top: 20px; display: none;">
-  <div style="height: 20px; background: #eee; border-radius: 4px; overflow: hidden;">
-    <div id="progress-bar" style="height: 100%; width: 0%; background: #28a745; text-align: center; color: white;"></div>
+<div id="progress-container" style="margin-top: 12px; display: none;">
+  <div style="height: 20px; background: #eee; border-radius: 6px; overflow: hidden;">
+    <div id="progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg,#22c55e,#16a34a); transition: width .2s;"></div>
   </div>
-  <p id="progress-label" style="margin-top: 5px;"></p>
+  <p id="progress-label" class="mt-1 mb-0" style="font-size: 0.9rem; color:#555;"></p>
 </div>
 
-{% if response %}
-  <h4 class="mt-4">Response:</h4>
-  <pre>{{ response }}</pre>
-{% endif %}
-
 <script>
-function startProgress() {
-  const container = document.getElementById('progress-container');
-  const bar = document.getElementById('progress-bar');
-  const label = document.getElementById('progress-label');
+(() => {
+  const form   = document.getElementById('chat-form');
+  const input  = document.getElementById('user-input');
+  const logEl  = document.getElementById('chat-log');
+  const sendBtn= document.getElementById('send-btn');
+  const clearBtn= document.getElementById('clear-btn');
+  const sessionSelect = document.getElementById('chat-session-select');
+  const renameInput = document.getElementById('chat-session-rename');
+  const renameBtn = document.getElementById('rename-btn');
 
-  container.style.display = 'block';
-  let progress = 0;
+  const progressBox = document.getElementById('progress-container');
+  const progressBar = document.getElementById('progress-bar');
+  const progressLbl = document.getElementById('progress-label');
 
-  const interval = setInterval(() => {
-    if (progress >= 100) {
-      clearInterval(interval);
-      label.innerText = "Done!";
-    } else {
-      progress += Math.floor(Math.random() * 10) + 7;
-      progress = Math.min(progress, 100);
-      bar.style.width = progress + '%';
-      label.innerText = progress + '% complete';
+  const HISTORY_LIMIT = 12;
+  let history = [];
+  let chatId = null;
+  let chatName = '';
+
+  function append(role, text) {
+    const who = role === 'assistant' ? 'Tutor' : 'You';
+    const block = `\n${who}:\n${text}\n`;
+    logEl.textContent += block;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function renderHistory() {
+    logEl.textContent = '';
+    for (const msg of history) {
+      append(msg.role, msg.content);
     }
-  }, 300);
-}
+  }
+
+  function startProgress() {
+    progressBox.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressLbl.textContent = 'Starting…';
+    let p = 0;
+    const tick = () => {
+      if (p >= 92) return;
+      p += Math.floor(Math.random() * 8) + 4;
+      p = Math.min(p, 92);
+      progressBar.style.width = p + '%';
+      progressLbl.textContent = p + '% complete';
+    };
+    const id = setInterval(tick, 300);
+    progressBox.dataset.timer = id;
+  }
+
+  function finishProgress(ok=true) {
+    const id = progressBox.dataset.timer;
+    if (id) clearInterval(Number(id));
+    progressBar.style.width = '100%';
+    progressLbl.textContent = ok ? 'Done!' : 'Failed';
+    setTimeout(() => { progressBox.style.display = 'none'; }, 600);
+  }
+
+  async function sendMessage(text) {
+    const trimmed = history.slice(-HISTORY_LIMIT);
+    const res = await fetch('/chatbot/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, history: trimmed, chat_id: chatId, chat_name: chatName })
+    });
+    if (!res.ok) {
+      const msg = `HTTP ${res.status} — ${await res.text()}`;
+      console.log(msg);
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    if (!data.ok) {
+      throw new Error(data.error || 'Unknown error from server');
+    }
+    // update chatId and chatName if returned
+    if (data.chat_id) chatId = data.chat_id;
+    if (data.chat_name) chatName = data.chat_name;
+    return data.reply;
+  }
+
+  async function fetchSessions() {
+    try {
+      const res = await fetch('/chatbot/sessions');
+      console.log('[DEBUG] fetchSessions response status:', res.status);
+      if (!res.ok) {
+        console.warn('[WARN] fetchSessions failed:', res.status);
+        return [];
+      }
+      const data = await res.json();
+      console.log('[DEBUG] fetchSessions data:', data);
+      return data;
+    } catch (err) {
+      console.error('[ERROR] fetchSessions:', err);
+      return [];
+    }
+  }
+
+  async function loadSession(id) {
+    const res = await fetch(`/chatbot/session/${id}`);
+    if (!res.ok) return { name: id, messages: [] };
+    return await res.json();
+  }
+
+  async function renameSession(id, newName) {
+    const res = await fetch(`/chatbot/session/${id}/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_name: newName })
+    });
+    return res.ok;
+  }
+
+  async function refreshSessions(selectedId = null, autoSelectLatest = false) {
+    console.log('[DEBUG] refreshSessions called, selectedId:', selectedId, 'autoSelectLatest:', autoSelectLatest);
+    const sessions = await fetchSessions();
+    console.log('[DEBUG] refreshSessions got sessions:', sessions);
+    sessionSelect.innerHTML = '';
+    // Always show dropdown, add default 'New Chat' option
+    const newOpt = document.createElement('option');
+    newOpt.value = '';
+    newOpt.textContent = 'New Chat';
+    sessionSelect.appendChild(newOpt);
+    
+    // Track if we found the selectedId
+    let foundSelected = false;
+    for (const s of sessions) {
+      console.log('[DEBUG] Creating option for session:', s);
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.name;
+      sessionSelect.appendChild(opt);
+      if (selectedId && s.id === selectedId) {
+        foundSelected = true;
+      }
+    }
+    
+    if (selectedId && foundSelected) {
+      console.log('[DEBUG] Setting dropdown value to:', selectedId);
+      sessionSelect.value = selectedId;
+    } else if (autoSelectLatest && sessions.length) {
+      console.log('[DEBUG] Auto-selecting latest session:', sessions[sessions.length - 1].id);
+      sessionSelect.value = sessions[sessions.length - 1].id;
+    } else {
+      console.log('[DEBUG] Setting dropdown to New Chat');
+      sessionSelect.value = '';
+    }
+    console.log('[DEBUG] refreshSessions complete, dropdown options count:', sessionSelect.options.length, 'current value:', sessionSelect.value);
+  }
+
+  sessionSelect.addEventListener('change', async () => {
+    chatId = sessionSelect.value;
+    if (!chatId) {
+      chatName = '';
+      history = [];
+      renameInput.value = '';
+      logEl.textContent = '';
+      return;
+    }
+    const session = await loadSession(chatId);
+    chatName = session.name;
+    history = session.messages || [];
+    renameInput.value = chatName;
+    renderHistory();
+  });
+
+  renameBtn.addEventListener('click', async () => {
+    const newName = renameInput.value.trim();
+    console.log('[DEBUG] Rename button clicked - chatId:', chatId, 'newName:', newName);
+    if (!chatId || !newName) {
+      console.warn('[WARN] Rename cancelled - chatId or newName missing');
+      return;
+    }
+    console.log('[DEBUG] Sending rename request for', chatId);
+    const ok = await renameSession(chatId, newName);
+    console.log('[DEBUG] Rename response:', ok);
+    if (ok) {
+      chatName = newName;
+      console.log('[DEBUG] Refreshing sessions with selectedId:', chatId);
+      await refreshSessions(chatId);
+      console.log('[DEBUG] Sessions refreshed, dropdown value:', sessionSelect.value);
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = (input.value || '').trim();
+    if (!text) return;
+    sendBtn.disabled = true;
+    append('user', text);
+    startProgress();
+    try {
+      const reply = await sendMessage(text);
+      history.push({ role: 'user',      content: text  });
+      history.push({ role: 'assistant', content: reply });
+      append('assistant', reply);
+      finishProgress(true);
+      input.value = '';
+      // refresh session list and auto-select latest after sending
+      await refreshSessions(chatId, true);
+    } catch (err) {
+      console.error(err);
+      append('assistant', 'Sorry — I could not reach the model right now.');
+      finishProgress(false);
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    history = [];
+    logEl.textContent = '';
+    input.value = '';
+    input.focus();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  });
+
+  // Initial load: always show dropdown, default to 'New Chat'
+  (async () => {
+    console.log('[DEBUG] Initial load starting...');
+    await refreshSessions();
+    sessionSelect.value = '';
+    sessionSelect.dispatchEvent(new Event('change'));
+    console.log('[DEBUG] Initial load complete');
+  })();
+})();
 </script>
 {% endblock %}
 

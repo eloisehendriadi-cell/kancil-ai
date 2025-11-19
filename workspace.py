@@ -1,27 +1,69 @@
 # the_ai_tutor/workspace.py
 from __future__ import annotations
 
-import os, json, re, shutil, uuid, hashlib, time, requests
-from typing import Any, Dict, List
-from flask import Blueprint, current_app, jsonify, render_template, request, session
+import hashlib
+import json
+import os
+import re
+import shutil
+import time
+import uuid
+from typing import Any, Dict, List, Optional
 
-# ======== Optional: shared quiz/notes imports ========
+import requests
+from flask import (
+    Blueprint,
+    current_app,
+    jsonify,
+    render_template,
+    request,
+    session,
+)
+
+# --------------------------------------------------------------------------------------
+# Optional helpers from sibling modules (works whether package or flat layout)
+# --------------------------------------------------------------------------------------
+_make_quiz_items = None
 try:
-    from .quiz_app import generate_quiz_items
+    # packaged
+    from .quiz_app import generate_quiz_items as _make_quiz_items  # type: ignore
 except Exception:
-    from quiz_app import generate_quiz_items  # type: ignore
+    try:
+        # flat
+        from quiz_app import generate_quiz_items as _make_quiz_items  # type: ignore
+    except Exception:
+        _make_quiz_items = None
 
 try:
-    from .notes_app import summarize_text
+    from .notes_app import summarize_text  # type: ignore
 except Exception:
-    from notes_app import summarize_text  # type: ignore
+    try:
+        from notes_app import summarize_text  # type: ignore
+    except Exception:
+        # super simple fallback
+        def summarize_text(txt: str) -> str:  # type: ignore
+            plain = re.sub(r"<[^>]+>", " ", txt or "")
+            plain = re.sub(r"\s+", " ", plain).strip()
+            return f"<h2>Summary</h2><p>{plain[:1200]}</p>"
 
-# ======== Blueprint ========
-workspace_bp = Blueprint("workspace", __name__, url_prefix="/workspace")
+# --------------------------------------------------------------------------------------
+# Blueprint
+# --------------------------------------------------------------------------------------
+workspace_bp = Blueprint(
+    "workspace",
+    __name__,
+    template_folder="templates",
+    url_prefix="/workspace",
+)
 
-# ======== Disk store ========
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-WS_STORE = os.path.join(BASE_DIR, "workspace_store")
+# --------------------------------------------------------------------------------------
+# Writable store (Render-safe: falls back to /tmp)
+# --------------------------------------------------------------------------------------
+def _writable_base(default: Optional[str] = None) -> str:
+    base = os.getenv("WRITE_BASE", default or os.getcwd())
+    return base if os.access(base, os.W_OK) else "/tmp"
+
+WS_STORE = os.path.join(_writable_base(), "workspace_store")
 os.makedirs(WS_STORE, exist_ok=True)
 
 
@@ -30,19 +72,20 @@ def _ws_key() -> str:
 
 
 def _ws_dir() -> str:
-    k = _ws_key()
-    if not k:
+    key = _ws_key()
+    if not key:
         return ""
-    d = os.path.join(WS_STORE, k)
+    d = os.path.join(WS_STORE, key)
     os.makedirs(d, exist_ok=True)
     return d
 
 
-def _write_text(name: str, text: str):
+def _write_text(name: str, text: str) -> None:
     d = _ws_dir()
     if not d:
         return
-    with open(os.path.join(d, name), "w", encoding="utf-8") as f:
+    p = os.path.join(d, name)
+    with open(p, "w", encoding="utf-8") as f:
         f.write(text or "")
 
 
@@ -54,16 +97,17 @@ def _read_text(name: str) -> str:
     if not os.path.exists(p):
         return ""
     try:
-        return open(p, "r", encoding="utf-8").read()
+        with open(p, "r", encoding="utf-8") as f:
+            return f.read()
     except Exception:
         return ""
 
 
-def _write_json(name: str, obj: Any):
+def _write_json(name: str, obj: Any) -> None:
     _write_text(name, json.dumps(obj, ensure_ascii=False, indent=2))
 
 
-def _read_json(name: str):
+def _read_json(name: str) -> Any:
     raw = _read_text(name)
     if not raw:
         return None
@@ -72,12 +116,14 @@ def _read_json(name: str):
     except Exception:
         return None
 
-
+# --------------------------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------------------------
 def _hash(s: str) -> str:
     return hashlib.sha256((s or "").encode("utf-8")).hexdigest()
 
 
-def _reset_session():
+def _reset_session() -> None:
     key = _ws_key()
     if key:
         shutil.rmtree(os.path.join(WS_STORE, key), ignore_errors=True)
@@ -89,63 +135,21 @@ def _get_source_text() -> str:
     return _read_text("source.txt")
 
 
-def _set_source(title: str, text: str):
+def _set_source(title: str, text: str) -> None:
     key = uuid.uuid4().hex
     session["ws_key"] = key
     session["shared_source_title"] = (title or "Untitled").strip()
     session["ws_cache_key"] = _hash(text or "")
     os.makedirs(_ws_dir(), exist_ok=True)
     _write_text("source.txt", text or "")
+    # wipe stale artifacts
     for fname in ("notes.html", "podcast.txt", "quiz.json", "flash.json"):
         fp = os.path.join(_ws_dir(), fname)
         if os.path.exists(fp):
-            os.remove(fp)
-
-
-# ======== Hosted LLM wrapper (OpenRouter or Ollama) ========
-def _chat_complete(prompt: str, *, model=None, temperature=0.2, num_predict=600, timeout=90) -> str:
-    """
-    Uses OpenRouter if OPENROUTER_API_KEY is present, else Ollama locally.
-    """
-    api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-    if api_key:
-        base = os.getenv("OPENROUTER_BASE", "https://openrouter.ai/api/v1").rstrip("/")
-        use_model = model or os.getenv("MODEL_NAME", "meta-llama/llama-3.1-8b-instruct")
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": os.getenv("SITE_URL", "https://kancil.ai"),
-            "X-Title": os.getenv("SITE_NAME", "Kancil AI"),
-            "Content-Type": "application/json",
-        }
-        body = {
-            "model": use_model,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": temperature,
-            "max_tokens": num_predict,
-        }
-        try:
-            r = requests.post(f"{base}/chat/completions", json=body, headers=headers, timeout=timeout)
-            r.raise_for_status()
-            data = r.json()
-            return (data["choices"][0]["message"]["content"] or "").strip()
-        except Exception as e:
-            print("OpenRouter error:", e)
-            return ""
-
-    # Fallback to local Ollama
-    host = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/")
-    model = model or os.getenv("MODEL_NAME", "llama3.2:3b")
-    opts = {"temperature": temperature, "num_predict": num_predict}
-    try:
-        r = requests.post(f"{host}/api/chat",
-                          json={"model": model, "messages": [{"role": "user", "content": prompt}],
-                                "options": opts, "stream": False}, timeout=timeout)
-        if r.status_code != 404:
-            r.raise_for_status()
-            return (r.json().get("message") or {}).get("content", "").strip()
-    except Exception:
-        pass
-    return ""
+            try:
+                os.remove(fp)
+            except Exception:
+                pass
 
 
 def _strip_html_to_text(html: str) -> str:
@@ -157,29 +161,85 @@ def _strip_html_to_text(html: str) -> str:
     s = re.sub(r"<[^>]+>", " ", s)
     s = re.sub(r"\s+\n", "\n", s)
     s = re.sub(r"\n{2,}", "\n", s)
+    s = re.sub(r"[ \t]{2,}", " ", s)
     return s.strip()
 
+# --------------------------------------------------------------------------------------
+# LLM provider: Groq (single source of truth)
+# --------------------------------------------------------------------------------------
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GROQ_MODEL   = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip()
 
-# ======== Routes ========
 
+def _llm_complete(
+    prompt_or_messages: str | List[Dict[str, str]],
+    *,
+    model: Optional[str] = None,
+    temperature: float = 0.22,
+    max_tokens: int = 700,
+    timeout: int = 60,
+) -> str:
+    """Call Groq's OpenAI-compatible chat completions."""
+    if not GROQ_API_KEY:
+        return ""
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    messages = (
+        [{"role": "user", "content": prompt_or_messages}]
+        if isinstance(prompt_or_messages, str)
+        else [{"role": m.get("role", "user"), "content": m.get("content", "")} for m in (prompt_or_messages or [])]
+    )
+    if not messages:
+        return ""
+
+    body = {
+        "model": model or GROQ_MODEL,
+        "messages": messages,
+        "temperature": float(temperature),
+        "max_tokens": int(max_tokens),
+        "stream": False,
+    }
+    try:
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=body,
+            headers=headers,
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        data = r.json()
+        return (data["choices"][0]["message"]["content"] or "").strip()
+    except Exception:
+        return ""
+
+# --------------------------------------------------------------------------------------
+# Pages
+# --------------------------------------------------------------------------------------
 @workspace_bp.get("/", endpoint="open_workspace")
 def open_workspace():
     return render_template("workspace.html", title="Workspace")
 
-
+# --------------------------------------------------------------------------------------
+# Reset
+# --------------------------------------------------------------------------------------
 @workspace_bp.post("/reset", endpoint="reset_workspace")
 def reset_workspace():
     _reset_session()
     return jsonify({"ok": True})
 
-
+# --------------------------------------------------------------------------------------
+# Wiring from dashboard (seed from generated or saved)
+# --------------------------------------------------------------------------------------
 @workspace_bp.post("/use_generated", endpoint="use_generated")
 def use_generated():
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "Untitled").strip()
     text = (data.get("text") or "").strip()
     if not text:
-        return jsonify({"ok": False, "error": "No source text provided"})
+        return jsonify({"ok": False, "error": "No source text provided."}), 400
     _reset_session()
     _set_source(title, text)
     return jsonify({"ok": True})
@@ -187,26 +247,31 @@ def use_generated():
 
 @workspace_bp.post("/use_saved", endpoint="use_saved")
 def use_saved():
+    """
+    Open a saved note WITHOUT regenerating; serve its HTML directly.
+    This sets a faux source so podcast/quiz/flashcards still work.
+    """
     notes_file = current_app.config.get("NOTES_FILE", "saved_notes.json")
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "").strip()
     if not title:
-        return jsonify({"ok": False, "error": "Missing title."})
+        return jsonify({"ok": False, "error": "Missing title."}), 400
 
     try:
         arr = json.load(open(notes_file, "r", encoding="utf-8"))
     except Exception:
         arr = []
 
-    for n in arr:
-        if (n.get("title") or "").strip().lower() == title.lower():
-            html = (n.get("content") or "").strip()
-            faux_source = f"[SAVED NOTE] {title}\n(length={len(html)})"
-            _reset_session()
-            _set_source(title, faux_source)
-            _write_text("notes.html", html)
-            return jsonify({"ok": True})
-    return jsonify({"ok": False, "error": "Saved note not found"})
+    match = next((n for n in arr if (n.get("title", "").strip().lower() == title.lower())), None)
+    if not match:
+        return jsonify({"ok": False, "error": "Saved note not found"}), 404
+
+    html = (match.get("content") or "").strip()
+    faux_source = f"[SAVED NOTE] {title}\n(length={len(_strip_html_to_text(html))} chars)"
+    _reset_session()
+    _set_source(title, faux_source)
+    _write_text("notes.html", html)
+    return jsonify({"ok": True})
 
 
 @workspace_bp.post("/seed", endpoint="seed_workspace")
@@ -214,31 +279,47 @@ def seed_workspace():
     body = request.get_json(silent=True) or {}
     title = (body.get("title") or "Untitled").strip()
     text = (body.get("text") or "").strip()
+    notes_html = (body.get("notes_html") or "").strip()
+    prebuild_quiz = bool(body.get("prebuild_quiz"))
+
     if not text:
-        return jsonify({"ok": False, "error": "No source text provided"})
+        return jsonify({"ok": False, "error": "No source text provided."}), 400
 
     _reset_session()
     _set_source(title, text)
-    try:
-        _write_text("notes.html", summarize_text(text))
-    except Exception:
-        pass
+
+    if notes_html:
+        _write_text("notes.html", notes_html)
+    else:
+        try:
+            _write_text("notes.html", summarize_text(text))
+        except Exception:
+            pass
+
+    if prebuild_quiz and _make_quiz_items:
+        try:
+            items = _make_quiz_items(text, title or "Topic", 10)
+            _write_json("quiz.json", items)
+        except Exception:
+            pass
+
     return jsonify({"ok": True, "title": title})
 
-
-# ======== API Endpoints ========
-
-@workspace_bp.post("/api/title")
+# --------------------------------------------------------------------------------------
+# APIs with caching
+# --------------------------------------------------------------------------------------
+@workspace_bp.post("/api/title", endpoint="api_update_title")
 def api_update_title():
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "Untitled").strip()
     session["shared_source_title"] = title
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "title": title})
 
 
-@workspace_bp.post("/api/notes")
+@workspace_bp.post("/api/notes", endpoint="api_generate_notes")
 def api_generate_notes():
-    force = bool((request.get_json(silent=True) or {}).get("force"))
+    body = request.get_json(silent=True) or {}
+    force = bool(body.get("force"))
     if not force:
         cached = _read_text("notes.html")
         if cached:
@@ -246,15 +327,19 @@ def api_generate_notes():
 
     src = _get_source_text()
     if not src:
-        return jsonify({"ok": False, "error": "No source in session"})
+        return jsonify({"ok": False, "error": "No source in session."}), 400
+
     html = summarize_text(src)
     _write_text("notes.html", html)
+    session["ws_cache_key"] = _hash(src)
     return jsonify({"ok": True, "html": html})
 
 
-@workspace_bp.post("/api/podcast")
+@workspace_bp.post("/api/podcast", endpoint="api_generate_podcast")
 def api_generate_podcast():
-    force = bool((request.get_json(silent=True) or {}).get("force"))
+    """Generate or return cached podcast script (hosted LLM by default)."""
+    body = request.get_json(silent=True) or {}
+    force = bool(body.get("force"))
     if not force:
         cached = _read_text("podcast.txt")
         if cached:
@@ -262,67 +347,128 @@ def api_generate_podcast():
 
     notes_html = _read_text("notes.html")
     src = _get_source_text()
-    plain = _strip_html_to_text(notes_html or src)
-    title = session.get("shared_source_title", "Untitled")
-    prompt = f"""Turn this study note into a clear 3–4 minute educational podcast dialogue.
-Tone: friendly teacher + student.
-Two speakers: Host: and Guest:
-Keep strictly to facts from the note.
+    if not (notes_html or src):
+        return jsonify({"ok": False, "error": "No source in session."}), 400
 
-Title: {title}
-Content:
-{plain}"""
-    script = _chat_complete(prompt, temperature=0.24, num_predict=700)
+    title = session.get("shared_source_title", "Untitled")
+    plain = _strip_html_to_text(notes_html) if notes_html else _strip_html_to_text(src)
+    prompt = f"""Turn this study note into a clear 3–4 minute podcast script.
+- Conversational, friendly teacher tone
+- Two speakers: Host: and Guest: (label each turn)
+- Include light signposting and a brief recap
+- No hallucinations; stick strictly to the note content
+
+TITLE: {title}
+NOTES (plain text):
+{plain}
+"""
+    script = _llm_complete(prompt, temperature=0.24, max_tokens=700)
     if not script:
-        return jsonify({"ok": False, "error": "Empty script returned"})
+        return jsonify({"ok": False, "error": "Empty script returned from model."}), 502
+
     _write_text("podcast.txt", script)
+    session["ws_cache_key"] = _hash(src or plain)
     return jsonify({"ok": True, "script": script})
 
-
-@workspace_bp.post("/api/quiz")
+# --------------------------------------------------------------------------------------
+# QUIZ API (delegates to quiz_app.generate_quiz_items)
+# --------------------------------------------------------------------------------------
+@workspace_bp.post("/api/quiz", endpoint="api_generate_quiz")
 def api_generate_quiz():
-    force = bool((request.get_json(silent=True) or {}).get("force"))
+    """
+    Thin wrapper: call quiz_app.generate_quiz_items().
+    Supports 'avoid' list and simple on-disk caching.
+    """
+    body = request.get_json(silent=True) or {}
+    request_count = int(body.get("count", 12))
+    avoid = set((q or "").strip().lower() for q in (body.get("avoid") or []))
+    force = bool(body.get("force", True))
+
     if not force:
         cached = _read_json("quiz.json")
-        if cached:
-            return jsonify({"ok": True, "items": cached})
+        if isinstance(cached, list) and cached:
+            if avoid:
+                fresh = [it for it in cached if (it.get("question", "").strip().lower() not in avoid)]
+                return jsonify({"ok": True, "items": fresh[:request_count]})
+            return jsonify({"ok": True, "items": cached[:request_count]})
 
     src = (_get_source_text() or "").strip()
     if not src:
-        return jsonify({"ok": False, "error": "No source in session"})
-    title = session.get("shared_source_title", "Topic")
+        return jsonify({"ok": False, "error": "No source in session."}), 400
+
+    title = (session.get("shared_source_title") or "Topic").strip()
+    if _make_quiz_items is None:
+        return jsonify({"ok": False, "error": "Quiz helper unavailable."}), 500
 
     try:
-        items = generate_quiz_items(src, title, 12)
-        _write_json("quiz.json", items)
-        return jsonify({"ok": True, "items": items})
+        batch = _make_quiz_items(src, title, request_count + 6)
     except Exception as e:
-        return jsonify({"ok": False, "error": f"Quiz generation failed: {e}"})
+        return jsonify({"ok": False, "error": f"Quiz generation failed: {e}"}), 502
 
+    out, seen = [], set()
+    for it in (batch or []):
+        q = (it.get("question") or "").strip()
+        if not q:
+            continue
+        k = q.lower()
+        if k in avoid or k in seen:
+            continue
+        out.append(it)
+        seen.add(k)
+        if len(out) >= request_count:
+            break
 
-@workspace_bp.post("/api/flashcards")
+    if not out:
+        return jsonify({"ok": False, "error": "No quiz items produced."}), 502
+
+    # merge cache (dedupe by question)
+    cached = _read_json("quiz.json") or []
+    merged = cached + out
+    uniq, seen_all = [], set()
+    for it in merged:
+        qk = (it.get("question") or "").strip().lower()
+        if qk and qk not in seen_all:
+            uniq.append(it)
+            seen_all.add(qk)
+    _write_json("quiz.json", uniq[:200])
+
+    session["ws_cache_key"] = _hash(src)
+    return jsonify({"ok": True, "items": out})
+
+# --------------------------------------------------------------------------------------
+# FLASHCARDS API
+# --------------------------------------------------------------------------------------
+@workspace_bp.post("/api/flashcards", endpoint="api_generate_flashcards")
 def api_generate_flashcards():
-    force = bool((request.get_json(silent=True) or {}).get("force"))
+    body = request.get_json(silent=True) or {}
+    force = bool(body.get("force"))
     if not force:
         cached = _read_json("flash.json")
-        if cached:
+        if cached is not None:
             return jsonify({"ok": True, "cards": cached})
 
     src = _get_source_text()
     if not src:
-        return jsonify({"ok": False, "error": "No source in session"})
+        return jsonify({"ok": False, "error": "No source in session."}), 400
 
-    prompt = f"""Create 16 concise Q/A flashcards as JSON:
-[{{"front": str, "back": str}}]
-Use short, factual pairs derived only from the following study notes:
-{src}
-"""
-    raw = _chat_complete(prompt, temperature=0.2, num_predict=500)
-    m = re.search(r"\[\s*\{.*\}\s*\]", raw, flags=re.S)
+    prompt = """Create 16 concise Q/A flashcards as JSON:
+[{"front": str, "back": str}]
+Use crisp definitions or cause→effect pairs. Stay faithful to the source ONLY.
+
+SOURCE:
+""" + src
+
     try:
-        cards = json.loads(m.group(0) if m else raw)
-    except Exception:
-        cards = []
+        raw = _llm_complete(prompt, temperature=0.20, max_tokens=700)
+        m = re.search(r"\[\s*\{.*?\}\s*\]", raw or "", flags=re.S)
+        payload = m.group(0) if m else (raw or "[]")
+        cards = json.loads(payload)
+        if not isinstance(cards, list):
+            raise ValueError("Model did not return a JSON list.")
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Flashcards parse/generation failed: {e}"}), 502
+
     _write_json("flash.json", cards)
+    session["ws_cache_key"] = _hash(src)
     return jsonify({"ok": True, "cards": cards})
 
