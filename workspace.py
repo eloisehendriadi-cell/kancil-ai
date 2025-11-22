@@ -424,25 +424,62 @@ def api_generate_quiz():
         return jsonify({"ok": False, "error": "Quiz helper unavailable."}), 500
 
     try:
-        batch = _make_quiz_items(src, title, request_count + 6)
+        # Request more than needed to account for questions that might be filtered out
+        # But be more conservative for small batches
+        generate_count = max(request_count + 2, int(request_count * 1.5))
+        print(f"[WORKSPACE] Generating {generate_count} quiz items (requested: {request_count}) from {len(src)} chars of source text...")
+        
+        # Retry once if first attempt returns empty
+        batch = _make_quiz_items(src, title, generate_count)
+        if not batch:
+            print(f"[WORKSPACE] First attempt returned empty, retrying...")
+            batch = _make_quiz_items(src, title, generate_count)
+        
+        print(f"[WORKSPACE] Quiz generation returned {len(batch or [])} items")
     except Exception as e:
-        return jsonify({"ok": False, "error": f"Quiz generation failed: {e}"}), 502
+        error_msg = f"Quiz generation failed: {type(e).__name__}: {e}"
+        print(f"[WORKSPACE] {error_msg}")
+        return jsonify({"ok": False, "error": error_msg}), 502
+
+    # Check if we got any items at all
+    if not batch or len(batch) == 0:
+        error_msg = "Quiz generation returned no items (LLM may be unavailable or timing out)"
+        print(f"[WORKSPACE] {error_msg}")
+        return jsonify({"ok": False, "error": error_msg}), 502
 
     out, seen = [], set()
+    skipped_duplicates = 0
     for it in (batch or []):
         q = (it.get("question") or "").strip()
         if not q:
+            print(f"[WORKSPACE] Skipping item with empty question")
             continue
         k = q.lower()
-        if k in avoid or k in seen:
+        if k in avoid:
+            skipped_duplicates += 1
+            continue
+        if k in seen:
+            skipped_duplicates += 1
             continue
         out.append(it)
         seen.add(k)
         if len(out) >= request_count:
             break
 
+    print(f"[WORKSPACE] After filtering: {len(out)} valid items from {len(batch or [])} generated (skipped {skipped_duplicates} duplicates/avoided)")
+
     if not out:
-        return jsonify({"ok": False, "error": "No quiz items produced."}), 502
+        # Don't fail - just return what we have or a helpful error
+        if len(batch or []) > 0:
+            error_msg = f"No NEW quiz items produced - {len(batch)} generated but all were duplicates or avoided."
+            print(f"[WORKSPACE] {error_msg}")
+            # Return the ones we have anyway, even if they're duplicates
+            out = batch[:request_count] if batch else []
+        
+        if not out:
+            error_msg = "Quiz generation failed - no items produced. Try regenerating."
+            print(f"[WORKSPACE] {error_msg}")
+            return jsonify({"ok": False, "error": error_msg}), 502
 
     # merge cache (dedupe by question)
     cached = _read_json("quiz.json") or []

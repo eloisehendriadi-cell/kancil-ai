@@ -5,6 +5,36 @@ from __future__ import annotations
 import os
 from typing import Literal
 
+# Load .env file if it exists (no external dependencies needed)
+def _load_env_file():
+    """Load environment variables from .env file if it exists."""
+    env_file = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if not line or line.startswith("#"):
+                        continue
+                    # Parse KEY=VALUE
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        key = key.strip()
+                        value = value.strip()
+                        # Remove quotes if present
+                        if value.startswith('"') and value.endswith('"'):
+                            value = value[1:-1]
+                        elif value.startswith("'") and value.endswith("'"):
+                            value = value[1:-1]
+                        # Only set if not already set via environment
+                        if key and not os.getenv(key):
+                            os.environ[key] = value
+        except Exception as e:
+            print(f"[LLM Config] Warning: Could not load .env file: {e}")
+
+_load_env_file()
+
 # Determine which LLM provider to use (default to groq if not set)
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").lower().strip()
 

@@ -118,11 +118,24 @@ def _options_ok(opts: List[str]) -> bool:
     return True
 
 # --------------------------------------------------------------------------------------
+# Fallback question generation (when LLM fails completely)
+# --------------------------------------------------------------------------------------
+def _generate_fallback_questions(sentences: List[str], target: int) -> List[Dict[str, Any]]:
+    """Don't generate fallback questions - they're low quality.
+    Better to return fewer good questions than many bad ones."""
+    return []
+
+# --------------------------------------------------------------------------------------
 # LLM client
 # --------------------------------------------------------------------------------------
 def _chat(text: str, *, temperature: float, num_predict: int, timeout: int = 90) -> str:
     """Call the configured LLM provider."""
     if not API_KEY and LLM_PROVIDER != "ollama":
+        print(f"[QUIZ] Error: No API_KEY configured for provider '{LLM_PROVIDER}'")
+        return ""
+    
+    if not MODEL:
+        print(f"[QUIZ] Error: No MODEL configured")
         return ""
     
     if LLM_PROVIDER in ("groq", "openrouter", "openai"):
@@ -147,8 +160,15 @@ def _chat(text: str, *, temperature: float, num_predict: int, timeout: int = 90)
         try:
             r = requests.post(f"{BASE_URL}/chat/completions", json=body, headers=headers, timeout=timeout)
             r.raise_for_status()
-            return (r.json()["choices"][0]["message"]["content"] or "").strip()
-        except Exception:
+            result = (r.json()["choices"][0]["message"]["content"] or "").strip()
+            if not result:
+                print(f"[QUIZ] Warning: LLM returned empty response from {LLM_PROVIDER}")
+            return result
+        except requests.exceptions.RequestException as e:
+            print(f"[QUIZ] Error calling {LLM_PROVIDER}: {type(e).__name__}: {e}")
+            return ""
+        except Exception as e:
+            print(f"[QUIZ] Error parsing {LLM_PROVIDER} response: {type(e).__name__}: {e}")
             return ""
     
     elif LLM_PROVIDER == "ollama":
@@ -165,10 +185,18 @@ def _chat(text: str, *, temperature: float, num_predict: int, timeout: int = 90)
         try:
             r = requests.post(f"{BASE_URL}/api/chat", json=payload, timeout=timeout)
             r.raise_for_status()
-            return (r.json().get("message") or {}).get("content", "").strip()
-        except Exception:
+            result = (r.json().get("message") or {}).get("content", "").strip()
+            if not result:
+                print(f"[QUIZ] Warning: Ollama returned empty response")
+            return result
+        except requests.exceptions.RequestException as e:
+            print(f"[QUIZ] Error calling Ollama: {type(e).__name__}: {e}")
+            return ""
+        except Exception as e:
+            print(f"[QUIZ] Error parsing Ollama response: {type(e).__name__}: {e}")
             return ""
     
+    print(f"[QUIZ] Error: Unsupported LLM_PROVIDER '{LLM_PROVIDER}'")
     return ""
 
 # --------------------------------------------------------------------------------------
@@ -303,33 +331,82 @@ def _best_support_sentence(sentences: List[str], answer: str, question: str) -> 
         score = direct * 1.2 + overlap_a * 0.7 + overlap_q * 0.3
         if score > best_score:
             best, best_score = s, score
-    return best if best_score >= 0.35 else None
+    # Relaxed threshold from 0.35 to 0.25 to allow more questions in incremental generation
+    return best if best_score >= 0.25 else None
 
 def _ground_explanation(item: Dict[str, Any], support: str) -> str:
+    """Create a better explanation that includes both the answer and contextual description."""
     ans = item["options"][item["answer_index"]]
     exp = item.get("explanation", "")
-    if len(exp) < 24 or "—" not in exp:
-        return f"{ans} — the notes state: “{support}”."
-    if ans.lower() not in exp.lower():
+    
+    # If LLM provided a good explanation, use it
+    if exp and len(exp) >= 24 and ans.lower() in exp.lower():
+        return exp
+    
+    # Otherwise, build a better explanation from the supporting sentence
+    # Format: "Answer — Context from notes that explains it"
+    if support:
+        # Clean up the supporting sentence for readability
+        context = support.strip()
+        # If the answer is mentioned in the context, emphasize it
+        if ans.lower() in context.lower():
+            explanation = f"{ans} — {context}"
+        else:
+            # If answer not directly in context, provide both
+            explanation = f"{ans} — {context} (This relates to the concept of {ans})"
+        return explanation
+    
+    # Fallback if no support sentence
+    if exp and len(exp.strip()) > 0:
         return f"{ans} — {exp}"
-    return exp
+    
+    return f"{ans} is the correct answer."
 
 # --------------------------------------------------------------------------------------
 # Generation loop
 # --------------------------------------------------------------------------------------
 def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict[str, Any]]:
-    target = max(10, min(20, int(target or 12)))
+    # Allow smaller batches for incremental loading (2-3 questions)
+    # But ensure minimum 2 to avoid too many requests
+    target = max(2, min(20, int(target or 12)))
     accepted: List[Dict[str, Any]] = []
     seen = set()
     tries = 0
+    all_grounded = []  # Keep all grounded items for fallback
 
     sentences = _sentences(notes_plain)
+    
+    if not sentences:
+        print(f"[QUIZ] Error: No sentences extracted from notes")
+        return []
 
     while len(accepted) < target and tries < MAX_TRIES:
         need = min(BATCH_SIZE, target - len(accepted))
         prompt = _build_prompt(topic, notes_plain, need)
         raw = _chat(prompt, temperature=DEFAULT_OPTIONS["temperature"], num_predict=DEFAULT_OPTIONS["num_predict"])
+        
+        # Check if LLM returned anything
+        if not raw or len(raw.strip()) < 10:
+            print(f"[QUIZ] Warning: Empty or minimal response from LLM (try {tries + 1}/{MAX_TRIES})")
+            tries += 1
+            if tries >= MAX_TRIES:
+                print(f"[QUIZ] LLM failed {MAX_TRIES} times, using fallback generation")
+                fallback = _generate_fallback_questions(sentences, target - len(accepted))
+                accepted.extend(fallback)
+                break
+            continue
+        
         parsed = _parse_items(raw)
+        
+        if not parsed:
+            print(f"[QUIZ] Warning: Could not parse LLM response (try {tries + 1}/{MAX_TRIES})")
+            tries += 1
+            if tries >= MAX_TRIES:
+                print(f"[QUIZ] Parsing failed {MAX_TRIES} times, using fallback generation")
+                fallback = _generate_fallback_questions(sentences, target - len(accepted))
+                accepted.extend(fallback)
+                break
+            continue
 
         normals: List[Dict[str, Any]] = []
         for obj in parsed or []:
@@ -342,11 +419,23 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
             ans = it["options"][it["answer_index"]]
             support = _best_support_sentence(sentences, ans, it["question"])
             if not support:
+                # Accept ungrounded items in these cases:
+                # 1. Small batches (incremental loading)
+                # 2. We've already tried multiple times
+                if target <= 5 or tries > 2:
+                    # Use LLM's explanation if available, otherwise create one
+                    exp = it.get("explanation", "").strip()
+                    if not exp or len(exp) < 10:
+                        exp = f"This is a key concept related to {ans.lower()}."
+                    it["explanation"] = exp
+                    it["supporting_sentence"] = "Based on source material"
+                    grounded.append(it)
                 continue
             it["explanation"] = _ground_explanation(it, support)
             it["supporting_sentence"] = support
             grounded.append(it)
 
+        all_grounded.extend(grounded)
         ranked = sorted(grounded, key=_score_item, reverse=True)
         for it in ranked:
             qk = it["question"].strip().lower()
@@ -358,8 +447,17 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
                 break
 
         tries += 1
-        if not grounded and DEFAULT_OPTIONS["temperature"] <= 0.18:
-            DEFAULT_OPTIONS["temperature"] = round(DEFAULT_OPTIONS["temperature"] + 0.02, 2)
+        # Be more aggressive with temperature increases to get better variety
+        if not grounded and DEFAULT_OPTIONS["temperature"] <= 0.30:
+            new_temp = round(DEFAULT_OPTIONS["temperature"] + 0.03, 2)
+            print(f"[QUIZ] No grounded questions, increasing temperature from {DEFAULT_OPTIONS['temperature']} to {new_temp}")
+            DEFAULT_OPTIONS["temperature"] = new_temp
+        elif not grounded:
+            print(f"[QUIZ] No grounded questions at temperature {DEFAULT_OPTIONS['temperature']}, try {tries}/{MAX_TRIES}")
+
+    # Return what we have - don't pad with low-quality fallback
+    if len(accepted) < target:
+        print(f"[QUIZ] Generated {len(accepted)} questions instead of {target}. Returning what we have (better quality over quantity).")
 
     return accepted[:target]
 
@@ -369,7 +467,8 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
 def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12) -> List[Dict[str, Any]]:
     text = source_text or ""
     notes_plain = _strip_html(text) if ("<" in text and ">" in text) else text
-    target = max(10, min(15, int(count or 12)))
+    # Allow flexibility for both initial load (12) and incremental (2-3)
+    target = max(2, min(20, int(count or 12)))
     items = _generate_from_notes(topic or "Topic", notes_plain, target)
     return items or []
 

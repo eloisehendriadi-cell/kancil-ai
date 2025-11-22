@@ -42,8 +42,8 @@
   </div>
 </header>
 
-<!-- Source setter -->
-<section class="ws-card" style="margin-bottom:12px;">
+<!-- Source setter - HIDDEN -->
+<section class="ws-card" style="margin-bottom:12px;display:none;">
   <details open>
     <summary><strong>Set source</strong> (paste text or upload PDF)</summary>
     <div style="display:grid;gap:10px;margin-top:8px">
@@ -53,7 +53,7 @@
         <button id="ws_seed" class="btn">Use as Source</button>
         <button id="ws_reset" class="btn" style="background:#fff;border:1px solid var(--border);">Reset Workspace</button>
       </div>
-      <small class="ws-muted">This posts to <code>/workspace/seed</code>. If text is provided, it’s used; otherwise a selected PDF is uploaded.</small>
+      <small class="ws-muted">This posts to <code>/workspace/seed</code>. If text is provided, it's used; otherwise a selected PDF is uploaded.</small>
     </div>
   </details>
 </section>
