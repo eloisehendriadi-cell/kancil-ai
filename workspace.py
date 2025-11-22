@@ -165,10 +165,9 @@ def _strip_html_to_text(html: str) -> str:
     return s.strip()
 
 # --------------------------------------------------------------------------------------
-# LLM provider: Groq (single source of truth)
+# LLM provider: Unified config
 # --------------------------------------------------------------------------------------
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
-GROQ_MODEL   = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip()
+from llm_config import LLM_PROVIDER, API_KEY, BASE_URL, MODEL
 
 
 def _llm_complete(
@@ -179,12 +178,12 @@ def _llm_complete(
     max_tokens: int = 700,
     timeout: int = 60,
 ) -> str:
-    """Call Groq's OpenAI-compatible chat completions."""
-    if not GROQ_API_KEY:
+    """Call the configured LLM provider."""
+    if not API_KEY and LLM_PROVIDER != "ollama":
         return ""
 
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
     }
     messages = (
@@ -195,25 +194,49 @@ def _llm_complete(
     if not messages:
         return ""
 
+    model_to_use = model or MODEL
+    
     body = {
-        "model": model or GROQ_MODEL,
+        "model": model_to_use,
         "messages": messages,
         "temperature": float(temperature),
         "max_tokens": int(max_tokens),
-        "stream": False,
     }
-    try:
-        r = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            json=body,
-            headers=headers,
-            timeout=timeout,
-        )
-        r.raise_for_status()
-        data = r.json()
-        return (data["choices"][0]["message"]["content"] or "").strip()
-    except Exception:
-        return ""
+    
+    if LLM_PROVIDER in ("groq", "openrouter", "openai"):
+        body["stream"] = False
+        try:
+            r = requests.post(
+                f"{BASE_URL}/chat/completions",
+                json=body,
+                headers=headers,
+                timeout=timeout,
+            )
+            r.raise_for_status()
+            data = r.json()
+            return (data["choices"][0]["message"]["content"] or "").strip()
+        except Exception:
+            return ""
+    
+    elif LLM_PROVIDER == "ollama":
+        body = {
+            "model": model_to_use,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": float(temperature),
+                "num_predict": int(max_tokens),
+            },
+        }
+        try:
+            r = requests.post(f"{BASE_URL}/api/chat", json=body, timeout=timeout)
+            r.raise_for_status()
+            data = r.json()
+            return (data.get("message") or {}).get("content", "").strip()
+        except Exception:
+            return ""
+    
+    return ""
 
 # --------------------------------------------------------------------------------------
 # Pages

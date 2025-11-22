@@ -17,21 +17,14 @@ from flask import Blueprint, jsonify, render_template, request, session, url_for
 quiz_bp = Blueprint("quiz", __name__, template_folder="templates")
 
 # --------------------------------------------------------------------------------------
-# LLM Providers: Groq (primary) → OpenRouter (optional) → Ollama (dev)
+# LLM Provider: Unified config from environment
 # --------------------------------------------------------------------------------------
-# Groq
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
-GROQ_BASE    = os.getenv("GROQ_BASE", "https://api.groq.com/openai/v1").rstrip("/")
-GROQ_MODEL   = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip()  # confirm in Groq console
+from llm_config import LLM_PROVIDER, API_KEY, BASE_URL, MODEL
 
-# OpenRouter (fallback)
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
-OPENROUTER_BASE    = os.getenv("OPENROUTER_BASE", "https://openrouter.ai/api/v1").rstrip("/")
-HOSTED_MODEL       = os.getenv("QUIZ_HOSTED_MODEL", "meta-llama/llama-3.1-8b-instruct").strip()
-
-# Ollama (dev fallback)
-OLLAMA_HOST  = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/")
-OLLAMA_MODEL = os.getenv("QUIZ_MODEL_NAME", "llama3.2:3b").strip()
+# For backwards compatibility with existing env vars, maintain these as aliases
+GROQ_API_KEY = API_KEY
+GROQ_BASE = BASE_URL
+GROQ_MODEL = MODEL
 
 # Knobs (safe defaults)
 DEFAULT_OPTIONS = {
@@ -128,58 +121,55 @@ def _options_ok(opts: List[str]) -> bool:
 # LLM client
 # --------------------------------------------------------------------------------------
 def _chat(text: str, *, temperature: float, num_predict: int, timeout: int = 90) -> str:
-    # 1) Groq
-    if GROQ_API_KEY:
-        try:
-            headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-            body = {"model": GROQ_MODEL, "messages": [{"role": "user", "content": text}],
-                    "temperature": temperature, "max_tokens": num_predict}
-            r = requests.post(f"{GROQ_BASE}/chat/completions", json=body, headers=headers, timeout=timeout)
-            r.raise_for_status()
-            return (r.json()["choices"][0]["message"]["content"] or "").strip()
-        except Exception:
-            pass
-
-    # 2) OpenRouter
-    if OPENROUTER_API_KEY:
-        try:
-            headers = {
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    """Call the configured LLM provider."""
+    if not API_KEY and LLM_PROVIDER != "ollama":
+        return ""
+    
+    if LLM_PROVIDER in ("groq", "openrouter", "openai"):
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": MODEL,
+            "messages": [{"role": "user", "content": text}],
+            "temperature": temperature,
+            "max_tokens": num_predict,
+        }
+        
+        # Add OpenRouter specific headers if needed
+        if LLM_PROVIDER == "openrouter":
+            headers.update({
                 "HTTP-Referer": os.getenv("SITE_URL", "https://example.com"),
                 "X-Title": os.getenv("SITE_NAME", "Kancil AI"),
-                "Content-Type": "application/json",
-            }
-            body = {"model": HOSTED_MODEL, "messages": [{"role": "user", "content": text}],
-                    "temperature": temperature, "max_tokens": num_predict}
-            r = requests.post(f"{OPENROUTER_BASE}/chat/completions", json=body, headers=headers, timeout=timeout)
+            })
+        
+        try:
+            r = requests.post(f"{BASE_URL}/chat/completions", json=body, headers=headers, timeout=timeout)
             r.raise_for_status()
             return (r.json()["choices"][0]["message"]["content"] or "").strip()
         except Exception:
-            pass
-
-    # 3) Ollama (dev)
-    try:
+            return ""
+    
+    elif LLM_PROVIDER == "ollama":
         payload = {
-            "model": OLLAMA_MODEL,
+            "model": MODEL,
             "messages": [{"role": "user", "content": text}],
-            "options": {"temperature": temperature, "num_predict": num_predict, "num_ctx": DEFAULT_OPTIONS["num_ctx"]},
+            "options": {
+                "temperature": temperature,
+                "num_predict": num_predict,
+                "num_ctx": DEFAULT_OPTIONS["num_ctx"],
+            },
             "stream": False,
         }
-        r = requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, timeout=timeout)
-        if r.status_code != 404:
+        try:
+            r = requests.post(f"{BASE_URL}/api/chat", json=payload, timeout=timeout)
             r.raise_for_status()
             return (r.json().get("message") or {}).get("content", "").strip()
-    except Exception:
-        pass
-
-    # fallback /api/generate
-    try:
-        payload = {"model": OLLAMA_MODEL, "prompt": text, "options": {"temperature": temperature, "num_predict": num_predict}, "stream": False}
-        r2 = requests.post(f"{OLLAMA_HOST}/api/generate", json=payload, timeout=timeout)
-        r2.raise_for_status()
-        return (r2.json().get("response") or "").strip()
-    except Exception:
-        return ""
+        except Exception:
+            return ""
+    
+    return ""
 
 # --------------------------------------------------------------------------------------
 # Prompting & parsing
