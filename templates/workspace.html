@@ -434,9 +434,31 @@
   document.getElementById('regen-podcast').addEventListener('click', () => loadPodcast(true));
   document.getElementById('regen-flash').addEventListener('click', () => loadFlash(true));
 
+  // Clear all cached content when page loads (ensures fresh state)
+  function clearAllContent() {
+    document.getElementById('notes_html').innerHTML = '';
+    document.getElementById('podcast_script').textContent = '';
+    document.getElementById('cards_grid').innerHTML = '';
+    document.getElementById('flash-front').textContent = '';
+    document.getElementById('flash-back').textContent = '';
+    document.getElementById('flash-counter').textContent = '0 / 0';
+    allCards = [];
+    currentCardIndex = 0;
+    isFlipped = false;
+    // Force quiz iframe reload with cache-busting timestamp
+    const base = quizFrame.src.split('?')[0];
+    quizFrame.src = base + '?embed=1&t=' + Date.now();
+  }
+
   // Boot
   (async () => {
+    // Clear any stale cached content from previous session
+    clearAllContent();
+    
+    // Switch to notes tab
     document.querySelector('.ws-side .tab-btn[data-tab="notes"]').click();
+    
+    // Load fresh notes
     try { await loadNotes(false); } catch {}
   })();
 </script>

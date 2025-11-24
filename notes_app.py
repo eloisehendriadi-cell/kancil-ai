@@ -36,10 +36,9 @@ except Exception:
 notes_bp = Blueprint("notes", __name__, template_folder="templates")
 
 # -----------------------------
-# Ollama config
+# LLM config (centralized)
 # -----------------------------
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
-MODEL_NAME = os.getenv("MODEL_NAME", "gemma:2b")
+from llm_config import LLM_PROVIDER, API_KEY, BASE_URL, MODEL
 
 DEFAULT_OPTIONS = {
     "temperature": 0.12,
@@ -102,25 +101,76 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 
 
 def query_ollama_chat(messages, stream: bool = False, fast: bool = True, timeout: int = 120) -> str:
+    """Call the configured LLM provider (supports all providers from llm_config)."""
+    if not API_KEY and LLM_PROVIDER != "ollama":
+        return f"Error: No API_KEY configured for provider '{LLM_PROVIDER}'"
+    
+    if not MODEL:
+        return "Error: No MODEL configured"
+    
     options = FAST_OPTIONS if fast else DEFAULT_OPTIONS
-    try:
-        r = requests.post(
-            f"{OLLAMA_HOST}/api/chat",
-            json={
-                "model": MODEL_NAME,
-                "messages": messages,
-                "stream": stream,
-                "options": options,
-                "keep_alive": "10m",
-            },
-            timeout=None if stream else timeout,
-            stream=stream,
-        )
-        r.raise_for_status()
-        data = r.json()
-        return (data.get("message") or {}).get("content", "").strip()
-    except Exception as e:
-        return f"Error contacting Ollama: {e}"
+    
+    # For OpenAI-compatible providers (Groq, OpenRouter, OpenAI)
+    if LLM_PROVIDER in ("groq", "openrouter", "openai"):
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": MODEL,
+            "messages": messages,
+            "temperature": float(options.get("temperature", 0.12)),
+            "max_tokens": int(options.get("num_predict", 1200)),
+        }
+        
+        # Add OpenRouter specific headers if needed
+        if LLM_PROVIDER == "openrouter":
+            headers.update({
+                "HTTP-Referer": os.getenv("SITE_URL", "https://example.com"),
+                "X-Title": os.getenv("SITE_NAME", "Kancil AI"),
+            })
+        
+        try:
+            r = requests.post(
+                f"{BASE_URL}/chat/completions",
+                json=body,
+                headers=headers,
+                timeout=timeout,
+            )
+            r.raise_for_status()
+            data = r.json()
+            return (data["choices"][0]["message"]["content"] or "").strip()
+        except Exception as e:
+            return f"Error contacting {LLM_PROVIDER}: {e}"
+    
+    # For Ollama
+    elif LLM_PROVIDER == "ollama":
+        try:
+            r = requests.post(
+                f"{BASE_URL}/api/chat",
+                json={
+                    "model": MODEL,
+                    "messages": messages,
+                    "stream": stream,
+                    "options": {
+                        "temperature": float(options.get("temperature", 0.12)),
+                        "num_predict": int(options.get("num_predict", 1200)),
+                        "num_ctx": int(options.get("num_ctx", 3072)),
+                        "top_p": float(options.get("top_p", 0.9)),
+                        "repeat_penalty": float(options.get("repeat_penalty", 1.15)),
+                    },
+                    "keep_alive": "10m",
+                },
+                timeout=None if stream else timeout,
+                stream=stream,
+            )
+            r.raise_for_status()
+            data = r.json()
+            return (data.get("message") or {}).get("content", "").strip()
+        except Exception as e:
+            return f"Error contacting Ollama: {e}"
+    
+    return f"Error: Unsupported LLM_PROVIDER '{LLM_PROVIDER}'"
 
 
 def query_ollama(prompt: str, **kwargs) -> str:

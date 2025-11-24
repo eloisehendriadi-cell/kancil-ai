@@ -128,7 +128,7 @@ def _generate_fallback_questions(sentences: List[str], target: int) -> List[Dict
 # --------------------------------------------------------------------------------------
 # LLM client
 # --------------------------------------------------------------------------------------
-def _chat(text: str, *, temperature: float, num_predict: int, timeout: int = 90) -> str:
+def _chat(text: str, *, temperature: float, num_predict: int, timeout: int = 120) -> str:
     """Call the configured LLM provider."""
     if not API_KEY and LLM_PROVIDER != "ollama":
         print(f"[QUIZ] Error: No API_KEY configured for provider '{LLM_PROVIDER}'")
@@ -365,7 +365,7 @@ def _ground_explanation(item: Dict[str, Any], support: str) -> str:
 # --------------------------------------------------------------------------------------
 # Generation loop
 # --------------------------------------------------------------------------------------
-def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict[str, Any]]:
+def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int = 0) -> List[Dict[str, Any]]:
     # Allow smaller batches for incremental loading (2-3 questions)
     # But ensure minimum 2 to avoid too many requests
     target = max(2, min(20, int(target or 12)))
@@ -373,7 +373,25 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
     seen = set()
     tries = 0
     all_grounded = []  # Keep all grounded items for fallback
-
+    
+    # Use local copy of temperature to avoid mutation across requests
+    current_temp = float(DEFAULT_OPTIONS["temperature"])
+    num_predict = int(DEFAULT_OPTIONS["num_predict"])
+    
+    # For very long sources (like YouTube transcripts), use sliding window
+    # This allows generating questions from different parts of the content
+    original_length = len(notes_plain)
+    if original_length > 8000:
+        print(f"[QUIZ] Source is very long ({original_length} chars), using sliding window approach")
+        # Use offset to vary which part of the content we focus on
+        # Each "batch" of questions uses a different 8000-char window
+        window_size = 8000
+        # Calculate window start based on offset (but with overlap for context)
+        window_start = min(offset * 3000, max(0, original_length - window_size))
+        window_end = min(window_start + window_size, original_length)
+        notes_plain = notes_plain[window_start:window_end]
+        print(f"[QUIZ] Using content window: chars {window_start}-{window_end} of {original_length}")
+    
     sentences = _sentences(notes_plain)
     
     if not sentences:
@@ -383,7 +401,7 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
     while len(accepted) < target and tries < MAX_TRIES:
         need = min(BATCH_SIZE, target - len(accepted))
         prompt = _build_prompt(topic, notes_plain, need)
-        raw = _chat(prompt, temperature=DEFAULT_OPTIONS["temperature"], num_predict=DEFAULT_OPTIONS["num_predict"])
+        raw = _chat(prompt, temperature=current_temp, num_predict=num_predict, timeout=150)
         
         # Check if LLM returned anything
         if not raw or len(raw.strip()) < 10:
@@ -448,12 +466,12 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
 
         tries += 1
         # Be more aggressive with temperature increases to get better variety
-        if not grounded and DEFAULT_OPTIONS["temperature"] <= 0.30:
-            new_temp = round(DEFAULT_OPTIONS["temperature"] + 0.03, 2)
-            print(f"[QUIZ] No grounded questions, increasing temperature from {DEFAULT_OPTIONS['temperature']} to {new_temp}")
-            DEFAULT_OPTIONS["temperature"] = new_temp
+        if not grounded and current_temp <= 0.30:
+            new_temp = round(current_temp + 0.03, 2)
+            print(f"[QUIZ] No grounded questions, increasing temperature from {current_temp} to {new_temp}")
+            current_temp = new_temp
         elif not grounded:
-            print(f"[QUIZ] No grounded questions at temperature {DEFAULT_OPTIONS['temperature']}, try {tries}/{MAX_TRIES}")
+            print(f"[QUIZ] No grounded questions at temperature {current_temp}, try {tries}/{MAX_TRIES}")
 
     # Return what we have - don't pad with low-quality fallback
     if len(accepted) < target:
@@ -464,12 +482,21 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int) -> List[Dict
 # --------------------------------------------------------------------------------------
 # Public helper (workspace imports this)
 # --------------------------------------------------------------------------------------
-def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12) -> List[Dict[str, Any]]:
+def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12, offset: int = 0) -> List[Dict[str, Any]]:
     text = source_text or ""
     notes_plain = _strip_html(text) if ("<" in text and ">" in text) else text
     # Allow flexibility for both initial load (12) and incremental (2-3)
     target = max(2, min(20, int(count or 12)))
-    items = _generate_from_notes(topic or "Topic", notes_plain, target)
+    
+    # Log source text length for debugging
+    print(f"[QUIZ] Generating {target} items from source of {len(notes_plain)} chars (topic: {topic}, offset: {offset})")
+    
+    if len(notes_plain) < 100:
+        print(f"[QUIZ] Warning: Source text is very short ({len(notes_plain)} chars)")
+        return []
+    
+    items = _generate_from_notes(topic or "Topic", notes_plain, target, offset)
+    print(f"[QUIZ] Successfully generated {len(items)} items")
     return items or []
 
 # Back-compat

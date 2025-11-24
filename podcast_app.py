@@ -7,10 +7,9 @@ import requests
 podcast_bp = Blueprint("podcast", __name__, template_folder="templates")
 
 # ------------------------------
-# Config (Ollama + TTS)
+# Config (LLM + TTS)
 # ------------------------------
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
-MODEL_NAME  = os.getenv("MODEL_NAME",  "gemma:2b")
+from llm_config import LLM_PROVIDER, API_KEY, BASE_URL, MODEL
 
 # Preferred voices (used only if installed)
 PREF_HOST_VOICE  = os.getenv("PODCAST_HOST_VOICE",  "Alex")       # macOS voice
@@ -32,20 +31,61 @@ DEFAULT_OPTIONS = {
 }
 
 def query_ollama_chat(messages, stream=False, timeout=120):
-    r = requests.post(
-        f"{OLLAMA_HOST}/api/chat",
-        json={
-            "model": MODEL_NAME,
+    """Call the configured LLM provider (supports all providers from llm_config)."""
+    if not API_KEY and LLM_PROVIDER != "ollama":
+        raise RuntimeError(f"No API_KEY configured for provider '{LLM_PROVIDER}'")
+    
+    if not MODEL:
+        raise RuntimeError("No MODEL configured")
+    
+    # For OpenAI-compatible providers (Groq, OpenRouter, OpenAI)
+    if LLM_PROVIDER in ("groq", "openrouter", "openai"):
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": MODEL,
             "messages": messages,
-            "stream": stream,
-            "options": DEFAULT_OPTIONS,
-            "keep_alive": "10m",
-        },
-        timeout=None if stream else timeout,
-        stream=stream,
-    )
-    r.raise_for_status()
-    return (r.json().get("message") or {}).get("content", "").strip()
+            "temperature": float(DEFAULT_OPTIONS.get("temperature", 0.35)),
+            "max_tokens": int(DEFAULT_OPTIONS.get("num_predict", 700)),
+        }
+        
+        # Add OpenRouter specific headers if needed
+        if LLM_PROVIDER == "openrouter":
+            headers.update({
+                "HTTP-Referer": os.getenv("SITE_URL", "https://example.com"),
+                "X-Title": os.getenv("SITE_NAME", "Kancil AI"),
+            })
+        
+        r = requests.post(
+            f"{BASE_URL}/chat/completions",
+            json=body,
+            headers=headers,
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        data = r.json()
+        return (data["choices"][0]["message"]["content"] or "").strip()
+    
+    # For Ollama
+    elif LLM_PROVIDER == "ollama":
+        r = requests.post(
+            f"{BASE_URL}/api/chat",
+            json={
+                "model": MODEL,
+                "messages": messages,
+                "stream": stream,
+                "options": DEFAULT_OPTIONS,
+                "keep_alive": "10m",
+            },
+            timeout=None if stream else timeout,
+            stream=stream,
+        )
+        r.raise_for_status()
+        return (r.json().get("message") or {}).get("content", "").strip()
+    
+    raise RuntimeError(f"Unsupported LLM_PROVIDER '{LLM_PROVIDER}'")
 
 def query_ollama(prompt: str):
     return query_ollama_chat([{"role": "user", "content": prompt}], stream=False)
