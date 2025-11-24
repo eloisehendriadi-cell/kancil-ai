@@ -109,7 +109,86 @@
       <div class="ws-actions">
         <button id="regen-flash" class="btn">↻ Regenerate flashcards</button>
       </div>
-      <div id="cards_grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;"></div>
+      
+      <!-- Large Flip Card Section -->
+      <div id="flashcard-player" style="margin-bottom:32px;">
+        <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;align-items:center;">
+          <button id="flash-prev" class="btn" style="padding:8px 12px;">←</button>
+          <div style="text-align:center;min-width:120px;">
+            <span id="flash-counter" style="font-weight:700;color:var(--muted);">0 / 0</span>
+          </div>
+          <button id="flash-next" class="btn" style="padding:8px 12px;">→</button>
+        </div>
+        
+        <!-- 3D Flip Card -->
+        <div id="flash-card-container" style="
+          width:100%;
+          height:480px;
+          perspective:1000px;
+          margin:0 auto;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <div id="flash-card" style="
+            width:100%;
+            height:100%;
+            position:relative;
+            transform-style:preserve-3d;
+            transition:transform 0.6s;
+            cursor:pointer;
+          ">
+            <!-- Front side -->
+            <div id="flash-front" style="
+              position:absolute;
+              width:100%;
+              height:100%;
+              background:#fff;
+              border:1px solid var(--border);
+              border-radius:12px;
+              padding:32px;
+              box-shadow:var(--shadow);
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              text-align:center;
+              backface-visibility:hidden;
+              font-weight:700;
+              font-size:20px;
+              overflow-y:auto;
+            "></div>
+            
+            <!-- Back side -->
+            <div id="flash-back" style="
+              position:absolute;
+              width:100%;
+              height:100%;
+              background:#f0fdf4;
+              border:1px solid var(--border);
+              border-radius:12px;
+              padding:32px;
+              box-shadow:var(--shadow);
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              text-align:center;
+              backface-visibility:hidden;
+              transform:rotateY(180deg);
+              font-size:16px;
+              overflow-y:auto;
+              color:#065f46;
+            "></div>
+          </div>
+        </div>
+        
+        <div style="text-align:center;margin-top:16px;font-size:14px;color:var(--muted);">Click card to flip</div>
+      </div>
+
+      <!-- Mini Cards Grid at Bottom -->
+      <div style="margin-top:48px;">
+        <h3 style="margin-bottom:16px;">All Questions</h3>
+        <div id="cards_grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -259,13 +338,62 @@
   });
 
   // ===== Flashcards =====
+  let allCards = [];
+  let currentCardIndex = 0;
+  let isFlipped = false;
+
+  function updateLargeCard() {
+    if (!allCards.length) return;
+    const card = allCards[currentCardIndex];
+    const frontEl = document.getElementById('flash-front');
+    const backEl = document.getElementById('flash-back');
+    const cardEl = document.getElementById('flash-card');
+    const counter = document.getElementById('flash-counter');
+
+    frontEl.textContent = card.front || '';
+    backEl.textContent = card.back || '';
+    counter.textContent = `${currentCardIndex + 1} / ${allCards.length}`;
+    
+    // Reset flip state
+    isFlipped = false;
+    cardEl.style.transform = 'rotateY(0deg)';
+  }
+
+  function nextCard() {
+    currentCardIndex = (currentCardIndex + 1) % allCards.length;
+    updateLargeCard();
+  }
+
+  function prevCard() {
+    currentCardIndex = (currentCardIndex - 1 + allCards.length) % allCards.length;
+    updateLargeCard();
+  }
+
+  // Flip card on click
+  document.getElementById('flash-card').addEventListener('click', () => {
+    isFlipped = !isFlipped;
+    document.getElementById('flash-card').style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+  });
+
+  // Navigation buttons
+  document.getElementById('flash-next').addEventListener('click', nextCard);
+  document.getElementById('flash-prev').addEventListener('click', prevCard);
+
   async function loadFlash(force=false){
     try{
       statusEl.textContent = force ? 'Regenerating flashcards…' : 'Loading flashcards…';
       const j = await postJSON(WS.flashcards, { force });
+      allCards = j.cards || [];
+      currentCardIndex = 0;
+      isFlipped = false;
+
+      // Update large card
+      updateLargeCard();
+
+      // Populate mini grid
       const grid = document.getElementById('cards_grid');
       grid.innerHTML = '';
-      (j.cards || []).forEach(c => {
+      allCards.forEach((c, idx) => {
         const card = document.createElement('div');
         card.className = 'ws-card';
         card.style.cursor = 'pointer';
@@ -274,6 +402,10 @@
           <div class="back"  style="display:none;color:#065f46">${(c.back || '').replace(/</g,'&lt;')}</div>
         `;
         card.onclick = () => {
+          // Jump to this card in large view
+          currentCardIndex = idx;
+          updateLargeCard();
+          // Flip small card for visual feedback
           const f = card.querySelector('.front');
           const b = card.querySelector('.back');
           const show = f.style.display !== 'none';

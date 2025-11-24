@@ -437,9 +437,11 @@ def api_generate_quiz():
         
         print(f"[WORKSPACE] Quiz generation returned {len(batch or [])} items")
     except Exception as e:
+        import traceback as _tb
+        tb = _tb.format_exc()[-800:]
         error_msg = f"Quiz generation failed: {type(e).__name__}: {e}"
-        print(f"[WORKSPACE] {error_msg}")
-        return jsonify({"ok": False, "error": error_msg}), 502
+        print(f"[WORKSPACE] {error_msg}\n{tb}")
+        return jsonify({"ok": False, "error": error_msg, "trace": tb}), 502
 
     # Check if we got any items at all
     if not batch or len(batch) == 0:
@@ -520,13 +522,33 @@ SOURCE:
 
     try:
         raw = _llm_complete(prompt, temperature=0.20, max_tokens=700)
-        m = re.search(r"\[\s*\{.*?\}\s*\]", raw or "", flags=re.S)
+        # Try to extract a JSON array from model output
+        m = re.search(r"\[\s*\{[\s\S]*?\}\s*\]", raw or "", flags=re.S)
         payload = m.group(0) if m else (raw or "[]")
-        cards = json.loads(payload)
+        try:
+            cards = json.loads(payload)
+        except Exception:
+            # Attempt to recover by extracting individual JSON objects
+            objs = re.findall(r"\{[\s\S]*?\}", payload)
+            parsed = []
+            for o in objs:
+                try:
+                    parsed.append(json.loads(o))
+                except Exception:
+                    continue
+            if parsed:
+                cards = parsed
+            else:
+                raise ValueError("Model did not return a parseable JSON list.")
         if not isinstance(cards, list):
             raise ValueError("Model did not return a JSON list.")
     except Exception as e:
-        return jsonify({"ok": False, "error": f"Flashcards parse/generation failed: {e}"}), 502
+        import traceback as _tb
+        tb = _tb.format_exc()[-800:]
+        print(f"[WORKSPACE] Flashcards generation error: {type(e).__name__}: {e}\n{tb}")
+        # Return helpful error with truncated model output for debugging
+        snippet = (raw or "")[:800]
+        return jsonify({"ok": False, "error": f"Flashcards parse/generation failed: {type(e).__name__}: {e}", "model_output_snippet": snippet}), 502
 
     _write_json("flash.json", cards)
     session["ws_cache_key"] = _hash(src)

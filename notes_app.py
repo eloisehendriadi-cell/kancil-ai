@@ -22,6 +22,14 @@ except Exception:  # pragma: no cover
     except Exception:
         _Pdf = None  # handled gracefully later
 
+try:
+    from youtube_utils import get_youtube_transcript, is_youtube_url
+except Exception:
+    def get_youtube_transcript(url: str):
+        return None
+    def is_youtube_url(url: str) -> bool:
+        return False
+
 # -----------------------------
 # Blueprint
 # -----------------------------
@@ -429,28 +437,27 @@ def notes():
                 output = summarize_text(pdf_text)
 
         elif method == "youtube":
+            # note_youtube may be a URL or a pasted transcript
             yt = (request.form.get("note_youtube") or "").strip()
             if yt:
-                msgs = [
-                    {"role": "system", "content": STYLEGUIDE_SYSTEM},
-                    {"role": "user", "content": f"""
-Summarise this YouTube transcript into exam-ready, text-only notes.
-- Emoji headers (5+), 220–400 words before first table,
-- At least one table + **Cause → Effect (with evidence)** table when relevant,
-- {HI_OPEN}…{HI_CLOSE} highlights (6–10),
-- No meta “Sections:”/“This presentation covers…”, no “Question 1…”.
-
-URL: {yt}
-(Assume transcript text is available; be conservative and avoid speculation.)
-""".strip()}
-                ]
-                md = query_ollama_chat(msgs, fast=True)
-                if looks_like_meta_or_exam(md) or len(md or "") < 200:
-                    msgs.append({"role": "user", "content": "Regenerate strictly on-topic with one table."})
-                    md = query_ollama_chat(msgs, fast=True)
-                md = ensure_min_highlights(md or "", min_count=6)
-                md = enforce_emoji_headers(md or "")
-                output = _to_html_with_highlights(md or "")
+                # If it's a YouTube URL, try to fetch the transcript
+                transcript = None
+                if is_youtube_url(yt):
+                    transcript = get_youtube_transcript(yt)
+                # If transcript extraction succeeded and is reasonably long, summarise it
+                if transcript and len(transcript.strip()) >= 220:
+                    output = summarize_text(transcript)
+                else:
+                    # If user pasted a transcript directly (not a URL), use it
+                    if not is_youtube_url(yt) and len(yt) >= 220:
+                        output = summarize_text(yt)
+                    else:
+                        # Fallback: inform the user to paste the transcript if extraction failed
+                        output = _to_html_with_highlights(f"""
+# 🎥 Couldn’t extract a usable transcript from the YouTube URL
+- The automatic transcript extraction failed or captions aren't available.
+- Please paste the video transcript into the YouTube input box (or provide a different video with captions), then generate again.
+""")
 
     return render_template("note_generator.html", output=output)
 
@@ -480,6 +487,44 @@ def notes_extract_pdf():
         return jsonify({"ok": True, "source": source, "title": title}), 200
     except Exception as e:
         return jsonify({"ok": False, "error": "Extract failed", "detail": str(e), "trace": traceback.format_exc()[-400:]}), 200
+
+# -----------------------------
+# YOUTUBE TRANSCRIPT EXTRACTION
+# -----------------------------
+@notes_bp.route("/notes/extract_youtube", methods=["POST"])
+def notes_extract_youtube():
+    """
+    Extract transcript from a YouTube URL.
+    Returns JSON: { ok, source, title, error?, warning? } — always 200.
+    """
+    try:
+        url = (request.form.get("youtube_url") or "").strip()
+        if not url:
+            return jsonify({"ok": False, "error": "Please provide a YouTube URL."}), 200
+
+        # Try to extract transcript
+        transcript = get_youtube_transcript(url)
+        
+        if not transcript:
+            return jsonify({
+                "ok": False,
+                "error": "Could not extract transcript. The video may not have captions, or the transcript service is unavailable."
+            }), 200
+
+        # Success
+        title = "YouTube Video"
+        return jsonify({
+            "ok": True,
+            "source": transcript,
+            "title": title
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": "YouTube extraction failed",
+            "detail": str(e),
+            "trace": traceback.format_exc()[-400:]
+        }), 200
 
 # -----------------------------
 # XHR endpoint for inline dashboard generation
@@ -542,32 +587,30 @@ def notes_xhr():
         if method == "youtube":
             yt = (request.form.get("note_youtube") or "").strip()
             if not yt:
-                return jsonify({"ok": False, "error": "Paste a YouTube URL."}), 200
+                return jsonify({"ok": False, "error": "Paste a YouTube URL or transcript."}), 200
 
-            msgs = [
-                {"role": "system", "content": STYLEGUIDE_SYSTEM},
-                {"role": "user", "content": f"""
-Summarise this YouTube transcript into exam-ready, text-only notes.
-- Emoji headers (5+), 220–400 words before first table,
-- At least one table + **Cause → Effect (with evidence)** table when relevant,
-- {HI_OPEN}…{HI_CLOSE} highlights (6–10),
-- No meta “Sections:”/“This presentation covers…”, no “Question 1…”.
+            # Try to extract transcript when a URL is provided
+            transcript = None
+            if is_youtube_url(yt):
+                transcript = get_youtube_transcript(yt)
 
-URL: {yt}
-(Assume transcript text is available; be conservative and avoid speculation.)
-""".strip()}
-            ]
-            md = query_ollama_chat(msgs, fast=True)
-            if looks_like_meta_or_exam(md) or len(md or "") < 200:
-                msgs.append({"role": "user", "content": "Regenerate strictly on-topic with one table."})
-                md = query_ollama_chat(msgs, fast=True)
+            # If transcript obtained, or user pasted transcript text, summarise using same pipeline
+            if transcript and len(transcript.strip()) >= 220:
+                title = infer_topic_title(sanitize_source_text(transcript), "Study Notes")
+                html = summarize_text(transcript)
+                return jsonify({"ok": True, "html": html, "source": transcript, "title": title}), 200
 
-            md = ensure_min_highlights(md or "", min_count=6)
-            md = enforce_emoji_headers(md or "")
-            html = _to_html_with_highlights(md or "")
-            title = "YouTube Notes"
-            source = f"URL: {yt}"
-            return jsonify({"ok": True, "html": html, "source": source, "title": title}), 200
+            # If user pasted a transcript directly into the field (not a URL)
+            if not is_youtube_url(yt) and len(yt.strip()) >= 220:
+                title = infer_topic_title(sanitize_source_text(yt), "Study Notes")
+                html = summarize_text(yt)
+                return jsonify({"ok": True, "html": html, "source": yt, "title": title}), 200
+
+            # Otherwise provide a helpful error
+            return jsonify({
+                "ok": False,
+                "error": "Could not extract transcript. Provide a transcript (paste it) or use a video with captions."
+            }), 200
 
         return jsonify({"ok": False, "error": "Invalid request."}), 200
 

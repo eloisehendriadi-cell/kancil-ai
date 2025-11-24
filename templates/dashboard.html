@@ -127,7 +127,22 @@
       if (m === 'youtube') {
         const url = (yt.value || '').trim();
         if (!url) { resDiv.innerHTML = '<p style="color:#b91c1c">Paste a YouTube link or transcript.</p>'; return; }
-        const seed = await postJSON(WS.seed, { title: 'YouTube Notes', text: `URL: ${url}`, notes_html: '', prebuild_quiz: false });
+        
+        // Extract transcript from YouTube URL
+        resDiv.innerHTML = '<p class="muted">Extracting transcript from YouTube…</p>';
+        const fd = new FormData();
+        fd.append('youtube_url', url);
+        const ex = await postForm("{{ url_for('notes.notes_extract_youtube') }}", fd);
+        if (!ex || !ex.ok) { 
+          resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract YouTube transcript.'}</p>`; 
+          return; 
+        }
+        if (!(ex.source || '').trim()) { 
+          resDiv.innerHTML = '<p style="color:#b91c1c">No transcript extracted. The video may not have captions available.</p>'; 
+          return; 
+        }
+
+        const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false });
         if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
         location.href = WS.open;
         return;
