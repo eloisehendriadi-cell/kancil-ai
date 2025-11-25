@@ -133,7 +133,8 @@
   const API   = "{{ api_url }}";
   const EMBED = {{ 'true' if embed else 'false' }};
   const TOPIC = "{{ topic|replace('\"','\\\"') }}";
-  const STORAGE_KEY = `ai_tutor_quiz:${API}:${TOPIC}`;
+  const WS_KEY = "{{ session.get('ws_key', '') }}"; // Include workspace session key
+  const STORAGE_KEY = `ai_tutor_quiz:${API}:${TOPIC}:${WS_KEY}`;
 
   const status     = document.getElementById('qz-status');
   const titleEl    = document.getElementById('qz-title');
@@ -195,16 +196,29 @@
   // ---------- persistence ----------
   function saveState(){
     try{
-      const payload = {items, idx, answered, corrects, attempts, explOpen, topic: TOPIC, ver: 2};
+      const payload = {
+        items, idx, answered, corrects, attempts, explOpen, 
+        topic: TOPIC, wsKey: WS_KEY, ver: 2
+      };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    }catch(_){}
+    }catch(e){
+      console.warn('[QUIZ] Error saving state:', e);
+    }
   }
   function loadState(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
       const s = JSON.parse(raw);
-      if (!s || (s.ver !== 2 && s.ver !== 1) || s.topic !== TOPIC) return false;
+      // Validate state: must have correct version, topic, and workspace key
+      if (!s || (s.ver !== 2 && s.ver !== 1)) return false;
+      if (s.topic !== TOPIC) return false;
+      // If workspace key exists in state, it must match current session
+      if (s.wsKey && WS_KEY && s.wsKey !== WS_KEY) {
+        console.log('[QUIZ] Workspace key mismatch, clearing old state');
+        clearState();
+        return false;
+      }
       if (!Array.isArray(s.items) || s.items.length === 0) return false;
       items = s.items;
       idx = Math.max(0, Math.min(Number(s.idx)||0, items.length-1));
@@ -216,11 +230,46 @@
         const key = (it.question || '').trim().toLowerCase();
         if (key) seen.add(key);
       });
+      console.log('[QUIZ] Loaded state with', items.length, 'questions');
       return true;
-    }catch(_){ return false; }
+    }catch(e){ 
+      console.warn('[QUIZ] Error loading state:', e);
+      return false; 
+    }
   }
   window.addEventListener('beforeunload', saveState);
-  function clearState(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(_){ } }
+  function clearState(){ 
+    try{ 
+      localStorage.removeItem(STORAGE_KEY); 
+      console.log('[QUIZ] Cleared state for current workspace');
+    }catch(e){ 
+      console.warn('[QUIZ] Error clearing state:', e);
+    } 
+  }
+  
+  // Clean up old quiz states from previous workspace sessions
+  function cleanupOldStates(){
+    try{
+      const prefix = `ai_tutor_quiz:${API}:${TOPIC}:`;
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++){
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix) && key !== STORAGE_KEY){
+          keys.push(key);
+        }
+      }
+      keys.forEach(k => {
+        try{ 
+          localStorage.removeItem(k);
+          console.log('[QUIZ] Cleaned up old state:', k);
+        }catch(_){}
+      });
+    }catch(e){
+      console.warn('[QUIZ] Error cleaning up old states:', e);
+    }
+  }
+  // Clean up on load
+  cleanupOldStates();
   // ----------------------------------
 
   function clearMarks(nodes){

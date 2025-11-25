@@ -48,3 +48,15 @@ def rename_chat(chat_id: str, new_name: str):
     """Rename a chat session."""
     data = load_chat(chat_id)
     save_chat(chat_id, new_name, data.get("messages", []))
+
+def delete_chat(chat_id: str) -> bool:
+    """Delete a chat session."""
+    try:
+        file_path = os.path.join(CHAT_DIR, f"{chat_id}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        return False
+    except Exception as e:
+        print(f"[ERROR] Failed to delete chat {chat_id}: {e}")
+        return False

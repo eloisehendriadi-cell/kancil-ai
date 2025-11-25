@@ -696,3 +696,54 @@ SOURCE:
     session["ws_cache_key"] = _hash(src)
     return jsonify({"ok": True, "cards": cards})
 
+
+# SAVE WORKSPACE API
+@workspace_bp.post("/api/save", endpoint="api_save_workspace")
+def api_save_workspace():
+    """Save current workspace to saved notes in dashboard."""
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "Untitled").strip()
+    content = (data.get("content") or "").strip()
+    
+    if not content:
+        return jsonify({"ok": False, "error": "No content to save"}), 400
+    
+    notes_file = current_app.config.get("NOTES_FILE", "saved_notes.json")
+    
+    try:
+        # Load existing notes
+        try:
+            with open(notes_file, "r", encoding="utf-8") as f:
+                notes = json.load(f)
+        except Exception:
+            notes = []
+        
+        # Check if note with this title already exists
+        existing_idx = None
+        for i, note in enumerate(notes):
+            if note.get("title", "").strip().lower() == title.lower():
+                existing_idx = i
+                break
+        
+        # Prepare note data
+        note_data = {
+            "title": title,
+            "content": content,
+            "timestamp": time.time()
+        }
+        
+        # Update or append
+        if existing_idx is not None:
+            notes[existing_idx] = note_data
+        else:
+            notes.append(note_data)
+        
+        # Save back to file
+        with open(notes_file, "w", encoding="utf-8") as f:
+            json.dump(notes, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({"ok": True, "message": "Workspace saved successfully"})
+    
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+

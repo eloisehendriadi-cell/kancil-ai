@@ -88,7 +88,7 @@ def create_app() -> Flask:
     # ---------- Home + Dashboard ----------
     @app.route("/", endpoint="index")
     def index():
-        return render_template("index.html")
+        return render_template("home.html")
 
     @app.route("/dashboard", endpoint="dashboard")
     def dashboard():

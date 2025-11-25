@@ -40,6 +40,7 @@
       <input id="ws_title" type="text" value="{{ session.get('shared_source_title','Untitled') }}">
     </div>
   </div>
+  <button id="save-workspace-btn" class="btn primary" style="margin-left:auto;">💾 Save Workspace</button>
 </header>
 
 <!-- Source setter - HIDDEN -->
@@ -173,7 +174,7 @@
               justify-content:center;
               text-align:center;
               backface-visibility:hidden;
-              transform:rotateY(180deg);
+              transform:rotateX(180deg);
               font-size:16px;
               overflow-y:auto;
               color:#065f46;
@@ -281,6 +282,35 @@
   document.getElementById('ws_seed').addEventListener('click', seedSource);
   document.getElementById('ws_reset').addEventListener('click', resetWorkspace);
 
+  // ===== Save Workspace =====
+  document.getElementById('save-workspace-btn').addEventListener('click', async () => {
+    const title = (document.getElementById('ws_title').value || 'Untitled').trim();
+    const notesHtml = document.getElementById('notes_html').innerHTML;
+    
+    if (!notesHtml || notesHtml.trim() === '') {
+      alert('No notes to save. Please generate notes first.');
+      return;
+    }
+    
+    try {
+      statusEl.textContent = 'Saving workspace...';
+      const response = await postJSON('/workspace/api/save', { 
+        title: title,
+        content: notesHtml 
+      });
+      
+      if (response.ok) {
+        statusEl.textContent = '✅ Workspace saved successfully!';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      } else {
+        throw new Error(response.error || 'Failed to save');
+      }
+    } catch (e) {
+      statusEl.textContent = '❌ Save failed: ' + e.message;
+      alert('Failed to save workspace: ' + e.message);
+    }
+  });
+
   // ===== Notes =====
   async function loadNotes(force=false){
     try{
@@ -356,7 +386,7 @@
     
     // Reset flip state
     isFlipped = false;
-    cardEl.style.transform = 'rotateY(0deg)';
+    cardEl.style.transform = 'rotateX(0deg)';
   }
 
   function nextCard() {
@@ -372,7 +402,7 @@
   // Flip card on click
   document.getElementById('flash-card').addEventListener('click', () => {
     isFlipped = !isFlipped;
-    document.getElementById('flash-card').style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+    document.getElementById('flash-card').style.transform = isFlipped ? 'rotateX(180deg)' : 'rotateX(0deg)';
   });
 
   // Navigation buttons
