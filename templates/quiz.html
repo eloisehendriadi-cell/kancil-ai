@@ -159,8 +159,8 @@
   let explOpen = false;
   const seen = new Set();
 
-  const BATCH = 12;
-  const PREFETCH_AT = 3;
+  const BATCH = 3;  // Fetch 3 questions at a time
+  const PREFETCH_AT = 1;  // Prefetch when 1 question remains
   let inflight = null;
 
   function showMask(on){ mask.style.display = on ? 'flex' : 'none'; }
@@ -326,25 +326,50 @@
   }
 
   // ----------- UPDATED FETCH + NEXT LOGIC -----------
-  async function fetchBatch(force=true, allowResetAvoid=false){
+  async function fetchBatch(force=true, allowResetAvoid=false, retry=0){
     // allowResetAvoid=true lets us retry with empty avoid list when needed.
     const avoid = allowResetAvoid ? [] : Array.from(seen);
-    const res = await fetch(API, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ count: BATCH, avoid, force })
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error || 'Quiz error');
+    try {
+      const res = await fetch(API, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ count: BATCH, avoid, force })
+      });
+      if (!res.ok) {
+        // Retry once on server error
+        if (res.status >= 500 && retry < 1) {
+          console.warn('[QUIZ] Server error, retrying...');
+          await new Promise(r => setTimeout(r, 500)); // wait 500ms
+          return fetchBatch(force, allowResetAvoid, retry + 1);
+        }
+        throw new Error('HTTP ' + res.status);
+      }
+      const j = await res.json();
+      if (!j.ok) {
+        // Try with empty avoid list if we got an error
+        if (!allowResetAvoid && retry < 1) {
+          console.warn('[QUIZ] Got error, retrying with empty avoid list...');
+          return fetchBatch(force, true, retry + 1);
+        }
+        throw new Error(j.error || 'Quiz error');
+      }
 
-    const fresh = (j.items || []).filter(it => {
-      const key = (it.question || '').trim().toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    return fresh;
+      const fresh = (j.items || []).filter(it => {
+        const key = (it.question || '').trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return fresh;
+    } catch (e) {
+      // Retry once more on network error
+      if (retry < 1) {
+        console.warn('[QUIZ] Network error, retrying...', e.message);
+        await new Promise(r => setTimeout(r, 500)); // wait 500ms
+        return fetchBatch(force, allowResetAvoid, retry + 1);
+      }
+      throw e;
+    }
   }
 
   async function prefetchMore(blocking, mode='screen'){
@@ -403,8 +428,14 @@
         render();
         saveState();
       } else {
-        // Still no new questions — don’t trap user on same screen
-        setStatus('No more questions available right now. Try Regenerate.');
+        // No new questions, try advancing to next if available
+        if (idx < items.length - 1) {
+          idx++;
+          render();
+          saveState();
+        } else {
+          setStatus('You have reached the end of the quiz.');
+        }
       }
     } finally {
       showCardBusy(false);

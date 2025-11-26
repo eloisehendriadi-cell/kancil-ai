@@ -109,8 +109,12 @@
     const m = methodSel();
 
     try {
-      // always clear previous workspace session
+      // IMPORTANT: Always reset workspace completely before seeding new content
+      resDiv.innerHTML = '<p class="muted">Clearing previous workspace…</p>';
       await postJSON(WS.reset, {});
+      
+      // Small delay to ensure session is cleared
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       if (m === 'text') {
         const source = (txt.value || '').trim();
@@ -118,6 +122,7 @@
         const firstLine = source.split(/\n/)[0].trim();
         const title = firstLine ? firstLine.slice(0, 80) : 'Study Notes';
 
+        resDiv.innerHTML = '<p class="muted">Setting up workspace…</p>';
         const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false });
         if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
         location.href = WS.open;
@@ -127,7 +132,23 @@
       if (m === 'youtube') {
         const url = (yt.value || '').trim();
         if (!url) { resDiv.innerHTML = '<p style="color:#b91c1c">Paste a YouTube link or transcript.</p>'; return; }
-        const seed = await postJSON(WS.seed, { title: 'YouTube Notes', text: `URL: ${url}`, notes_html: '', prebuild_quiz: false });
+        
+        // Extract transcript from YouTube URL
+        resDiv.innerHTML = '<p class="muted">Extracting transcript from YouTube…</p>';
+        const fd = new FormData();
+        fd.append('youtube_url', url);
+        const ex = await postForm("{{ url_for('notes.notes_extract_youtube') }}", fd);
+        if (!ex || !ex.ok) { 
+          resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract YouTube transcript.'}</p>`; 
+          return; 
+        }
+        if (!(ex.source || '').trim()) { 
+          resDiv.innerHTML = '<p style="color:#b91c1c">No transcript extracted. The video may not have captions available.</p>'; 
+          return; 
+        }
+
+        resDiv.innerHTML = '<p class="muted">Setting up workspace…</p>';
+        const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false });
         if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
         location.href = WS.open;
         return;
@@ -135,12 +156,14 @@
 
       if (m === 'pdf') {
         if (!pdf.files[0]) { resDiv.innerHTML = '<p style="color:#b91c1c">Please choose a PDF file.</p>'; return; }
+        resDiv.innerHTML = '<p class="muted">Extracting text from PDF…</p>';
         const fd = new FormData();
         fd.append('note_pdf', pdf.files[0]);
         const ex = await postForm("{{ url_for('notes.notes_extract_pdf') }}", fd);
         if (!ex || !ex.ok) { resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract PDF.'}</p>`; return; }
         if (!(ex.source || '').trim()) { resDiv.innerHTML = '<p style="color:#b91c1c">Could not read text from the PDF (likely scanned). Try a text-based PDF or paste the text.</p>'; return; }
 
+        resDiv.innerHTML = '<p class="muted">Setting up workspace…</p>';
         const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false });
         if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
         location.href = WS.open;
@@ -171,9 +194,23 @@
     const title = el.dataset.title || '';
     if(!title) return;
     try {
+      // Show loading state
+      el.textContent = 'Loading...';
+      el.disabled = true;
+      
       const j = await postJSONCrud(WS.useSaved, { title });
-      if (j && j.ok) { location.href = WS.open; } else { alert((j && j.error) || 'Could not open in workspace.'); }
-    } catch { alert('Network error.'); }
+      if (j && j.ok) { 
+        location.href = WS.open; 
+      } else { 
+        alert((j && j.error) || 'Could not open in workspace.'); 
+        el.textContent = title;
+        el.disabled = false;
+      }
+    } catch { 
+      alert('Network error.'); 
+      el.textContent = title;
+      el.disabled = false;
+    }
   }
   window.useSaved = useSaved;
 
