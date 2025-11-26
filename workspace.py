@@ -471,6 +471,11 @@ def use_saved():
         _write_text("podcast.txt", podcast_text)
         print(f"[WORKSPACE] Restored podcast script ({len(podcast_text)} chars)")
     
+    high_score = match.get("high_score", 0)
+    if high_score:
+        _write_json("high_score.json", {"score": high_score})
+        print(f"[WORKSPACE] Restored high score: {high_score}")
+    
     # Mark cache as valid since we've loaded saved content
     session["ws_cache_key"] = _hash(text_source)
     
@@ -900,6 +905,8 @@ def api_save_workspace():
         quiz_data = _read_json("quiz.json")
         flash_data = _read_json("flash.json")
         podcast_text = _read_text("podcast.txt")
+        high_score_data = _read_json("high_score.json")
+        high_score = high_score_data.get("score", 0) if high_score_data else 0
         
         # Prepare note data with all artifacts
         note_data = {
@@ -909,6 +916,7 @@ def api_save_workspace():
             "quiz": quiz_data,
             "flashcards": flash_data,
             "podcast": podcast_text,
+            "high_score": high_score,
             "timestamp": time.time()
         }
         
@@ -942,4 +950,53 @@ def serve_podcast_audio(ws_key: str):
         return jsonify({"error": "Audio file not found"}), 404
     
     return send_file(audio_path, mimetype="audio/mpeg")
+
+
+@workspace_bp.post("/save_high_score", endpoint="save_high_score")
+def save_high_score():
+    """Save the highest game score for the current workspace."""
+    ws_key = session.get("ws_key")
+    if not ws_key:
+        return jsonify({"error": "No active workspace"}), 400
+    
+    ws_path = os.path.join(WS_STORE, ws_key)
+    if not os.path.exists(ws_path):
+        return jsonify({"error": "Workspace not found"}), 404
+    
+    try:
+        data = request.get_json() or {}
+        score = data.get("score", 0)
+        
+        # Save to workspace directory
+        score_file = os.path.join(ws_path, "high_score.json")
+        with open(score_file, "w", encoding="utf-8") as f:
+            json.dump({"score": score}, f)
+        
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@workspace_bp.get("/get_high_score", endpoint="get_high_score")
+def get_high_score():
+    """Get the highest game score for the current workspace."""
+    ws_key = session.get("ws_key")
+    if not ws_key:
+        return jsonify({"score": 0})
+    
+    ws_path = os.path.join(WS_STORE, ws_key)
+    if not os.path.exists(ws_path):
+        return jsonify({"score": 0})
+    
+    score_file = os.path.join(ws_path, "high_score.json")
+    if not os.path.exists(score_file):
+        return jsonify({"score": 0})
+    
+    try:
+        with open(score_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return jsonify({"score": data.get("score", 0)})
+    except Exception:
+        return jsonify({"score": 0})
+
 

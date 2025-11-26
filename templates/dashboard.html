@@ -34,6 +34,38 @@
   </form>
 
   <div id="notes_result" style="margin-top:1rem;"></div>
+  
+  <!-- Progress Bar -->
+  <div id="progress-container" style="display:none; margin-top:1rem;">
+    <div style="background:#f3f4f6; border-radius:8px; overflow:hidden; height:32px; position:relative;">
+      <div id="progress-bar" style="
+        width:0%;
+        height:100%;
+        background:linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        transition:width 0.3s ease;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:white;
+        font-weight:600;
+        font-size:14px;
+      ">
+        <span id="progress-text">0%</span>
+      </div>
+      <div id="progress-label" style="
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50%, -50%);
+        font-weight:600;
+        font-size:14px;
+        color:#1f2937;
+        pointer-events:none;
+        white-space:nowrap;
+      "></div>
+    </div>
+    <p id="progress-status" style="margin:0.5rem 0 0; color:#6b7280; font-size:14px;"></p>
+  </div>
 </section>
 
 <section class="card">
@@ -107,10 +139,25 @@
     resDiv.innerHTML = '<p class="muted">Preparing…</p>';
 
     const m = methodSel();
+    
+    // Progress tracking
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const progressLabel = document.getElementById('progress-label');
+    const progressStatus = document.getElementById('progress-status');
+    
+    function updateProgress(percent, label, status) {
+      progressContainer.style.display = 'block';
+      progressBar.style.width = percent + '%';
+      progressText.textContent = Math.round(percent) + '%';
+      progressLabel.textContent = label || '';
+      progressStatus.textContent = status || '';
+    }
 
     try {
       // IMPORTANT: Always reset workspace completely before seeding new content
-      resDiv.innerHTML = '<p class="muted">Clearing previous workspace…</p>';
+      updateProgress(10, 'Initializing...', 'Clearing previous workspace');
       await postJSON(WS.reset, {});
       
       // Small delay to ensure session is cleared
@@ -118,62 +165,104 @@
 
       if (m === 'text') {
         const source = (txt.value || '').trim();
-        if (!source) { resDiv.innerHTML = '<p style="color:#b91c1c">Please enter some text.</p>'; return; }
+        if (!source) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Please enter some text.</p>'; 
+          return; 
+        }
         const firstLine = source.split(/\n/)[0].trim();
         const title = firstLine ? firstLine.slice(0, 80) : 'Study Notes';
 
-        resDiv.innerHTML = '<p class="muted">Setting up workspace…</p>';
+        updateProgress(30, 'Setting up workspace...', 'Preparing your content');
         const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false });
-        if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
+        if (!seed || !seed.ok) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
+          return; 
+        }
+        updateProgress(100, 'Complete!', 'Redirecting to workspace...');
+        await new Promise(resolve => setTimeout(resolve, 500));
         location.href = WS.open;
         return;
       }
 
       if (m === 'youtube') {
         const url = (yt.value || '').trim();
-        if (!url) { resDiv.innerHTML = '<p style="color:#b91c1c">Paste a YouTube link or transcript.</p>'; return; }
+        if (!url) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Paste a YouTube link or transcript.</p>'; 
+          return; 
+        }
         
         // Extract transcript from YouTube URL
-        resDiv.innerHTML = '<p class="muted">Extracting transcript from YouTube…</p>';
+        updateProgress(20, 'Extracting transcript...', 'Fetching video captions from YouTube');
         const fd = new FormData();
         fd.append('youtube_url', url);
         const ex = await postForm("{{ url_for('notes.notes_extract_youtube') }}", fd);
         if (!ex || !ex.ok) { 
+          progressContainer.style.display = 'none';
           resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract YouTube transcript.'}</p>`; 
           return; 
         }
         if (!(ex.source || '').trim()) { 
+          progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">No transcript extracted. The video may not have captions available.</p>'; 
           return; 
         }
 
-        resDiv.innerHTML = '<p class="muted">Setting up workspace…</p>';
+        updateProgress(60, 'Setting up workspace...', 'Preparing your content');
         const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false });
-        if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
+        if (!seed || !seed.ok) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
+          return; 
+        }
+        updateProgress(100, 'Complete!', 'Redirecting to workspace...');
+        await new Promise(resolve => setTimeout(resolve, 500));
         location.href = WS.open;
         return;
       }
 
       if (m === 'pdf') {
-        if (!pdf.files[0]) { resDiv.innerHTML = '<p style="color:#b91c1c">Please choose a PDF file.</p>'; return; }
-        resDiv.innerHTML = '<p class="muted">Extracting text from PDF…</p>';
+        if (!pdf.files[0]) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Please choose a PDF file.</p>'; 
+          return; 
+        }
+        updateProgress(15, 'Reading PDF...', 'Extracting text from document');
         const fd = new FormData();
         fd.append('note_pdf', pdf.files[0]);
         const ex = await postForm("{{ url_for('notes.notes_extract_pdf') }}", fd);
-        if (!ex || !ex.ok) { resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract PDF.'}</p>`; return; }
-        if (!(ex.source || '').trim()) { resDiv.innerHTML = '<p style="color:#b91c1c">Could not read text from the PDF (likely scanned). Try a text-based PDF or paste the text.</p>'; return; }
+        if (!ex || !ex.ok) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = `<p style="color:#b91c1c">${(ex && ex.error) ? ex.error : 'Could not extract PDF.'}</p>`; 
+          return; 
+        }
+        if (!(ex.source || '').trim()) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Could not read text from the PDF (likely scanned). Try a text-based PDF or paste the text.</p>'; 
+          return; 
+        }
 
-        resDiv.innerHTML = '<p class="muted">Setting up workspace…</p>';
+        updateProgress(50, 'Setting up workspace...', 'Preparing your content');
         const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false });
-        if (!seed || !seed.ok) { resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; return; }
+        if (!seed || !seed.ok) { 
+          progressContainer.style.display = 'none';
+          resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
+          return; 
+        }
+        updateProgress(100, 'Complete!', 'Redirecting to workspace...');
+        await new Promise(resolve => setTimeout(resolve, 500));
         location.href = WS.open;
         return;
       }
 
+      progressContainer.style.display = 'none';
       resDiv.innerHTML = '<p style="color:#b91c1c">Unsupported method.</p>';
 
     } catch (err) {
       console.error(err);
+      progressContainer.style.display = 'none';
       resDiv.innerHTML = `<p style="color:#b91c1c">Error: ${err.message}</p>`;
     }
   }
