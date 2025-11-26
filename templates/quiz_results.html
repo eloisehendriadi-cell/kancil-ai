@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}Quiz Results{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:800px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;margin-bottom:30px;">
+    <h1 style="font-size:48px;margin:20px 0;">🎉</h1>
+    <h2 style="margin:10px 0;color:#1f2937;">Congratulations!</h2>
+    <p style="color:#6b7280;font-size:18px;">You've completed the quiz</p>
+  </div>
+
+  <!-- Score Card -->
+  <div class="note-fig" style="padding:30px;text-align:center;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border-radius:16px;margin-bottom:24px;">
+    <div style="font-size:72px;font-weight:bold;margin-bottom:10px;" id="accuracy-display">0%</div>
+    <div style="font-size:20px;opacity:0.9;">Accuracy</div>
+    <div style="margin-top:20px;font-size:16px;opacity:0.8;" id="score-breakdown">
+      0/0 correct answers
+    </div>
+  </div>
+
+  <!-- Performance Analysis -->
+  <div class="note-fig" style="padding:24px;margin-bottom:24px;">
+    <h3 style="margin-top:0;color:#1f2937;display:flex;align-items:center;gap:8px;">
+      📊 Performance Analysis
+    </h3>
+    <div id="performance-message" style="font-size:18px;color:#374151;line-height:1.6;margin-bottom:20px;">
+      Loading your results...
+    </div>
+    <div id="topic-feedback" style="margin-top:16px;">
+      <!-- Topic-specific feedback will be inserted here -->
+    </div>
+  </div>
+
+  <!-- Study Recommendations -->
+  <div class="note-fig" style="padding:24px;margin-bottom:24px;border-left:4px solid #3b82f6;">
+    <h3 style="margin-top:0;color:#1f2937;display:flex;align-items:center;gap:8px;">
+      💡 Study Recommendations
+    </h3>
+    <div id="recommendations" style="color:#374151;line-height:1.8;">
+      <!-- Recommendations will be inserted here -->
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:32px;">
+    <button onclick="retakeQuiz()" class="btn primary" style="padding:12px 24px;font-size:16px;">
+      🔄 Retake Quiz
+    </button>
+    <button onclick="goToTopics()" class="btn" style="padding:12px 24px;font-size:16px;">
+      📚 Choose Another Topic
+    </button>
+    <button onclick="goHome()" class="btn" style="padding:12px 24px;font-size:16px;">
+      🏠 Back to Home
+    </button>
+  </div>
+</div>
+
+<script>
+  // Retrieve results from sessionStorage
+  const results = JSON.parse(sessionStorage.getItem('quizResults') || '{}');
+  
+  if (!results.topic) {
+    window.location.href = '{{ url_for("quiz.quiz_menu") }}';
+  }
+  
+  // Display accuracy
+  document.getElementById('accuracy-display').textContent = results.accuracy + '%';
+  document.getElementById('score-breakdown').textContent = 
+    `${results.correctAnswers}/${results.totalQuestions} correct answers`;
+  
+  // Performance message based on accuracy
+  const performanceEl = document.getElementById('performance-message');
+  if (results.accuracy >= 90) {
+    performanceEl.innerHTML = '🌟 <strong>Outstanding!</strong> You have excellent mastery of this topic. Keep up the great work!';
+    performanceEl.style.color = '#059669';
+  } else if (results.accuracy >= 75) {
+    performanceEl.innerHTML = '👏 <strong>Great job!</strong> You have a strong understanding of this topic with room for minor improvements.';
+    performanceEl.style.color = '#0891b2';
+  } else if (results.accuracy >= 60) {
+    performanceEl.innerHTML = '👍 <strong>Good effort!</strong> You have a decent grasp of the material, but reviewing some concepts would help.';
+    performanceEl.style.color = '#d97706';
+  } else {
+    performanceEl.innerHTML = '📖 <strong>Keep learning!</strong> This topic needs more study. Don\'t worry - practice makes perfect!';
+    performanceEl.style.color = '#dc2626';
+  }
+  
+  // Analyze topics from answer history
+  const topicPerformance = {};
+  (results.answerHistory || []).forEach(answer => {
+    const topic = answer.topic || 'general';
+    if (!topicPerformance[topic]) {
+      topicPerformance[topic] = { correct: 0, total: 0 };
+    }
+    topicPerformance[topic].total++;
+    if (answer.isCorrect) {
+      topicPerformance[topic].correct++;
+    }
+  });
+  
+  // Display topic feedback
+  const topicFeedbackEl = document.getElementById('topic-feedback');
+  const topicFeedbackHTML = [];
+  
+  Object.entries(topicPerformance).forEach(([topic, stats]) => {
+    const percent = Math.round((stats.correct / stats.total) * 100);
+    const emoji = percent >= 75 ? '✅' : percent >= 50 ? '⚠️' : '❌';
+    const color = percent >= 75 ? '#059669' : percent >= 50 ? '#d97706' : '#dc2626';
+    
+    topicFeedbackHTML.push(`
+      <div style="margin-bottom:12px;padding:12px;background:#f9fafb;border-radius:8px;border-left:3px solid ${color};">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:600;text-transform:capitalize;">${emoji} ${topic}</span>
+          <span style="color:${color};font-weight:bold;">${percent}%</span>
+        </div>
+        <div style="font-size:14px;color:#6b7280;margin-top:4px;">
+          ${stats.correct} out of ${stats.total} correct
+        </div>
+      </div>
+    `);
+  });
+  
+  topicFeedbackEl.innerHTML = topicFeedbackHTML.length > 0 
+    ? topicFeedbackHTML.join('') 
+    : '<p style="color:#6b7280;">No topic-specific data available.</p>';
+  
+  // Generate recommendations
+  const recommendationsEl = document.getElementById('recommendations');
+  const recommendations = [];
+  
+  // Find weak topics (< 75% accuracy)
+  const weakTopics = Object.entries(topicPerformance)
+    .filter(([topic, stats]) => (stats.correct / stats.total) < 0.75)
+    .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total))
+    .map(([topic]) => topic);
+  
+  // Find strong topics (>= 75% accuracy)
+  const strongTopics = Object.entries(topicPerformance)
+    .filter(([topic, stats]) => (stats.correct / stats.total) >= 0.75)
+    .map(([topic]) => topic);
+  
+  if (weakTopics.length > 0) {
+    recommendations.push(`
+      <div style="margin-bottom:16px;">
+        <strong style="color:#dc2626;">📌 Focus Areas:</strong>
+        <ul style="margin:8px 0;padding-left:20px;">
+          ${weakTopics.map(topic => `
+            <li style="margin:4px 0;">
+              Review <strong style="text-transform:capitalize;">${topic}</strong> - 
+              spend extra time understanding the core concepts and work through more practice problems.
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `);
+  }
+  
+  if (strongTopics.length > 0) {
+    recommendations.push(`
+      <div style="margin-bottom:16px;">
+        <strong style="color:#059669;">✨ Strengths:</strong>
+        <ul style="margin:8px 0;padding-left:20px;">
+          ${strongTopics.map(topic => `
+            <li style="margin:4px 0;">
+              Great job with <strong style="text-transform:capitalize;">${topic}</strong>! 
+              Consider challenging yourself with advanced problems in this area.
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `);
+  }
+  
+  // General recommendations based on overall performance
+  if (results.accuracy < 60) {
+    recommendations.push(`
+      <div style="padding:12px;background:#fef2f2;border-radius:8px;border-left:3px solid #dc2626;">
+        <strong>General Advice:</strong> Consider reviewing the course material thoroughly, 
+        taking detailed notes, and attempting practice questions before retaking the quiz. 
+        Break down complex topics into smaller, manageable sections.
+      </div>
+    `);
+  } else if (results.accuracy < 75) {
+    recommendations.push(`
+      <div style="padding:12px;background:#fef3c7;border-radius:8px;border-left:3px solid #d97706;">
+        <strong>General Advice:</strong> You're on the right track! Focus on the specific topics 
+        where you struggled and review the explanations for incorrect answers. 
+        Try teaching the concepts to someone else to reinforce your understanding.
+      </div>
+    `);
+  } else {
+    recommendations.push(`
+      <div style="padding:12px;background:#ecfdf5;border-radius:8px;border-left:3px solid #059669;">
+        <strong>General Advice:</strong> Excellent work! To maintain your mastery, 
+        continue practicing regularly and explore more advanced applications of these concepts. 
+        Consider helping peers who might be struggling with this material.
+      </div>
+    `);
+  }
+  
+  recommendationsEl.innerHTML = recommendations.join('');
+  
+  // Navigation functions
+  function retakeQuiz() {
+    sessionStorage.removeItem('quizResults');
+    window.location.href = '{{ url_for("quiz.quiz_page", topic="") }}' + results.topic;
+  }
+  
+  function goToTopics() {
+    sessionStorage.removeItem('quizResults');
+    window.location.href = '{{ url_for("quiz.quiz_menu") }}';
+  }
+  
+  function goHome() {
+    sessionStorage.removeItem('quizResults');
+    window.location.href = '/';
+  }
+</script>
+{% endblock %}

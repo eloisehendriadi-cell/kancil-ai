@@ -517,3 +517,33 @@ def quiz_menu():
     # safe even if template missing
     return render_template("quiz_menu.html")
 
+@quiz_bp.route("/quiz/<topic>")
+def quiz_page(topic):
+    """Serve the quiz page for a specific topic."""
+    # This would load questions from workspace or generate them
+    # For now, just render the template
+    return render_template("quiz_page.html", topic=topic, questions=[])
+
+@quiz_bp.route("/quiz/results")
+def quiz_results():
+    """Display quiz results page."""
+    return render_template("quiz_results.html")
+
+@quiz_bp.route("/quiz/generate", methods=["POST"])
+def generate_quiz():
+    """Generate quiz questions via API call."""
+    try:
+        data = request.get_json() or {}
+        topic = data.get("topic", "Topic")
+        count = int(data.get("count", 12))
+        
+        # Get source text from session or request
+        source_text = session.get("shared_source_text", "")
+        if not source_text:
+            return jsonify({"error": "No source text available"}), 400
+        
+        items = generate_quiz_items(source_text, topic, count)
+        return jsonify({"ok": True, "items": items})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
