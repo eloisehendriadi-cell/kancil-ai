@@ -83,9 +83,25 @@
     <!-- Podcast -->
     <section id="tab-podcast" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-podcast" class="btn">↻ Regenerate podcast script</button>
+        <button id="regen-podcast" class="btn">↻ Regenerate podcast</button>
       </div>
-      <pre id="podcast_script" class="ws-card" style="white-space:pre-wrap;margin:0"></pre>
+      
+      <!-- Audio Player (shown when audio is available) -->
+      <div id="podcast-audio-player" style="display:none; margin-bottom:1.5rem;">
+        <div class="ws-card">
+          <h3 style="margin-top:0; margin-bottom:1rem;">🎙️ Podcast Audio</h3>
+          <audio id="podcast-audio" controls style="width:100%; max-width:600px;">
+            <source id="podcast-audio-source" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      </div>
+      
+      <!-- Script Display -->
+      <div class="ws-card">
+        <h3 style="margin-top:0; margin-bottom:1rem;">📝 Script</h3>
+        <pre id="podcast_script" style="white-space:pre-wrap;margin:0;font-family:inherit;"></pre>
+      </div>
     </section>
 
     <!-- Quiz (embedded quiz.html player) -->
@@ -331,9 +347,25 @@
     try{
       statusEl.textContent = force ? 'Regenerating podcast…' : 'Loading podcast…';
       const j = await postJSON(WS.podcast, { force });
+      
+      // Update script
       document.getElementById('podcast_script').textContent = (j && j.script) ? j.script : 'No script.';
+      
+      // Update audio player if available
+      const audioPlayer = document.getElementById('podcast-audio-player');
+      const audioElement = document.getElementById('podcast-audio');
+      const audioSource = document.getElementById('podcast-audio-source');
+      
+      if (j && j.audio_url) {
+        audioSource.src = j.audio_url;
+        audioElement.load();
+        audioPlayer.style.display = 'block';
+      } else {
+        audioPlayer.style.display = 'none';
+      }
     }catch(e){
       document.getElementById('podcast_script').textContent = '';
+      document.getElementById('podcast-audio-player').style.display = 'none';
       statusEl.textContent = 'Error: ' + e.message;
       return;
     }finally{

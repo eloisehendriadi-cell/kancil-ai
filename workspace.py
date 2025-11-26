@@ -18,6 +18,7 @@ from flask import (
     render_template,
     request,
     session,
+    send_file,
 )
 
 # --------------------------------------------------------------------------------------
@@ -182,6 +183,125 @@ def _strip_html_to_text(html: str) -> str:
     s = re.sub(r"[ \t]{2,}", " ", s)
     return s.strip()
 
+
+def _generate_podcast_audio(script: str) -> Optional[str]:
+    """
+    Generate audio from podcast script using OpenAI TTS API.
+    Returns the URL path to the audio file, or None if generation fails.
+    Uses simple MP3 concatenation without external dependencies.
+    """
+    if not API_KEY or LLM_PROVIDER != "openai":
+        print("[WORKSPACE] Audio generation requires OpenAI API key and provider")
+        return None
+    
+    # Parse script into speaker segments
+    lines = script.split('\n')
+    segments = []
+    current_speaker = None
+    current_text = []
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Detect speaker labels - handle both plain and markdown formats
+        # Patterns: "Host:", "**Host:**", "Host **", etc.
+        host_match = re.match(r'^\*{0,2}Host\*{0,2}:\s*(.*)', line, re.IGNORECASE)
+        guest_match = re.match(r'^\*{0,2}Guest\*{0,2}:\s*(.*)', line, re.IGNORECASE)
+        
+        if host_match:
+            if current_speaker and current_text:
+                segments.append((current_speaker, ' '.join(current_text)))
+            current_speaker = "host"
+            text_after_label = host_match.group(1).strip()
+            current_text = [text_after_label] if text_after_label else []
+        elif guest_match:
+            if current_speaker and current_text:
+                segments.append((current_speaker, ' '.join(current_text)))
+            current_speaker = "guest"
+            text_after_label = guest_match.group(1).strip()
+            current_text = [text_after_label] if text_after_label else []
+        elif current_speaker:
+            current_text.append(line)
+    
+    # Don't forget the last segment
+    if current_speaker and current_text:
+        segments.append((current_speaker, ' '.join(current_text)))
+    
+    if not segments:
+        print("[WORKSPACE] No speaker segments found in script, generating single audio from full text")
+        # Generate audio from the full script without speaker separation
+        segments = [("host", script)]  # Use single voice for entire script
+    
+    # Voice mapping: Use distinctly different voices for Host and Guest
+    # OpenAI TTS voices: alloy (neutral), echo (male), fable (British), onyx (deep male), nova (female), shimmer (soft female)
+    voices = {
+        "host": "echo",     # Male voice - clear and authoritative
+        "guest": "shimmer"  # Female voice - warm and friendly
+    }
+    
+    ws_dir = _ws_dir()
+    if not ws_dir:
+        print("[WORKSPACE] No workspace directory available")
+        return None
+    
+    print(f"[WORKSPACE] Generating audio for {len(segments)} speaker segments")
+    
+    try:
+        # Collect all MP3 segments
+        audio_segments = []
+        
+        for i, (speaker, text) in enumerate(segments):
+            if not text.strip():
+                continue
+            
+            voice = voices.get(speaker, "echo")
+            print(f"[WORKSPACE] Generating segment {i+1}/{len(segments)} with voice '{voice}' for {speaker}")
+            
+            # Call OpenAI TTS API
+            headers = {
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            tts_body = {
+                "model": "tts-1",
+                "input": text,
+                "voice": voice,
+                "response_format": "mp3"
+            }
+            
+            r = requests.post(
+                f"{BASE_URL}/audio/speech",
+                json=tts_body,
+                headers=headers,
+                timeout=60
+            )
+            r.raise_for_status()
+            
+            # Store the MP3 data
+            audio_segments.append(r.content)
+        
+        # Concatenate all MP3 segments (simple binary concatenation works for MP3)
+        combined_audio = b''.join(audio_segments)
+        
+        # Save combined audio
+        audio_path = os.path.join(ws_dir, "podcast_audio.mp3")
+        with open(audio_path, "wb") as f:
+            f.write(combined_audio)
+        
+        print(f"[WORKSPACE] Successfully generated podcast audio with {len(segments)} segments")
+        
+        # Return URL path
+        return f"/workspace/podcast_audio/{_ws_key()}"
+        
+    except Exception as e:
+        print(f"[WORKSPACE] TTS API error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 # --------------------------------------------------------------------------------------
 # LLM provider: Unified config
 # --------------------------------------------------------------------------------------
@@ -295,8 +415,8 @@ def use_generated():
 @workspace_bp.post("/use_saved", endpoint="use_saved")
 def use_saved():
     """
-    Open a saved note WITHOUT regenerating; serve its HTML directly.
-    This sets a faux source so podcast/quiz/flashcards still work.
+    Open a saved note and restore ALL workspace artifacts (notes, quiz, flashcards, podcast).
+    This allows users to continue where they left off.
     Properly resets previous workspace state before loading.
     """
     notes_file = current_app.config.get("NOTES_FILE", "saved_notes.json")
@@ -315,16 +435,44 @@ def use_saved():
         return jsonify({"ok": False, "error": "Saved note not found"}), 404
 
     html = (match.get("content") or "").strip()
-    faux_source = f"[SAVED NOTE] {title}\n(length={len(_strip_html_to_text(html))} chars)"
+    
+    # Get saved source text (preferred) or extract from HTML
+    text_source = (match.get("source") or "").strip()
+    if not text_source or len(text_source.strip()) < 50:
+        # Fallback: extract actual text content from HTML
+        text_source = _strip_html_to_text(html)
+    
+    if not text_source or len(text_source.strip()) < 50:
+        # Final fallback to minimal source if extraction fails
+        text_source = f"[SAVED NOTE] {title}\n(length={len(html)} chars)"
     
     # IMPORTANT: Reset previous workspace state completely
     _reset_session()
     
-    # Set new source (creates new workspace key)
-    _set_source(title, faux_source)
+    # Set new source with actual text content (creates new workspace key)
+    _set_source(title, text_source)
     
     # Write the saved notes HTML
     _write_text("notes.html", html)
+    
+    # Restore all saved artifacts if they exist
+    quiz_data = match.get("quiz")
+    if quiz_data is not None:
+        _write_json("quiz.json", quiz_data)
+        print(f"[WORKSPACE] Restored {len(quiz_data) if isinstance(quiz_data, list) else 0} quiz questions")
+    
+    flash_data = match.get("flashcards")
+    if flash_data is not None:
+        _write_json("flash.json", flash_data)
+        print(f"[WORKSPACE] Restored {len(flash_data) if isinstance(flash_data, list) else 0} flashcards")
+    
+    podcast_text = match.get("podcast")
+    if podcast_text:
+        _write_text("podcast.txt", podcast_text)
+        print(f"[WORKSPACE] Restored podcast script ({len(podcast_text)} chars)")
+    
+    # Mark cache as valid since we've loaded saved content
+    session["ws_cache_key"] = _hash(text_source)
     
     return jsonify({"ok": True})
 
@@ -402,7 +550,7 @@ def api_generate_notes():
 
 @workspace_bp.post("/api/podcast", endpoint="api_generate_podcast")
 def api_generate_podcast():
-    """Generate or return cached podcast script (hosted LLM by default)."""
+    """Generate podcast script and audio with different voices for Host and Guest."""
     body = request.get_json(silent=True) or {}
     force = bool(body.get("force"))
     
@@ -417,9 +565,14 @@ def api_generate_podcast():
     cache_is_stale = (current_cache_key != stored_cache_key)
     
     if not force and not cache_is_stale:
-        cached = _read_text("podcast.txt")
-        if cached:
-            return jsonify({"ok": True, "script": cached})
+        cached_script = _read_text("podcast.txt")
+        cached_audio = _read_text("podcast_audio.mp3")
+        if cached_script:
+            audio_url = f"/workspace/podcast_audio/{_ws_key()}" if cached_audio else None
+            return jsonify({"ok": True, "script": cached_script, "audio_url": audio_url})
+        # If force=false and no cache, return empty to indicate "not generated yet"
+        if not force:
+            return jsonify({"ok": True, "script": "", "audio_url": None, "message": "No podcast generated yet. Generate to create podcast script."})
 
     title = session.get("shared_source_title", "Untitled")
     plain = _strip_html_to_text(notes_html) if notes_html else _strip_html_to_text(src)
@@ -438,8 +591,17 @@ NOTES (plain text):
         return jsonify({"ok": False, "error": "Empty script returned from model."}), 502
 
     _write_text("podcast.txt", script)
+    
+    # Generate audio from script with different voices
+    audio_url = None
+    try:
+        audio_url = _generate_podcast_audio(script)
+    except Exception as e:
+        print(f"[WORKSPACE] Audio generation failed: {e}")
+        # Continue without audio - script is still saved
+    
     session["ws_cache_key"] = _hash(src or plain)
-    return jsonify({"ok": True, "script": script})
+    return jsonify({"ok": True, "script": script, "audio_url": audio_url})
 
 # --------------------------------------------------------------------------------------
 # QUIZ API (delegates to quiz_app.generate_quiz_items)
@@ -473,6 +635,9 @@ def api_generate_quiz():
                 fresh = [it for it in cached if (it.get("question", "").strip().lower() not in avoid)]
                 return jsonify({"ok": True, "items": fresh[:request_count]})
             return jsonify({"ok": True, "items": cached[:request_count]})
+        # If force=false and no cache, return empty to indicate "not generated yet"
+        if not force:
+            return jsonify({"ok": True, "items": [], "message": "No quiz generated yet. Generate to create questions."})
 
     src = (_get_source_text() or "").strip()
     if not src:
@@ -652,8 +817,11 @@ def api_generate_flashcards():
     
     if not force and not cache_is_stale:
         cached = _read_json("flash.json")
-        if cached is not None:
+        if cached is not None and len(cached) > 0:
             return jsonify({"ok": True, "cards": cached})
+        # If force=false and no cache, return empty to indicate "not generated yet"
+        if not force:
+            return jsonify({"ok": True, "cards": [], "message": "No flashcards generated yet. Generate to create flashcards."})
 
     prompt = """Create 16 concise Q/A flashcards as JSON:
 [{"front": str, "back": str}]
@@ -700,7 +868,7 @@ SOURCE:
 # SAVE WORKSPACE API
 @workspace_bp.post("/api/save", endpoint="api_save_workspace")
 def api_save_workspace():
-    """Save current workspace to saved notes in dashboard."""
+    """Save current workspace to saved notes in dashboard, including ALL artifacts."""
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "Untitled").strip()
     content = (data.get("content") or "").strip()
@@ -725,10 +893,22 @@ def api_save_workspace():
                 existing_idx = i
                 break
         
-        # Prepare note data
+        # Get source text from current workspace
+        source_text = _get_source_text()
+        
+        # Collect all workspace artifacts
+        quiz_data = _read_json("quiz.json")
+        flash_data = _read_json("flash.json")
+        podcast_text = _read_text("podcast.txt")
+        
+        # Prepare note data with all artifacts
         note_data = {
             "title": title,
             "content": content,
+            "source": source_text,
+            "quiz": quiz_data,
+            "flashcards": flash_data,
+            "podcast": podcast_text,
             "timestamp": time.time()
         }
         
@@ -746,4 +926,20 @@ def api_save_workspace():
     
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+# SERVE PODCAST AUDIO
+@workspace_bp.get("/podcast_audio/<ws_key>", endpoint="serve_podcast_audio")
+def serve_podcast_audio(ws_key: str):
+    """Serve the generated podcast audio file."""
+    # Validate workspace key
+    ws_path = os.path.join(WS_STORE, ws_key)
+    if not os.path.exists(ws_path):
+        return jsonify({"error": "Workspace not found"}), 404
+    
+    audio_path = os.path.join(ws_path, "podcast_audio.mp3")
+    if not os.path.exists(audio_path):
+        return jsonify({"error": "Audio file not found"}), 404
+    
+    return send_file(audio_path, mimetype="audio/mpeg")
 
