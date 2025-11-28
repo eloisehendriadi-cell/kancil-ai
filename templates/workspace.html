@@ -877,7 +877,18 @@
       
       // Always force generate new questions to get a larger pool
       const res = await postJSON(WS.quiz, { force: true });
+      
+      console.log('Quiz API response:', res);
+      
+      if (!res || !res.ok) {
+        throw new Error(res?.error || 'Quiz generation failed');
+      }
+      
       gameState.questions = res.items || res.questions || [];
+      
+      if (gameState.questions.length === 0) {
+        throw new Error('No questions were generated. Please check if your source content has enough text.');
+      }
       
       updateLoadingProgress(50, `Loaded ${gameState.questions.length} questions...`);
       
@@ -911,10 +922,10 @@
       updateLoadingProgress(100, 'Ready!');
     } catch (e) {
       console.error('Failed to load questions:', e);
-      // Fallback questions
-      gameState.questions = [
-        { question: 'Sample question?', options: ['A', 'B', 'C', 'D'], answer_index: 0 }
-      ];
+      alert('Failed to generate questions: ' + e.message + '\n\nPlease make sure you have uploaded source content in your workspace.');
+      // Go back to start screen instead of using fallback
+      gameState.mode = 'start';
+      renderUI();
     }
   }
 

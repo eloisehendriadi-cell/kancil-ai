@@ -19,6 +19,36 @@
       <label><input type="radio" name="method" value="pdf"> 📄 From PDF</label>
       <label><input type="radio" name="method" value="youtube"> 🎥 From YouTube</label>
     </div>
+    
+    <!-- Language Selection -->
+    <div style="margin-bottom:.8rem;">
+      <label style="display:block; font-weight:600; margin-bottom:.4rem; color:#374151;">
+        🌍 Output Language
+      </label>
+      <select id="output_language" style="
+        width:100%; 
+        padding:0.6rem; 
+        border:1px solid #d1d5db; 
+        border-radius:8px; 
+        font-size:15px;
+        background:white;
+        cursor:pointer;
+      ">
+        <option value="english">English</option>
+        <option value="bahasa">Bahasa Indonesia</option>
+        <option value="spanish">Spanish (Español)</option>
+        <option value="french">French (Français)</option>
+        <option value="german">German (Deutsch)</option>
+        <option value="mandarin">Mandarin Chinese (中文)</option>
+        <option value="japanese">Japanese (日本語)</option>
+        <option value="korean">Korean (한국어)</option>
+        <option value="arabic">Arabic (العربية)</option>
+        <option value="hindi">Hindi (हिन्दी)</option>
+      </select>
+      <small style="color:#6b7280; display:block; margin-top:.3rem;">
+        Your source content can be in any language, but all generated content (notes, podcast, quiz, games) will be in the selected language.
+      </small>
+    </div>
 
     <textarea id="note_text" rows="8" placeholder="Enter your text here…"
               style="display:block; margin-bottom:.6rem;"></textarea>
@@ -105,6 +135,7 @@
   const txt     = document.getElementById('note_text');
   const pdf     = document.getElementById('note_pdf');
   const yt      = document.getElementById('note_yt');
+  const langSel = document.getElementById('output_language');
 
   function methodSel(){
     return (form.querySelector('input[name="method"]:checked') || {}).value;
@@ -172,9 +203,10 @@
         }
         const firstLine = source.split(/\n/)[0].trim();
         const title = firstLine ? firstLine.slice(0, 80) : 'Study Notes';
+        const language = langSel.value || 'english';
 
         updateProgress(30, 'Setting up workspace...', 'Preparing your content');
-        const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false });
+        const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false, output_language: language });
         if (!seed || !seed.ok) { 
           progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
@@ -210,8 +242,9 @@
           return; 
         }
 
+        const language = langSel.value || 'english';
         updateProgress(60, 'Setting up workspace...', 'Preparing your content');
-        const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false });
+        const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false, output_language: language });
         if (!seed || !seed.ok) { 
           progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
@@ -244,8 +277,9 @@
           return; 
         }
 
+        const language = langSel.value || 'english';
         updateProgress(50, 'Setting up workspace...', 'Preparing your content');
-        const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false });
+        const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false, output_language: language });
         if (!seed || !seed.ok) { 
           progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 

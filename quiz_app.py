@@ -218,12 +218,37 @@ ONE_SHOT = {
     "explanation": "Osmosis — the notes define it as water moving across a partially permeable membrane down its water potential gradient.",
 }
 
-def _build_prompt(topic: str, notes_plain: str, n: int) -> str:
+def _build_prompt(topic: str, notes_plain: str, n: int, language: str = "english") -> str:
+    """Build quiz generation prompt with language support."""
+    language_map = {
+        "english": "in English",
+        "bahasa": "in Bahasa Indonesia",  
+        "spanish": "in Spanish",
+        "french": "in French",
+        "german": "in German",
+        "mandarin": "in Mandarin Chinese",
+        "japanese": "in Japanese",
+        "korean": "in Korean",
+        "arabic": "in Arabic",
+        "hindi": "in Hindi"
+    }
+    lang_instruction = language_map.get(language.lower(), "in English")
+    
+    prompt_system_with_lang = (
+        f"You are a meticulous exam writer. Create MCQs ONLY from the provided notes {lang_instruction}. "
+        "Each item must have a single unambiguous correct answer supported by the notes. "
+        "Avoid yes/no stems and avoid 'All/None of the above'. "
+        "Return ONLY a JSON array; no commentary, no code fences. "
+        "Each item fields: question, options[4], answer_index (0-3), explanation. "
+        f"All questions, options, and explanations must be {lang_instruction}. "
+        "Explanation must cite the specific fact from the notes and include the correct option text."
+    )
+    
     example = json.dumps(ONE_SHOT, ensure_ascii=False)
     return (
-        f"{PROMPT_SYSTEM}\n\n"
+        f"{prompt_system_with_lang}\n\n"
         f"TOPIC: {topic or 'Topic'}\nCOUNT: {n}\n\n"
-        f"Return a JSON array of {n} items. Example of ONE item:\n{example}\n\n"
+        f"Return a JSON array of {n} items {lang_instruction}. Example of ONE item:\n{example}\n\n"
         f"NOTES (source of truth):\n{notes_plain}"
     )
 
@@ -365,7 +390,7 @@ def _ground_explanation(item: Dict[str, Any], support: str) -> str:
 # --------------------------------------------------------------------------------------
 # Generation loop
 # --------------------------------------------------------------------------------------
-def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int = 0) -> List[Dict[str, Any]]:
+def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int = 0, language: str = "english") -> List[Dict[str, Any]]:
     # Allow smaller batches for incremental loading (2-3 questions)
     # But ensure minimum 2 to avoid too many requests
     target = max(2, min(20, int(target or 12)))
@@ -400,7 +425,7 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int 
 
     while len(accepted) < target and tries < MAX_TRIES:
         need = min(BATCH_SIZE, target - len(accepted))
-        prompt = _build_prompt(topic, notes_plain, need)
+        prompt = _build_prompt(topic, notes_plain, need, language)
         raw = _chat(prompt, temperature=current_temp, num_predict=num_predict, timeout=150)
         
         # Check if LLM returned anything
@@ -482,20 +507,20 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int 
 # --------------------------------------------------------------------------------------
 # Public helper (workspace imports this)
 # --------------------------------------------------------------------------------------
-def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12, offset: int = 0) -> List[Dict[str, Any]]:
+def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12, offset: int = 0, language: str = "english") -> List[Dict[str, Any]]:
     text = source_text or ""
     notes_plain = _strip_html(text) if ("<" in text and ">" in text) else text
     # Allow flexibility for both initial load (12) and incremental (2-3)
     target = max(2, min(20, int(count or 12)))
     
     # Log source text length for debugging
-    print(f"[QUIZ] Generating {target} items from source of {len(notes_plain)} chars (topic: {topic}, offset: {offset})")
+    print(f"[QUIZ] Generating {target} items from source of {len(notes_plain)} chars (topic: {topic}, offset: {offset}, language: {language})")
     
     if len(notes_plain) < 100:
         print(f"[QUIZ] Warning: Source text is very short ({len(notes_plain)} chars)")
         return []
     
-    items = _generate_from_notes(topic or "Topic", notes_plain, target, offset)
+    items = _generate_from_notes(topic or "Topic", notes_plain, target, offset, language)
     print(f"[QUIZ] Successfully generated {len(items)} items")
     return items or []
 
