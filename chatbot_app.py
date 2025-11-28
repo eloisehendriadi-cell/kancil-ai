@@ -1,9 +1,10 @@
 # the_ai_tutor/chat_app.py
 from __future__ import annotations
 from typing import List, Dict
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, Response, stream_with_context
 
-from llm_client import chat_text, get_chat_sessions, get_chat, rename_chat_session
+from llm_client import chat_text, chat_text_stream, get_chat_sessions, get_chat, rename_chat_session
+from chat_history import delete_chat
 
 chat_bp = Blueprint("chat", __name__, template_folder="templates")
 
@@ -45,6 +46,30 @@ def chat_send():
             chat_name = sessions[-1]["name"]
     return jsonify({"ok": True, "reply": reply, "chat_id": chat_id, "chat_name": chat_name})
 
+@chat_bp.post("/stream", endpoint="chat_stream")
+def chat_stream():
+    data = request.get_json(silent=True) or {}
+    text = (data.get("text") or "").strip()
+    history = data.get("history") or []
+    chat_id = data.get("chat_id")
+    chat_name = data.get("chat_name")
+
+    if not text:
+        return jsonify({"ok": False, "error": "empty message"}), 400
+
+    msgs: List[Dict[str, str]] = []
+    for m in history[-12:]:
+        r, c = (m.get("role") or "user"), (m.get("content") or "")
+        if r in ("user", "assistant") and c:
+            msgs.append({"role": r, "content": c})
+    msgs.append({"role": "user", "content": text})
+
+    def generate():
+        for token in chat_text_stream(msgs, chat_id=chat_id, chat_name=chat_name):
+            yield token
+    
+    return Response(stream_with_context(generate()), mimetype='text/plain')
+
 # List all chat sessions
 @chat_bp.get("/sessions")
 def chat_sessions():
@@ -66,4 +91,12 @@ def chat_rename(chat_id):
         return jsonify({"ok": False, "error": "No new name provided"}), 400
     rename_chat_session(chat_id, new_name)
     return jsonify({"ok": True})
+
+# Delete a chat session
+@chat_bp.delete("/session/<chat_id>/delete")
+def chat_delete(chat_id):
+    success = delete_chat(chat_id)
+    if success:
+        return jsonify({"ok": True})
+    return jsonify({"ok": False, "error": "Failed to delete chat"}), 500
 

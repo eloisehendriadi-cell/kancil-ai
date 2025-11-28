@@ -1,1 +1,234 @@
-[]
+[
+  {
+    "title": "1._Direct_and_Inverse_Proportion_-_IGCSE",
+    "content": "<style>\n  .hi-imp { background: #fff3a6; padding: 0 .15em; border-radius: .25rem }\n  table { border-collapse: collapse; width: 100%; background: #fff }\n  th, td { border: 1px solid #e5e7eb; padding: 8px 10px; vertical-align: top }\n  thead th { background: #f8fafc; }\n  h1, h2, h3 { margin-top: 1.1rem; }\n</style>\n<h1>🌿 📚 Learning</h1>\n<ul>\n<li><mark class=\"hi-imp\">Direct Proportion</mark>: When two quantities increase or decrease at the same rate, they are directly proportional, linked by a constant multiplier known as the Constant of Proportionality.</li>\n<li><mark class=\"hi-imp\">Inverse Proportion</mark>: When one quantity increases, the other decreases at a proportional rate, maintaining a constant product.</li>\n<li><mark class=\"hi-imp\">Algebraic Expressions</mark>: Direct proportion can be expressed as ( y \\propto x ) or ( y = kx ), while inverse proportion is expressed as ( y \\propto \\frac{1}{x} ) or ( xy = k ).</li>\n<li><mark class=\"hi-imp\">Case Study 1</mark>: In a supermarket, 6 kg of rice costs $24, leading to a cost of $52 for 13 kg of rice.</li>\n<li><mark class=\"hi-imp\">Case Study 2</mark>: If 5 workers take 150 days to build 1 house, it would take 10 workers 75 days and 12 workers 62.5 days.</li>\n<li><mark class=\"hi-imp\">Finding Unknown Quantities</mark>: Algebraic expressions of direct and inverse proportions can be used to find unknown quantities in various scenarios.</li>\n<li><strong>Graphical Representation</strong>: Direct proportions yield straight-line graphs through the origin, while inverse proportions produce hyperbolic graphs.</li>\n</ul>\n<h2>🔑 Key Concepts</h2>\n<ul>\n<li><strong>Direct Proportion</strong>: Relationship where one quantity increases/decreases with another at the same rate.</li>\n<li><strong>Inverse Proportion</strong>: Relationship where one quantity increases while the other decreases.</li>\n<li><strong>Constant of Proportionality</strong>: The constant multiplier linking two directly proportional quantities.</li>\n</ul>\n<h2>🧬 Processes / Mechanisms</h2>\n<ol>\n<li>Identify the quantities involved.</li>\n<li>Determine if the relationship is direct or inverse.</li>\n<li>Use the appropriate algebraic expression to find unknown values.</li>\n</ol>\n<h2>📊 Comparisons &amp; Tables</h2>\n<table>\n<thead>\n<tr>\n<th>Term</th>\n<th>Definition</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Direct Proportion</td>\n<td>( y \\propto x ) or ( y = kx )</td>\n</tr>\n<tr>\n<td>Inverse Proportion</td>\n<td>( y \\propto \\frac{1}{x} ) or ( xy = k )</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th>Factor</th>\n<th>Cause → Effect (how outcome changes)</th>\n<th>Evidence / Example</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Increase in workers</td>\n<td>Decrease in days to build a house</td>\n<td>5 workers take 150 days; 10 workers take 75 days</td>\n</tr>\n<tr>\n<td>Increase in rice quantity</td>\n<td>Increase in cost</td>\n<td>6 kg of rice costs $24; 13 kg costs $52</td>\n</tr>\n</tbody>\n</table>\n<h2>💡 Applications / Examples</h2>\n<ul>\n<li>Supermarket pricing for rice demonstrates direct proportion.</li>\n<li>Construction time and workforce illustrate inverse proportion.</li>\n</ul>\n<h2>⚠️ Misconceptions &amp; Pitfalls</h2>\n<p>Not stated in source.</p>\n<h2>✍️ Mini-Quiz (3 quick checks)</h2>\n<ul>\n<li>Q: What is the formula for direct proportion?</li>\n<li>Answer: ( y = kx )</li>\n<li>Q: How does increasing workers affect the time to build a house?</li>\n<li>Answer: It decreases the time.</li>\n<li>Q: What does a constant product indicate in inverse proportion?</li>\n<li>Answer: The relationship between the two quantities is inversely proportional.</li>\n</ul>",
+    "source": "Learning Objectives\n3\nExpress direct proportion in algebraic terms\nExpress inverse proportion in algebraic terms\nUse the algebraic expression of a direct or \ninverse proportion to find unknown quantities.\nApplications\n• Daily life – kinematics, groceries\n• Mathematical modelling\n• Others?\n4\nLearning \nObjectives\n• Express direct proportion \nin algebraic terms\n• Express inverse \nproportion in algebraic \nterms\n• Use the algebraic \nexpression of a direct or \ninverse proportion to find \nunknown quantities.\n5\nCase Study 1\nIn a supermarket, 6 kg of rice cost $24.\nWhat would be the cost of 13 kg of rice?\n6\nCase Study 1 (discussion)\nIn a supermarket, 6 kg of rice cost $24.\nWhat would be the cost of 13 kg of rice?\n6 kg of rice ⇔ $24\n1 kg of rice ⇔\n$24\n6 = $4\n13 kg of rice ⇔ 13×$4 = $52\nWhat about the cost of 18 kg of rice? 47 kg of rice?\nWhat would be the maximum amount of rice can be \npurchased with $60? With $84?\nHow can we solve any related problems easier?\n7\n• What do you notice about the relationship between the \namount of rice (R) and its cost (C)?\nFormalising the concept - discussion\n• When two quantities are related in such a way that the \nincrement (or decrement) of one quantity increases (or \ndecreases) the other quantity at the same rate, we call \nthe two quantities to be directly proportional.\n• When two quantities are directly proportional to each \nother they are linked by a constant multiplier (known as \nthe Constant of Proportionality). This means that the ratio \nof the two variables will always be this constant.\nDirect Proportion - Summary\n• In general, if “𝒚 is directly proportional to 𝒙” then we \nhave…\n𝑦 ∝ 𝑥 ⟷ 𝑦 = 𝑘𝑥 ⟷ 𝑘 = 𝑦\n𝑥\n Proportionality symbol Constant of Proportionality\nNote: A graph of two variables that are directly \nproportional to each other will be a straight-line graph \nthrough the origin (𝑦 = 𝑘𝑥)!\nDirect Proportion - Summary\n• Some examples can be found on the table below \nwhereas Quantity 1 is directly proportional to Quantity 2.\nDirect Proportion - Summary\nQuantity 1 Quantity 2 Expression\n𝑦 𝑥 𝑦 ∝ 𝑥 ⟷ 𝑦 = 𝑘𝑥\n𝑦 𝑥2 𝑦 ∝ 𝑥2 ⟷ 𝑦 = 𝑘𝑥2\n𝑦 𝑥 𝑦 ∝ 𝑥 ⟷ 𝑦 = 𝑘 𝑥\n𝑦 1\n𝑥 𝑦 ∝ 1\n𝑥 ⟷ 𝑦 = 𝑘\n𝑥\nDirect Proportion - Examples\nExample 1\nTwo quantities 𝑦 and 𝑥 are directly proportional to each other.\nWhen 𝑥 = 4, 𝑦 = 10.\n(a) Find a formula for 𝑦 in terms of 𝑥.\n(b) Find the value of 𝑦 when 𝑥 = 6.\n(c) Find the value of 𝑥 when 𝑦 = 8. \n12\nDirect Proportion - Examples\nExample 2\nThe table below shows a set of matching 𝑝 and 𝑞 values, \nwhere 𝑝 is directly proportional to 𝑞. Find a formula for 𝑝 in \nterms of 𝑞, and then work out the missing values in the table.\n13\n𝒑 𝟏 𝟑 𝟑𝟎\n𝒒 12 18\nDirect Proportion - Examples\nExample 3\n𝑦 is directly proportional to 𝑥2.  Given that 𝑦 = 144 when 𝑥 =\n4, find\na) an expression for 𝑦 in terms of 𝑥,\nb) the value(s) of 𝑥 when 𝑦 = 2025,\nc) the percentage increase or decrease in the value of 𝑦 \nwhen 𝑥 is doubled.\n14\nCase Study 2\nIf it takes 5 workers 150 days to build 1 house,\na) how long would it take for 10 workers to build 1 \nhouse? How about 12 workers?\nb) how many workers will be needed to build 1 house in \n125 days? How about 100 days?\n15\nCase Study 2 (discussion)\nIf it takes 5 workers 150 days to build 1 house,\na) how long would it take for 10 workers to build 1 \nhouse?\n 5 workers ⇔ 150 days\n   1 worker ⇔ 150×5 = 750 days\n         10 workers ⇔\n150×5\n10 = 75 days\n16\nCase Study 2 (discussion)\nIf it takes 5 workers 150 days to build 1 house,\nb) how long would it take for 12 workers to build 1 \nhouse?\n 5 workers ⇔ 150 days\n   1 worker ⇔ 150×5 = 750 days\n         12 workers ⇔\n150×5\n12 = 62.5 days\n17\nCase Study 2 (discussion)\nIf it takes 5 workers 150 days to build 1 house,\nc) how many workers will be needed to build 1 house in \n125 days?\n 5 workers ⇔ 150 days\n   1 worker ⇔ 150×5 = 750 days\n         12 workers ⇔\n150×5\n12 = 62.5 days\n18\n• What do you notice about the relationship between the \nnumber of workers (W) and number of days (D)?\n• Similar to the discussion on Direct Proportion, form a \nformula to connect the number of workers (W) and \nnumber of days (D).\nFormalising the concept - discussion\n• When two quantities are related in such a way that the \nincrease of one quantity causes a decrease in the other \nquantity at a proportional rate, we call the two quantities \nto be inversely proportional.\n• When two quantities are inversely proportional to each \nother, the product of the two quantities will be a constant.\nInverse Proportion - Summary\n• In general, if “𝒚 is inversely proportional to 𝒙” then we \nhave…\n𝑦 ∝ 1\n𝑥 ⟷ 𝑦 = 𝑘\n𝑥 ⟷ 𝑥𝑦 = 𝑘\n Product is constant\nNote: A graph of inverse proportion will look like this…\nInverse Proportion - Summary\nInverse Proportion\nExample 4\nTwo quantities 𝑥  and 𝑦  are such that 𝑦  is inversely \nproportional to 𝑥. When 𝑥 = 20, 𝑦 = 6.\n(a) Find a formula connecting 𝑥 and 𝑦.\n(b) Work out the value of 𝑦 when 𝑥 = 40.\n(c) Work out the value of 𝑥 when 𝑦 = 2.\n22\nInverse Proportion\nExample 5\nIn the table below, 𝑓 is inversely proportional to 𝑔. Find a \nformula for 𝑓 in terms of 𝑔 and then use it to find the missing \nvalues in the table.\n23\n𝒇 𝟏𝟎 𝟒𝟎\n𝑔 45 9\nInverse Proportion\nExample 6\n𝑝 is inversely proportional to the cube of 𝑣.\n(a) It is known that 𝑝 = 4 for a particular value of 𝑣. What is \nthe value of 𝑝 when 𝑣 is doubled?\n(b) Given that 𝑝 = 1 and 𝑣 = 2, write down a formula \nconnecting 𝑝 and 𝑣.\n(c) Hence find the value of 𝑣 when 𝑝 = 125.\n24\nReflection/Journal\nWrite your reflection/journal by answering the following \nquestion\n1) What does a relationship of direct proportionality tell us?\n2) What does a relationship of inverse proportionality tell us?\n3) How is proportionality different from a linear equation?\n25\nTextbook Exercises\nDirect Proportion\nTextbook Exercises 21.1 No. 2, 4, 5, 7, 8\nInverse Proportion\nTextbook Exercises 21.2 No. 1, 2, 4, 5, 7\n26",
+    "quiz": [
+      {
+        "question": "In the case study, how much would 13 kg of rice cost if 6 kg costs $24?",
+        "options": [
+          "$48",
+          "$52",
+          "$60",
+          "$54"
+        ],
+        "answer_index": 1,
+        "explanation": "The cost of 13 kg of rice is calculated as 13 × $4 (where $4 is the cost per kg), resulting in $52.",
+        "supporting_sentence": "13 kg of rice ⇔ 13×$4 = $52"
+      },
+      {
+        "question": "In the case study of rice, what is the cost of 1 kg of rice if 6 kg costs $24?",
+        "options": [
+          "$2",
+          "$4",
+          "$6",
+          "$8"
+        ],
+        "answer_index": 1,
+        "explanation": "The cost of 1 kg of rice is calculated as $24 divided by 6 kg, which equals $4.",
+        "supporting_sentence": "13 kg of rice ⇔ 13×$4 = $52"
+      },
+      {
+        "question": "If 5 workers take 150 days to build 1 house, how many days will it take for 10 workers to build the same house?",
+        "options": [
+          "150 days",
+          "75 days",
+          "62.5 days",
+          "300 days"
+        ],
+        "answer_index": 1,
+        "explanation": "It will take 10 workers 75 days to build 1 house, calculated by the formula 150×5/10.",
+        "supporting_sentence": "10 = 75 days"
+      },
+      {
+        "question": "What does it mean when two quantities are inversely proportional?",
+        "options": [
+          "Their sum is constant",
+          "Their product is constant",
+          "Their difference is constant",
+          "Their ratio is constant"
+        ],
+        "answer_index": 1,
+        "explanation": "When two quantities are inversely proportional, their product is constant, as stated in the notes.",
+        "supporting_sentence": "Product is constant"
+      },
+      {
+        "question": "In an inverse proportion, what relationship exists between the product of two quantities?",
+        "options": [
+          "The product is variable",
+          "The product is zero",
+          "The product is constant",
+          "The product is negative"
+        ],
+        "answer_index": 2,
+        "explanation": "The product is constant — In inverse proportion, the product of the two quantities is constant, as indicated in the notes stating 'when two quantities are inversely proportional to each other, the product of the two quantities will be a constant.'",
+        "supporting_sentence": "other, the product of the two quantities will be a constant"
+      },
+      {
+        "question": "If y is inversely proportional to x, what is the relationship expressed algebraically?",
+        "options": [
+          "y = kx",
+          "y = k/x",
+          "xy = k",
+          "y = kx^2"
+        ],
+        "answer_index": 2,
+        "explanation": "The relationship is expressed as xy = k, which is the definition provided in the notes for inverse proportion.",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "What is the algebraic expression for a direct proportion between y and x?",
+        "options": [
+          "y = k/x",
+          "y = kx",
+          "y = kx^2",
+          "y = k/x^2"
+        ],
+        "answer_index": 1,
+        "explanation": "The algebraic expression for a direct proportion is y = kx, as stated in the notes under Direct Proportion - Summary.",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "In the case study, how much does 1 kg of rice cost if 6 kg costs $24?",
+        "options": [
+          "$2",
+          "$4",
+          "$6",
+          "$8"
+        ],
+        "answer_index": 1,
+        "explanation": "The cost of 1 kg of rice is $4, calculated by dividing the total cost of $24 by the quantity of 6 kg.",
+        "supporting_sentence": "13 kg of rice ⇔ 13×$4 = $52"
+      },
+      {
+        "question": "If y is directly proportional to x, what is the algebraic expression that represents this relationship?",
+        "options": [
+          "y = k/x",
+          "y = kx",
+          "y = kx^2",
+          "y = k"
+        ],
+        "answer_index": 1,
+        "explanation": "The algebraic expression for direct proportion is y = kx, where k is the constant of proportionality, as stated in the notes.",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "What happens to the value of y when x is doubled in an inverse proportion relationship?",
+        "options": [
+          "y doubles",
+          "y remains the same",
+          "y is halved",
+          "y quadruples"
+        ],
+        "answer_index": 2,
+        "explanation": "In an inverse proportion, when x is doubled, y is halved, as the product of the two quantities remains constant, according to the notes.",
+        "supporting_sentence": "the value of 𝑝 when 𝑣 is doubled?"
+      },
+      {
+        "question": "In the case study where 5 workers take 150 days to build 1 house, how many days would it take for 10 workers to build the same house?",
+        "options": [
+          "150 days",
+          "75 days",
+          "62.5 days",
+          "100 days"
+        ],
+        "answer_index": 1,
+        "explanation": "It would take 10 workers 75 days to build 1 house, calculated by the formula 150×5/10.",
+        "supporting_sentence": "10 = 75 days"
+      },
+      {
+        "question": "In the case study where 6 kg of rice costs $24, what is the cost of 1 kg of rice?",
+        "options": [
+          "$4",
+          "$6",
+          "$3",
+          "$5"
+        ],
+        "answer_index": 0,
+        "explanation": "The cost of 1 kg of rice is $4, calculated by dividing $24 by 6 kg, as shown in the case study.",
+        "supporting_sentence": "13 kg of rice ⇔ 13×$4 = $52"
+      },
+      {
+        "question": "In the case study of rice, how much would 13 kg of rice cost if 6 kg costs $24?",
+        "options": [
+          "$48",
+          "$52",
+          "$60",
+          "$54"
+        ],
+        "answer_index": 1,
+        "explanation": "The cost of 13 kg of rice is calculated as 13 × $4 = $52, where $4 is the cost per kg derived from the initial cost of 6 kg.",
+        "supporting_sentence": "13 kg of rice ⇔ 13×$4 = $52"
+      }
+    ],
+    "flashcards": [
+      {
+        "front": "What is direct proportion?",
+        "back": "A relationship where an increase in one quantity results in a proportional increase in another quantity."
+      },
+      {
+        "front": "How is direct proportion expressed algebraically?",
+        "back": "y ∝ x ⟷ y = kx, where k is the constant of proportionality."
+      },
+      {
+        "front": "What is inverse proportion?",
+        "back": "A relationship where an increase in one quantity results in a proportional decrease in another quantity."
+      },
+      {
+        "front": "How is inverse proportion expressed algebraically?",
+        "back": "y ∝ 1/x ⟷ y = k/x, where k is the constant."
+      },
+      {
+        "front": "What does the constant of proportionality indicate?",
+        "back": "It indicates the ratio of two directly proportional quantities."
+      },
+      {
+        "front": "What is the formula to find unknown quantities in direct proportion?",
+        "back": "Use the formula y = kx to solve for unknowns."
+      },
+      {
+        "front": "If 6 kg of rice costs $24, what is the cost of 1 kg?",
+        "back": "$4."
+      },
+      {
+        "front": "If 6 kg of rice costs $24, what is the cost of 13 kg?",
+        "back": "$52."
+      },
+      {
+        "front": "If 5 workers take 150 days to build a house, how long for 10 workers?",
+        "back": "75 days."
+      },
+      {
+        "front": "If 5 workers take 150 days to build a house, how long for 12 workers?",
+        "back": "62.5 days."
+      },
+      {
+        "front": "What happens to the number of days if the number of workers increases?",
+        "back": "The number of days decreases."
+      },
+      {
+        "front": "What is the product of two inversely proportional quantities?",
+        "back": "The product remains constant."
+      },
+      {
+        "front": "If y is inversely proportional to x and y = 6 when x = 20, what is the formula?",
+        "back": "y = k/x, where k = 120."
+      },
+      {
+        "front": "If p is inversely proportional to v^3 and p = 4 when v = 1, what is p when v is doubled?",
+        "back": "p = 0.5."
+      },
+      {
+        "front": "What does a direct proportionality relationship tell us?",
+        "back": "It indicates that two quantities increase or decrease together."
+      },
+      {
+        "front": "What does an inverse proportionality relationship tell us?",
+        "back": "It indicates that as one quantity increases, the other decreases."
+      }
+    ],
+    "podcast": "**Podcast Script: Understanding Direct and Inverse Proportion**\n\n**Host:** Welcome back to our educational podcast! Today, we’re diving into a fascinating topic that’s essential for anyone studying for their IGCSEs: Direct and Inverse Proportion. I’m your host, and joining me today is our friendly math expert, [Guest's Name]. \n\n**Guest:** Hi everyone! I’m excited to be here and talk about these concepts that are not only important for exams but also for real-life applications!\n\n**Host:** Absolutely! So, let’s start with the basics. What exactly is direct proportion?\n\n**Guest:** Great question! Direct proportion occurs when two quantities increase or decrease at the same rate. This means they are linked by a constant multiplier, which we call the Constant of Proportionality. \n\n**Host:** So, if I understand correctly, if one quantity goes up, the other does too, right?\n\n**Guest:** Exactly! You can express this relationship algebraically as \\( y \\propto x \\) or \\( y = kx \\), where \\( k \\) is that constant multiplier.\n\n**Host:** Got it! Now, what about inverse proportion? How does that differ?\n\n**Guest:** Inverse proportion is quite different. Here, when one quantity increases, the other decreases, but they maintain a constant product. This can be expressed as \\( y \\propto \\frac{1}{x} \\) or \\( xy = k \\).\n\n**Host:** That’s interesting! Can you give us some real-life examples to illustrate these concepts?\n\n**Guest:** Sure! Let’s take a look at a supermarket example. If 6 kg of rice costs $24, then for 13 kg, the cost would be $52. This is a direct proportion because as the quantity of rice increases, the cost increases at the same rate.\n\n**Host:** That’s a clear example! And what about inverse proportion?\n\n**Guest:** For inverse proportion, consider a construction scenario. If 5 workers take 150 days to build one house, then 10 workers would take just 75 days, and 12 workers would take about 62.5 days. Here, as the number of workers increases, the time taken decreases.\n\n**Host:** That’s a great illustration of how these concepts apply in real life! Now, how do we find unknown quantities using these relationships?\n\n**Guest:** You can use the algebraic expressions we discussed earlier. First, identify the quantities involved and determine if the relationship is direct or inverse. Then, apply the appropriate formula to find your unknown values.\n\n**Host:** And what about graphical representations? How do these relationships look on a graph?\n\n**Guest:** Good point! Direct proportions yield straight-line graphs that pass through the origin, while inverse proportions create hyperbolic graphs. It’s a visual way to see how the quantities relate to each other.\n\n**Host:** Before we wrap up, let’s do a quick recap of the key concepts we covered today.\n\n**Guest:** Sure! We learned that direct proportion means one quantity increases or decreases with another at the same rate, while inverse proportion means one quantity increases as the other decreases. The constant of proportionality links these quantities in direct proportion.\n\n**Host:** And we also discussed how to identify these relationships, use algebraic expressions to find unknowns, and how they can be represented graphically. \n\n**Guest:** Exactly! And remember, understanding these concepts can",
+    "high_score": 0,
+    "timestamp": 1764148386.785826
+  }
+]

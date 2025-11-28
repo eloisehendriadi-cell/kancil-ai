@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}🎙️ Podcast • {{ title or "Episode" }}{% endblock %}
+
+{% block content %}
+<h2>🎙️ {{ title or "Podcast Episode" }}</h2>
+<p class="muted">Approx. length: ~{{ minutes or 0 }} min</p>
+
+<div class="card">
+  {% if audio_url %}
+    <figure class="note-fig" style="margin:0">
+      <audio controls preload="metadata" style="width:100%">
+        <!-- Most TTS exports end up as m4a/mp4 containers; include a generic source -->
+        <source src="{{ audio_url }}" type="audio/mp4">
+        <source src="{{ audio_url }}">
+        Your browser can’t play this audio. You can
+        <a href="{{ audio_url }}" download>download it here</a>.
+      </audio>
+      <figcaption class="muted" style="margin-top:.5rem">
+        File: <a href="{{ audio_url }}" download>Download audio</a>
+      </figcaption>
+    </figure>
+  {% else %}
+    <article style="margin:0">
+      <strong>Audio not created.</strong>
+      <p class="muted">System TTS tools weren’t detected. The script below is still ready to record anywhere.</p>
+    </article>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="toolbar" style="justify-content:space-between;">
+    <h3 style="margin:0;">📝 Script</h3>
+    <a href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+  </div>
+  <hr>
+  <pre style="
+      white-space:pre-wrap;
+      background:#fff;
+      border:1px solid #e5e7eb;
+      padding:1rem;
+      border-radius:.8rem;
+      margin:0;
+    ">{{ script or "No script available." }}</pre>
+</div>
+{% endblock %}
+

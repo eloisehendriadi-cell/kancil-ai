@@ -1,46 +1,275 @@
 {% extends "base.html" %}
-{% block title %}🎙️ Podcast • {{ title or "Episode" }}{% endblock %}
+{% block title %}🎙️ Podcast{% endblock %}
 
-{% block content %}
-<h2>🎙️ {{ title or "Podcast Episode" }}</h2>
-<p class="muted">Approx. length: ~{{ minutes or 0 }} min</p>
-
-<div class="card">
-  {% if audio_url %}
-    <figure class="note-fig" style="margin:0">
-      <audio controls preload="metadata" style="width:100%">
-        <!-- Most TTS exports end up as m4a/mp4 containers; include a generic source -->
-        <source src="{{ audio_url }}" type="audio/mp4">
-        <source src="{{ audio_url }}">
-        Your browser can’t play this audio. You can
-        <a href="{{ audio_url }}" download>download it here</a>.
-      </audio>
-      <figcaption class="muted" style="margin-top:.5rem">
-        File: <a href="{{ audio_url }}" download>Download audio</a>
-      </figcaption>
-    </figure>
-  {% else %}
-    <article style="margin:0">
-      <strong>Audio not created.</strong>
-      <p class="muted">System TTS tools weren’t detected. The script below is still ready to record anywhere.</p>
-    </article>
-  {% endif %}
-</div>
-
-<div class="card">
-  <div class="toolbar" style="justify-content:space-between;">
-    <h3 style="margin:0;">📝 Script</h3>
-    <a href="{{ url_for('dashboard') }}">← Back to dashboard</a>
-  </div>
-  <hr>
-  <pre style="
-      white-space:pre-wrap;
-      background:#fff;
-      border:1px solid #e5e7eb;
-      padding:1rem;
-      border-radius:.8rem;
-      margin:0;
-    ">{{ script or "No script available." }}</pre>
-</div>
+{% block head %}
+<style>
+  .main{max-width:1200px !important}
+  .podcast-shell{display:grid;grid-template-columns:1fr 400px;gap:24px;min-height:70vh}
+  
+  /* Left panel - Create & Saved Podcasts */
+  .podcast-left{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+  }
+  .podcast-section{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+    box-shadow:var(--shadow);
+  }
+  .podcast-section h3{
+    margin:0 0 16px 0;
+    font-size:18px;
+    font-weight:700;
+  }
+  .create-podcast-btn{
+    width:100%;
+    padding:14px;
+    font-size:16px;
+    font-weight:600;
+    border-radius:10px;
+  }
+  
+  /* Saved podcasts list */
+  .podcast-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .podcast-item{
+    padding:14px 16px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    cursor:pointer;
+    transition:all 0.2s;
+    background:#fff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .podcast-item:hover{
+    background:#f9fafb;
+    border-color:#9ca3af;
+  }
+  .podcast-item.active{
+    background:#eef2ff;
+    border-color:#c7d2fe;
+  }
+  .podcast-name{
+    font-weight:600;
+    font-size:15px;
+  }
+  .podcast-actions{
+    display:flex;
+    gap:8px;
+  }
+  .podcast-actions button{
+    padding:6px 12px;
+    font-size:13px;
+    border-radius:6px;
+  }
+  
+  /* Right panel - Player */
+  .podcast-player{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:24px;
+    box-shadow:var(--shadow);
+    position:sticky;
+    top:24px;
+    height:fit-content;
+  }
+  .player-title{
+    font-size:20px;
+    font-weight:700;
+    margin:0 0 20px 0;
+  }
+  .player-artwork{
+    width:100%;
+    aspect-ratio:1;
+    background:#f3f4f6;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:20px;
+    font-size:14px;
+    color:var(--muted);
+    text-align:center;
+    padding:20px;
+  }
+  .player-controls{
+    width:100%;
+  }
+  .player-controls audio{
+    width:100%;
+    margin-top:12px;
+  }
+  
+  /* Tabs for player */
+  .player-tabs{
+    display:flex;
+    gap:8px;
+    margin:20px 0 12px;
+    border-bottom:1px solid var(--border);
+  }
+  .player-tab{
+    padding:10px 16px;
+    background:none;
+    border:none;
+    border-bottom:2px solid transparent;
+    cursor:pointer;
+    font-weight:600;
+    color:var(--muted);
+    transition:all 0.2s;
+  }
+  .player-tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+  .tab-content{
+    display:none;
+    padding:16px 0;
+  }
+  .tab-content.active{
+    display:block;
+  }
+  .script-content{
+    max-height:400px;
+    overflow-y:auto;
+    white-space:pre-wrap;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--text);
+  }
+  
+  @media (max-width: 820px){
+    .podcast-shell{
+      grid-template-columns:1fr;
+    }
+    .podcast-player{
+      position:relative;
+      top:0;
+    }
+  }
+</style>
 {% endblock %}
 
+{% block content %}
+<header class="toolbar" style="justify-content:space-between;margin-bottom:24px">
+  <h1 style="margin:0;font-size:28px;font-weight:800">Podcast page</h1>
+  <a class="btn" href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+</header>
+
+<div class="podcast-shell">
+  <!-- Left Panel -->
+  <div class="podcast-left">
+    <!-- Create New Podcast Section -->
+    <div class="podcast-section">
+      <h3>Create new podcast</h3>
+      <button class="btn primary create-podcast-btn" id="create-podcast-btn">
+        + Generate from Notes
+      </button>
+    </div>
+    
+    <!-- Saved Podcasts Section -->
+    <div class="podcast-section">
+      <h3>Saved podcasts:</h3>
+      <div class="podcast-list" id="podcast-list">
+        <div class="podcast-item" data-id="1">
+          <span class="podcast-name">Podcast 1</span>
+          <div class="podcast-actions">
+            <button class="btn" onclick="playPodcast(1)">Play</button>
+          </div>
+        </div>
+        <div class="podcast-item" data-id="2">
+          <span class="podcast-name">Podcast 2</span>
+          <div class="podcast-actions">
+            <button class="btn" onclick="playPodcast(2)">Play</button>
+          </div>
+        </div>
+        <div class="podcast-item" data-id="3">
+          <span class="podcast-name">Podcast 3</span>
+          <div class="podcast-actions">
+            <button class="btn" onclick="playPodcast(3)">Play</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Right Panel - Player -->
+  <div class="podcast-player">
+    <h2 class="player-title">Now playing:</h2>
+    
+    <div class="player-artwork" id="player-artwork">
+      Randomly generated photo here
+    </div>
+    
+    <div class="player-controls">
+      <audio controls id="audio-player" style="width:100%">
+        <source id="audio-source" src="" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+    
+    <div class="player-tabs">
+      <button class="player-tab active" data-tab="info">Info</button>
+      <button class="player-tab" data-tab="script">Script</button>
+    </div>
+    
+    <div class="tab-content active" id="tab-info">
+      <p class="muted">Select a podcast to view details.</p>
+    </div>
+    
+    <div class="tab-content" id="tab-script">
+      <div class="script-content" id="script-content">
+        Select a podcast to view the script.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.player-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.player-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+  
+  // Play podcast
+  function playPodcast(id) {
+    // Highlight active podcast
+    document.querySelectorAll('.podcast-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    document.querySelector(`[data-id="${id}"]`).classList.add('active');
+    
+    // Update player
+    // TODO: Load actual podcast data
+    console.log('Playing podcast', id);
+  }
+  
+  // Create podcast button
+  document.getElementById('create-podcast-btn').addEventListener('click', () => {
+    // Redirect to dashboard to select notes
+    window.location.href = '{{ url_for("dashboard") }}';
+  });
+  
+  // Load saved podcasts
+  async function loadPodcasts() {
+    // TODO: Implement loading podcasts from backend
+    console.log('Loading podcasts...');
+  }
+  
+  loadPodcasts();
+</script>
+{% endblock %}

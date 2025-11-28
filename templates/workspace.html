@@ -30,6 +30,68 @@
   /* Embedded quiz frame */
   .quiz-frame-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px}
   .quiz-frame{width:100%;border:0;height:720px}
+
+  /* Game styling */
+  #game-board > div {
+    transition: background 0.15s, transform 0.1s;
+  }
+  
+  #game-board > div:hover {
+    background: #dbeafe !important;
+    transform: scale(1.05);
+  }
+  
+  #block-pieces > div {
+    transition: all 0.15s ease-out;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-drag: element;
+  }
+  
+  #block-pieces > div:active {
+    cursor: grabbing;
+  }
+  
+  #block-pieces > div.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+  
+  #block-pieces > div:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  #block-pieces > div.dragging {
+    opacity: 0.5;
+  }
+  
+  #block-pieces > div.used {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  
+  #question-options button {
+    transition: all 0.2s;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+  }
+  
+  #question-options button:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: translateX(4px);
+  }
+
+  .block-selected {
+    border: 3px solid #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 </style>
 
 <header class="toolbar" style="justify-content:flex-start;gap:12px;margin-bottom:10px">
@@ -40,6 +102,7 @@
       <input id="ws_title" type="text" value="{{ session.get('shared_source_title','Untitled') }}">
     </div>
   </div>
+  <button id="save-workspace-btn" class="btn primary" style="margin-left:auto;">💾 Save Workspace</button>
 </header>
 
 <!-- Source setter - HIDDEN -->
@@ -65,6 +128,7 @@
     <button class="tab-btn" data-tab="podcast">🎙️ <span>Podcast</span></button>
     <button class="tab-btn" data-tab="quiz">❓ <span>Quiz</span></button>
     <button class="tab-btn" data-tab="flashcards">🧠 <span>Flashcards</span></button>
+    <button class="tab-btn" data-tab="game">🎮 <span>Games</span></button>
   </aside>
 
   <!-- Main pane -->
@@ -82,9 +146,25 @@
     <!-- Podcast -->
     <section id="tab-podcast" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-podcast" class="btn">↻ Regenerate podcast script</button>
+        <button id="regen-podcast" class="btn">↻ Regenerate podcast</button>
       </div>
-      <pre id="podcast_script" class="ws-card" style="white-space:pre-wrap;margin:0"></pre>
+      
+      <!-- Audio Player (shown when audio is available) -->
+      <div id="podcast-audio-player" style="display:none; margin-bottom:1.5rem;">
+        <div class="ws-card">
+          <h3 style="margin-top:0; margin-bottom:1rem;">🎙️ Podcast Audio</h3>
+          <audio id="podcast-audio" controls style="width:100%; max-width:600px;">
+            <source id="podcast-audio-source" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      </div>
+      
+      <!-- Script Display -->
+      <div class="ws-card">
+        <h3 style="margin-top:0; margin-bottom:1rem;">📝 Script</h3>
+        <pre id="podcast_script" style="white-space:pre-wrap;margin:0;font-family:inherit;"></pre>
+      </div>
     </section>
 
     <!-- Quiz (embedded quiz.html player) -->
@@ -173,7 +253,7 @@
               justify-content:center;
               text-align:center;
               backface-visibility:hidden;
-              transform:rotateY(180deg);
+              transform:rotateX(180deg);
               font-size:16px;
               overflow-y:auto;
               color:#065f46;
@@ -188,6 +268,85 @@
       <div style="margin-top:48px;">
         <h3 style="margin-bottom:16px;">All Questions</h3>
         <div id="cards_grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;"></div>
+      </div>
+    </section>
+
+    <!-- Games Tab -->
+    <section id="tab-game" class="tab" style="display:none;">
+      <!-- Game Container -->
+      <div id="game-container" style="display:flex;gap:24px;">
+        <!-- Left: Scores and Grid -->
+        <div style="flex:1;">
+          <div style="margin-bottom:16px;">
+            <div style="font-size:13px;color:#6b7280;margin-bottom:2px;">Highest score:</div>
+            <div style="font-size:20px;font-weight:700;color:#111827;" id="game-highest">0</div>
+            <div style="font-size:13px;color:#6b7280;margin-top:12px;margin-bottom:2px;">Score:</div>
+            <div style="font-size:20px;font-weight:700;color:#3b82f6;" id="game-score">0</div>
+          </div>
+
+          <!-- Grid Container (400x400px) -->
+          <div id="grid-container" style="width:400px;height:400px;background:#f3f4f6;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;">
+            <!-- Start Screen -->
+            <div id="start-screen" style="text-align:center;">
+              <button onclick="startGame()" style="padding:16px 48px;font-size:18px;font-weight:600;background:#3b82f6;color:white;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(59,130,246,0.3);">Start now</button>
+            </div>
+
+            <!-- Loading Screen -->
+            <div id="loading-screen" style="display:none;text-align:center;padding:40px;">
+              <div style="margin-bottom:16px;">
+                <div style="width:200px;height:200px;margin:0 auto;position:relative;">
+                  <svg style="transform:rotate(-90deg);" width="200" height="200">
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                    <circle id="progress-circle" cx="100" cy="100" r="90" fill="none" stroke="#3b82f6" stroke-width="8" stroke-dasharray="565.48" stroke-dashoffset="565.48" style="transition:stroke-dashoffset 0.3s;"/>
+                  </svg>
+                  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:700;color:#3b82f6;" id="loading-percent">0%</div>
+                </div>
+              </div>
+              <div style="font-size:16px;color:#6b7280;font-weight:500;" id="loading-text">Loading questions...</div>
+            </div>
+
+            <!-- Loading Screen -->
+            <div id="loading-screen" style="display:none;text-align:center;padding:40px;">
+              <div style="margin-bottom:16px;">
+                <div style="width:200px;height:200px;margin:0 auto;position:relative;">
+                  <svg style="transform:rotate(-90deg);" width="200" height="200">
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                    <circle id="progress-circle" cx="100" cy="100" r="90" fill="none" stroke="#3b82f6" stroke-width="8" stroke-dasharray="565.48" stroke-dashoffset="565.48" style="transition:stroke-dashoffset 0.3s;"/>
+                  </svg>
+                  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:700;color:#3b82f6;" id="loading-percent">0%</div>
+                </div>
+              </div>
+              <div style="font-size:16px;color:#6b7280;font-weight:500;" id="loading-text">Loading questions...</div>
+            </div>
+
+            <!-- Question Card -->
+            <div id="question-card" style="display:none;background:white;padding:32px;border-radius:12px;max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+              <h3 id="question-title" style="margin:0 0 16px 0;font-size:16px;font-weight:600;color:#6b7280;">Question 1:</h3>
+              <p id="question-text" style="font-size:17px;line-height:1.6;margin-bottom:24px;font-weight:500;"></p>
+              <div id="question-options" style="display:flex;flex-direction:column;gap:10px;"></div>
+              <div id="question-feedback" style="margin-top:12px;font-size:14px;color:#ef4444;display:none;">Try again!</div>
+            </div>
+
+            <!-- Game Board -->
+            <div id="game-board" style="display:none;width:400px;height:400px;background:#d1d5db;padding:4px;border-radius:8px;">
+              <div id="board-grid" style="display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:2px;width:100%;height:100%;"></div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="gameover-screen" style="display:none;text-align:center;">
+              <h2 style="margin:0 0 8px 0;font-size:24px;font-weight:700;">Game Over</h2>
+              <p style="font-size:32px;font-weight:700;color:#3b82f6;margin:16px 0;" id="final-score">Score: 0</p>
+              <p id="new-high-score" style="display:none;color:#10b981;font-weight:600;margin-bottom:16px;">🎉 New Highest Score!</p>
+              <button onclick="playAgain()" style="padding:14px 36px;font-size:16px;font-weight:600;background:#3b82f6;color:white;border:none;border-radius:8px;cursor:pointer;">Play again</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Block Pieces -->
+        <div style="width:160px;">
+          <div style="font-size:14px;font-weight:600;color:#6b7280;margin-bottom:12px;">Blocks here:</div>
+          <div id="block-tray" style="display:flex;flex-direction:column;gap:16px;"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -281,6 +440,35 @@
   document.getElementById('ws_seed').addEventListener('click', seedSource);
   document.getElementById('ws_reset').addEventListener('click', resetWorkspace);
 
+  // ===== Save Workspace =====
+  document.getElementById('save-workspace-btn').addEventListener('click', async () => {
+    const title = (document.getElementById('ws_title').value || 'Untitled').trim();
+    const notesHtml = document.getElementById('notes_html').innerHTML;
+    
+    if (!notesHtml || notesHtml.trim() === '') {
+      alert('No notes to save. Please generate notes first.');
+      return;
+    }
+    
+    try {
+      statusEl.textContent = 'Saving workspace...';
+      const response = await postJSON('/workspace/api/save', { 
+        title: title,
+        content: notesHtml 
+      });
+      
+      if (response.ok) {
+        statusEl.textContent = '✅ Workspace saved successfully!';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      } else {
+        throw new Error(response.error || 'Failed to save');
+      }
+    } catch (e) {
+      statusEl.textContent = '❌ Save failed: ' + e.message;
+      alert('Failed to save workspace: ' + e.message);
+    }
+  });
+
   // ===== Notes =====
   async function loadNotes(force=false){
     try{
@@ -299,11 +487,42 @@
   // ===== Podcast =====
   async function loadPodcast(force=false){
     try{
-      statusEl.textContent = force ? 'Regenerating podcast…' : 'Loading podcast…';
+      statusEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="width:16px;height:16px;border:3px solid #3b82f6;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div><span>' + (force ? 'Regenerating podcast…' : 'Loading podcast…') + ' <span id="podcast-progress">0%</span></span></div>';
+      
+      const progressInterval = setInterval(() => {
+        const progressEl = document.getElementById('podcast-progress');
+        if (progressEl) {
+          const current = parseInt(progressEl.textContent) || 0;
+          if (current < 90) {
+            progressEl.textContent = Math.min(current + 10, 90) + '%';
+          }
+        }
+      }, 500);
+      
       const j = await postJSON(WS.podcast, { force });
+      clearInterval(progressInterval);
+      
+      const progressEl = document.getElementById('podcast-progress');
+      if (progressEl) progressEl.textContent = '100%';
+      
+      // Update script
       document.getElementById('podcast_script').textContent = (j && j.script) ? j.script : 'No script.';
+      
+      // Update audio player if available
+      const audioPlayer = document.getElementById('podcast-audio-player');
+      const audioElement = document.getElementById('podcast-audio');
+      const audioSource = document.getElementById('podcast-audio-source');
+      
+      if (j && j.audio_url) {
+        audioSource.src = j.audio_url;
+        audioElement.load();
+        audioPlayer.style.display = 'block';
+      } else {
+        audioPlayer.style.display = 'none';
+      }
     }catch(e){
       document.getElementById('podcast_script').textContent = '';
+      document.getElementById('podcast-audio-player').style.display = 'none';
       statusEl.textContent = 'Error: ' + e.message;
       return;
     }finally{
@@ -356,7 +575,7 @@
     
     // Reset flip state
     isFlipped = false;
-    cardEl.style.transform = 'rotateY(0deg)';
+    cardEl.style.transform = 'rotateX(0deg)';
   }
 
   function nextCard() {
@@ -372,7 +591,7 @@
   // Flip card on click
   document.getElementById('flash-card').addEventListener('click', () => {
     isFlipped = !isFlipped;
-    document.getElementById('flash-card').style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+    document.getElementById('flash-card').style.transform = isFlipped ? 'rotateX(180deg)' : 'rotateX(0deg)';
   });
 
   // Navigation buttons
@@ -461,6 +680,553 @@
     // Load fresh notes
     try { await loadNotes(false); } catch {}
   })();
+
+  // ===== GAME LOGIC =====
+  const BOARD_SIZE = 10;
+  const CELL_SIZE = 38;
+
+  // Block shapes (polyominoes)
+  const PIECE_SHAPES = [
+    [[1]], // 1x1
+    [[1,1]], // 1x2 horizontal
+    [[1],[1]], // 2x1 vertical
+    [[1,1,1]], // 1x3
+    [[1],[1],[1]], // 3x1
+    [[1,1],[1,1]], // 2x2 square
+    [[1,1,1,1]], // 1x4
+    [[1],[1],[1],[1]], // 4x1
+    [[1,0],[1,1]], // L small
+    [[0,1],[1,1]], // L flipped
+    [[1,1],[1,0]], // L rotated
+    [[1,1],[0,1]], // L rotated flipped
+    [[1,1,1],[1,0,0]], // L large
+    [[1,1,1],[0,0,1]], // L large flipped
+    [[1,0,0],[1,1,1]], // L large rotated
+    [[0,0,1],[1,1,1]], // L large rotated flipped
+    [[1,1,0],[0,1,1]], // Z
+    [[0,1,1],[1,1,0]], // S
+    [[1,1,1],[0,1,0]], // T
+  ];
+
+  // Game state
+  const gameState = {
+    mode: 'start', // start, loading, question, play, gameOver
+    board: [],
+    trayPieces: [],
+    questions: [],
+    currentQuestionIndex: 0,
+    score: 0,
+    highScore: 0,
+    placedThisRound: 0,
+    draggedPiece: null,
+    draggedPieceIndex: -1,
+  };
+
+  // Initialize game on tab switch
+  document.querySelector('.tab-btn[data-tab="game"]').addEventListener('click', () => {
+    initGame();
+  });
+
+  function initGame() {
+    // Load high score from localStorage
+    gameState.highScore = parseInt(localStorage.getItem('blockblast_highscore') || '0');
+    document.getElementById('game-highest').textContent = gameState.highScore;
+    
+    // Load questions from quiz API
+    loadQuestions();
+    
+    // Initialize empty board
+    gameState.board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
+    
+    // Set mode to start
+    gameState.mode = 'start';
+    renderUI();
+  }
+
+  function updateLoadingProgress(percent, text) {
+    const circle = document.getElementById('progress-circle');
+    const percentEl = document.getElementById('loading-percent');
+    const textEl = document.getElementById('loading-text');
+    
+    if (circle && percentEl && textEl) {
+      const offset = 565.48 - (565.48 * percent / 100);
+      circle.style.strokeDashoffset = offset;
+      percentEl.textContent = Math.round(percent) + '%';
+      textEl.textContent = text;
+    }
+  }
+
+  async function loadQuestions() {
+    try {
+      updateLoadingProgress(10, 'Generating quiz questions...');
+      
+      // Always force generate new questions to get a larger pool
+      const res = await postJSON(WS.quiz, { force: true });
+      gameState.questions = res.items || res.questions || [];
+      
+      updateLoadingProgress(50, `Loaded ${gameState.questions.length} questions...`);
+      
+      console.log(`Loaded ${gameState.questions.length} questions for game`);
+      
+      if (gameState.questions.length < 10) {
+        // If we got fewer than 10, try to generate more
+        updateLoadingProgress(60, 'Generating more questions...');
+        console.log('Generating more questions...');
+        const res2 = await postJSON(WS.quiz, { force: true });
+        const moreQuestions = res2.items || res2.questions || [];
+        
+        updateLoadingProgress(80, 'Merging questions...');
+        
+        // Merge and deduplicate
+        const allQuestions = [...gameState.questions];
+        moreQuestions.forEach(q => {
+          if (!allQuestions.find(existing => existing.question === q.question)) {
+            allQuestions.push(q);
+          }
+        });
+        gameState.questions = allQuestions;
+        console.log(`Total questions after merge: ${gameState.questions.length}`);
+      }
+      
+      updateLoadingProgress(90, 'Preparing game...');
+      
+      // Shuffle questions for variety
+      gameState.questions = shuffleArray(gameState.questions);
+      
+      updateLoadingProgress(100, 'Ready!');
+    } catch (e) {
+      console.error('Failed to load questions:', e);
+      // Fallback questions
+      gameState.questions = [
+        { question: 'Sample question?', options: ['A', 'B', 'C', 'D'], answer_index: 0 }
+      ];
+    }
+  }
+
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  function renderUI() {
+    // Hide all screens
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('question-card').style.display = 'none';
+    document.getElementById('game-board').style.display = 'none';
+    document.getElementById('gameover-screen').style.display = 'none';
+    document.getElementById('block-tray').innerHTML = '';
+
+    // Show appropriate screen based on mode
+    if (gameState.mode === 'start') {
+      document.getElementById('start-screen').style.display = 'block';
+    } else if (gameState.mode === 'loading') {
+      document.getElementById('loading-screen').style.display = 'block';
+    } else if (gameState.mode === 'question') {
+      showQuestion();
+    } else if (gameState.mode === 'play') {
+      document.getElementById('game-board').style.display = 'block';
+      renderBoard();
+      renderTray();
+    } else if (gameState.mode === 'gameOver') {
+      showGameOver();
+    }
+
+    // Update score display
+    document.getElementById('game-score').textContent = gameState.score;
+  }
+
+  function startGame() {
+    console.log('Starting game...');
+    gameState.mode = 'loading';
+    gameState.currentQuestionIndex = 0;
+    gameState.score = 0;
+    gameState.placedThisRound = 0;
+    gameState.board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
+    renderUI();
+    
+    // Load questions with progress
+    loadQuestions().then(() => {
+      setTimeout(() => {
+        gameState.mode = 'question';
+        renderUI();
+      }, 500);
+    });
+  }
+
+  function updateLoadingProgress(percent, text) {
+    const circle = document.getElementById('progress-circle');
+    const percentEl = document.getElementById('loading-percent');
+    const textEl = document.getElementById('loading-text');
+    
+    if (circle && percentEl && textEl) {
+      const offset = 565.48 - (565.48 * percent / 100);
+      circle.style.strokeDashoffset = offset;
+      percentEl.textContent = Math.round(percent) + '%';
+      textEl.textContent = text;
+    }
+  }
+
+  async function loadQuestions() {
+    try {
+      updateLoadingProgress(10, 'Generating quiz questions...');
+      
+      // Always force generate new questions to get a larger pool
+      const res = await postJSON(WS.quiz, { force: true });
+      gameState.questions = res.items || res.questions || [];
+      
+      updateLoadingProgress(50, `Loaded ${gameState.questions.length} questions...`);
+      
+      console.log(`Loaded ${gameState.questions.length} questions for game`);
+      
+      if (gameState.questions.length < 10) {
+        // If we got fewer than 10, try to generate more
+        updateLoadingProgress(60, 'Generating more questions...');
+        console.log('Generating more questions...');
+        const res2 = await postJSON(WS.quiz, { force: true });
+        const moreQuestions = res2.items || res2.questions || [];
+        
+        updateLoadingProgress(80, 'Merging questions...');
+        
+        // Merge and deduplicate
+        const allQuestions = [...gameState.questions];
+        moreQuestions.forEach(q => {
+          if (!allQuestions.find(existing => existing.question === q.question)) {
+            allQuestions.push(q);
+          }
+        });
+        gameState.questions = allQuestions;
+        console.log(`Total questions after merge: ${gameState.questions.length}`);
+      }
+      
+      updateLoadingProgress(90, 'Preparing game...');
+      
+      // Shuffle questions for variety
+      gameState.questions = shuffleArray(gameState.questions);
+      
+      updateLoadingProgress(100, 'Ready!');
+    } catch (e) {
+      console.error('Failed to load questions:', e);
+      // Fallback questions
+      gameState.questions = [
+        { question: 'Sample question?', options: ['A', 'B', 'C', 'D'], answer_index: 0 }
+      ];
+    }
+  }
+
+  function showQuestion() {
+    // Cycle through questions without repeating same 3
+    if (gameState.currentQuestionIndex >= gameState.questions.length) {
+      // If we've used all questions, generate more
+      console.log('Used all questions, generating more...');
+      gameState.mode = 'loading';
+      renderUI();
+      loadQuestions().then(() => {
+        gameState.currentQuestionIndex = 0;
+        gameState.mode = 'question';
+        renderUI();
+      });
+      return;
+    }
+
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    console.log(`Showing question ${gameState.currentQuestionIndex + 1}/${gameState.questions.length}`);
+    const correctAnswer = q.answer_index !== undefined ? q.answer_index : q.answer;
+
+    document.getElementById('question-card').style.display = 'block';
+    document.getElementById('question-title').textContent = `Question ${gameState.currentQuestionIndex + 1}:`;
+    document.getElementById('question-text').textContent = q.question || 'Question text';
+    document.getElementById('question-feedback').style.display = 'none';
+
+    const optionsContainer = document.getElementById('question-options');
+    optionsContainer.innerHTML = '';
+
+    (q.options || []).forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.style.cssText = 'width:100%;padding:12px 16px;text-align:left;background:#f9fafb;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:15px;transition:all 0.2s;';
+      btn.onmouseover = () => { btn.style.background = '#eff6ff'; btn.style.borderColor = '#3b82f6'; };
+      btn.onmouseout = () => { btn.style.background = '#f9fafb'; btn.style.borderColor = '#e5e7eb'; };
+      btn.onclick = () => handleAnswer(idx, correctAnswer);
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function handleAnswer(selected, correct) {
+    console.log('Answer:', selected, 'Correct:', correct);
+    
+    if (selected === correct) {
+      // Correct answer - start playing and move to next question
+      console.log('Correct! Starting play mode');
+      gameState.currentQuestionIndex++; // Move to next question for next round
+      gameState.mode = 'play';
+      gameState.placedThisRound = 0;
+      generatePieces();
+      renderUI();
+    } else {
+      // Wrong answer - show feedback but keep same question
+      console.log('Wrong answer, try again');
+      document.getElementById('question-feedback').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('question-feedback').style.display = 'none';
+      }, 1500);
+    }
+  }
+
+  function generatePieces() {
+    gameState.trayPieces = [];
+    for (let i = 0; i < 3; i++) {
+      const shape = PIECE_SHAPES[Math.floor(Math.random() * PIECE_SHAPES.length)];
+      gameState.trayPieces.push(JSON.parse(JSON.stringify(shape))); // Deep copy
+    }
+    console.log('Generated pieces:', gameState.trayPieces);
+  }
+
+  function renderBoard() {
+    const boardGrid = document.getElementById('board-grid');
+    boardGrid.innerHTML = '';
+
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        const cell = document.createElement('div');
+        cell.style.cssText = `background:${gameState.board[row][col] ? '#3b82f6' : '#ffffff'};border-radius:3px;`;
+        cell.dataset.row = row;
+        cell.dataset.col = col;
+
+        // Drop zone
+        cell.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (gameState.draggedPiece) {
+            cell.style.background = '#dbeafe';
+          }
+        });
+
+        cell.addEventListener('dragleave', () => {
+          if (!gameState.board[row][col]) {
+            cell.style.background = '#ffffff';
+          }
+        });
+
+        cell.addEventListener('drop', (e) => {
+          e.preventDefault();
+          tryPlacePiece(row, col);
+        });
+
+        boardGrid.appendChild(cell);
+      }
+    }
+  }
+
+  function renderTray() {
+    const tray = document.getElementById('block-tray');
+    tray.innerHTML = '';
+
+    gameState.trayPieces.forEach((piece, idx) => {
+      if (!piece) return; // Skip removed pieces
+
+      const pieceDiv = document.createElement('div');
+      pieceDiv.draggable = true;
+      pieceDiv.style.cssText = 'padding:12px;background:transparent;border:2px solid #e5e7eb;border-radius:8px;cursor:grab;transition:all 0.15s ease-out;user-select:none;';
+      
+      const grid = document.createElement('div');
+      const cols = piece[0].length;
+      grid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},24px);gap:2px;`;
+
+      piece.forEach(row => {
+        row.forEach(cell => {
+          const cellDiv = document.createElement('div');
+          cellDiv.style.cssText = `width:24px;height:24px;background:${cell ? '#3b82f6' : 'transparent'};border-radius:3px;`;
+          grid.appendChild(cellDiv);
+        });
+      });
+
+      pieceDiv.appendChild(grid);
+
+      pieceDiv.addEventListener('dragstart', (e) => {
+        gameState.draggedPiece = piece;
+        gameState.draggedPieceIndex = idx;
+        pieceDiv.style.opacity = '0.5';
+        
+        // Create drag image for smooth dragging
+        const dragImage = pieceDiv.cloneNode(true);
+        dragImage.style.position = 'absolute';
+        dragImage.style.top = '-1000px';
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 20, 20);
+        setTimeout(() => document.body.removeChild(dragImage), 0);
+      });
+
+      pieceDiv.addEventListener('dragend', () => {
+        pieceDiv.style.opacity = '1';
+        gameState.draggedPiece = null;
+        gameState.draggedPieceIndex = -1;
+      });
+
+      tray.appendChild(pieceDiv);
+    });
+  }
+
+  function tryPlacePiece(row, col) {
+    if (!gameState.draggedPiece) return;
+
+    const piece = gameState.draggedPiece;
+    
+    // Check if piece fits
+    if (!canPlacePiece(row, col, piece)) {
+      console.log('Cannot place piece here');
+      renderBoard(); // Reset hover effects
+      return;
+    }
+
+    // Place piece
+    for (let r = 0; r < piece.length; r++) {
+      for (let c = 0; c < piece[r].length; c++) {
+        if (piece[r][c]) {
+          gameState.board[row + r][col + c] = 1;
+        }
+      }
+    }
+
+    // Remove piece from tray
+    gameState.trayPieces[gameState.draggedPieceIndex] = null;
+    gameState.placedThisRound++;
+    
+    console.log(`Placed piece ${gameState.placedThisRound}/3`);
+
+    // Check and clear lines
+    checkAndClearLines();
+
+    // Render board
+    renderBoard();
+
+    // Check if placed 3 pieces
+    if (gameState.placedThisRound >= 3) {
+      console.log('Placed 3 pieces, back to question mode');
+      gameState.mode = 'question';
+      // Don't increment here - it was already incremented on correct answer
+      setTimeout(() => renderUI(), 500);
+      return;
+    }
+
+    // Regenerate tray with new piece
+    const newPiece = PIECE_SHAPES[Math.floor(Math.random() * PIECE_SHAPES.length)];
+    gameState.trayPieces[gameState.draggedPieceIndex] = JSON.parse(JSON.stringify(newPiece));
+    renderTray();
+
+    // Check game over
+    if (checkGameOver()) {
+      gameState.mode = 'gameOver';
+      setTimeout(() => renderUI(), 500);
+    }
+  }
+
+  function canPlacePiece(row, col, piece) {
+    for (let r = 0; r < piece.length; r++) {
+      for (let c = 0; c < piece[r].length; c++) {
+        if (piece[r][c]) {
+          const boardRow = row + r;
+          const boardCol = col + c;
+          
+          // Check bounds
+          if (boardRow >= BOARD_SIZE || boardCol >= BOARD_SIZE) return false;
+          
+          // Check collision
+          if (gameState.board[boardRow][boardCol]) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function checkAndClearLines() {
+    let linesCleared = 0;
+
+    // Check rows
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      if (gameState.board[r].every(cell => cell === 1)) {
+        gameState.board[r].fill(0);
+        linesCleared++;
+      }
+    }
+
+    // Check columns
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (gameState.board.every(row => row[c] === 1)) {
+        gameState.board.forEach(row => row[c] = 0);
+        linesCleared++;
+      }
+    }
+
+    // Update score (BlockBlast-style scoring)
+    if (linesCleared > 0) {
+      const points = linesCleared === 1 ? 10 : 
+                     linesCleared === 2 ? 30 : 
+                     linesCleared === 3 ? 60 : 
+                     linesCleared * 40;
+      gameState.score += points;
+      console.log(`Cleared ${linesCleared} lines, +${points} points`);
+      
+      // Update high score
+      if (gameState.score > gameState.highScore) {
+        gameState.highScore = gameState.score;
+        localStorage.setItem('blockblast_highscore', gameState.highScore);
+        document.getElementById('game-highest').textContent = gameState.highScore;
+      }
+      
+      document.getElementById('game-score').textContent = gameState.score;
+    }
+  }
+
+  function checkGameOver() {
+    // Check if any piece in tray can fit anywhere on board
+    for (const piece of gameState.trayPieces) {
+      if (!piece) continue;
+      
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          if (canPlacePiece(r, c, piece)) {
+            return false; // At least one piece can fit
+          }
+        }
+      }
+    }
+    
+    console.log('Game over - no more moves');
+    return true; // No pieces can fit
+  }
+
+  function showGameOver() {
+    document.getElementById('gameover-screen').style.display = 'block';
+    document.getElementById('final-score').textContent = `Score: ${gameState.score}`;
+    
+    // Check if new high score
+    if (gameState.score >= gameState.highScore && gameState.score > 0) {
+      document.getElementById('new-high-score').style.display = 'block';
+    } else {
+      document.getElementById('new-high-score').style.display = 'none';
+    }
+  }
+
+  function playAgain() {
+    console.log('Play again');
+    gameState.mode = 'start';
+    gameState.score = 0;
+    gameState.placedThisRound = 0;
+    gameState.currentQuestionIndex = 0;
+    gameState.board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
+    gameState.trayPieces = [];
+    renderUI();
+  }
+
+  function resetGame() {
+    playAgain();
+  }
+
+
 </script>
 {% endblock %}
 
