@@ -369,7 +369,11 @@ def build_messages(topic: str, clean_source: str, kw_line: str, language: str = 
     # Map language codes to natural language instructions
     language_map = {
         "english": "in English",
+        "bahasa": "in Bahasa Indonesia",
         "indonesian": "in Bahasa Indonesia",
+        "malay": "in Bahasa Malaysia (Melayu)",
+        "urdu": "in Urdu",
+        "nepali": "in Nepali",
         "spanish": "in Spanish",
         "french": "in French",
         "german": "in German",

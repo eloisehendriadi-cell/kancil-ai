@@ -65,6 +65,39 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;
     letter-spacing:-1px;
   }
+  
+  /* Language selector */
+  .language-selector{
+    margin:0 0 40px;
+    animation:fadeInUp 0.8s ease-out 0.3s backwards;
+  }
+  .language-selector label{
+    display:block;
+    font-size:18px;
+    color:#6b7280;
+    margin-bottom:12px;
+    font-weight:500;
+  }
+  .language-selector select{
+    padding:14px 20px;
+    font-size:18px;
+    border:2px solid #d1d5db;
+    border-radius:12px;
+    background:#fff;
+    color:#374151;
+    cursor:pointer;
+    min-width:280px;
+    transition:all 0.3s ease;
+  }
+  .language-selector select:hover{
+    border-color:#9ca3af;
+  }
+  .language-selector select:focus{
+    outline:none;
+    border-color:#6b7280;
+    box-shadow:0 0 0 3px rgba(107,114,128,0.1);
+  }
+  
   .start-btn{
     display:inline-block;
     padding:20px 60px;
@@ -244,9 +277,313 @@
   
   <!-- Welcome Section -->
   <div class="welcome-section">
-    <h2 class="welcome-text">Welcome</h2>
-    <a href="{{ url_for('dashboard') }}" class="start-btn">Start now</a>
+    <h2 class="welcome-text" id="welcomeText">Welcome</h2>
+    
+    <!-- Language Selector -->
+    <div class="language-selector">
+      <label for="uiLanguage" id="languageLabel">Choose your interface language:</label>
+      <select id="uiLanguage" onchange="changeUILanguage(this.value)">
+        <option value="en">English</option>
+        <option value="id">Bahasa Indonesia</option>
+        <option value="ms">Bahasa Malaysia (Melayu)</option>
+        <option value="ur">اردو (Urdu - Pakistan)</option>
+        <option value="ne">नेपाली (Nepali)</option>
+        <option value="es">Español (Spanish)</option>
+        <option value="zh-cn">简体中文 (Chinese Simplified)</option>
+        <option value="zh-tw">繁體中文 (Chinese Traditional)</option>
+        <option value="ja">日本語 (Japanese)</option>
+        <option value="ko">한국어 (Korean)</option>
+        <option value="fr">Français (French)</option>
+        <option value="de">Deutsch (German)</option>
+        <option value="ar">العربية (Arabic)</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+        <option value="bn">বাংলা (Bengali)</option>
+      </select>
+    </div>
+    
+    <a href="{{ url_for('dashboard') }}" class="start-btn" id="startBtn">Start now</a>
   </div>
 </div>
-{% endblock %}
 
+<script>
+// Translation dictionary
+const translations = {
+  en: {
+    welcome: "Welcome",
+    languageLabel: "Choose your interface language:",
+    startBtn: "Start now",
+    home: "Home",
+    dashboard: "Dashboard",
+    chatbot: "Chatbot",
+    pastPapers: "Past Papers",
+    notes: "Notes",
+    quiz: "Quiz",
+    flashcards: "Flashcards",
+    games: "Games",
+    podcast: "Podcast",
+    workspace: "Workspace"
+  },
+  id: {
+    welcome: "Selamat Datang",
+    languageLabel: "Pilih bahasa antarmuka Anda:",
+    startBtn: "Mulai sekarang",
+    home: "Beranda",
+    dashboard: "Dasbor",
+    chatbot: "Chatbot",
+    pastPapers: "Soal Ujian",
+    notes: "Catatan",
+    quiz: "Kuis",
+    flashcards: "Kartu Flash",
+    games: "Permainan",
+    podcast: "Podcast",
+    workspace: "Ruang Kerja"
+  },
+  ms: {
+    welcome: "Selamat Datang",
+    languageLabel: "Pilih bahasa antara muka anda:",
+    startBtn: "Mula sekarang",
+    home: "Laman Utama",
+    dashboard: "Papan Pemuka",
+    chatbot: "Chatbot",
+    pastPapers: "Kertas Peperiksaan",
+    notes: "Nota",
+    quiz: "Kuiz",
+    flashcards: "Kad Imbasan",
+    games: "Permainan",
+    podcast: "Podcast",
+    workspace: "Ruang Kerja"
+  },
+  ur: {
+    welcome: "خوش آمدید",
+    languageLabel: "اپنی انٹرفیس کی زبان منتخب کریں:",
+    startBtn: "ابھی شروع کریں",
+    home: "گھر",
+    dashboard: "ڈیش بورڈ",
+    chatbot: "چیٹ بوٹ",
+    pastPapers: "ماضی کے پرچے",
+    notes: "نوٹس",
+    quiz: "کوئز",
+    flashcards: "فلیش کارڈز",
+    games: "گیمز",
+    podcast: "پوڈکاسٹ",
+    workspace: "ورک سپیس"
+  },
+  ne: {
+    welcome: "स्वागत छ",
+    languageLabel: "आफ्नो इन्टरफेस भाषा छान्नुहोस्:",
+    startBtn: "अहिले सुरु गर्नुहोस्",
+    home: "गृहपृष्ठ",
+    dashboard: "ड्यासबोर्ड",
+    chatbot: "च्याटबट",
+    pastPapers: "विगतका प्रश्नपत्रहरू",
+    notes: "नोटहरू",
+    quiz: "क्विज",
+    flashcards: "फ्ल्यासकार्डहरू",
+    games: "खेलहरू",
+    podcast: "पोडकास्ट",
+    workspace: "कार्यक्षेत्र"
+  },
+  es: {
+    welcome: "Bienvenido",
+    languageLabel: "Elige el idioma de tu interfaz:",
+    startBtn: "Comenzar ahora",
+    home: "Inicio",
+    dashboard: "Panel",
+    chatbot: "Chatbot",
+    pastPapers: "Exámenes Anteriores",
+    notes: "Notas",
+    quiz: "Cuestionario",
+    flashcards: "Tarjetas",
+    games: "Juegos",
+    podcast: "Podcast",
+    workspace: "Espacio de Trabajo"
+  },
+  "zh-cn": {
+    welcome: "欢迎",
+    languageLabel: "选择您的界面语言：",
+    startBtn: "立即开始",
+    home: "主页",
+    dashboard: "仪表板",
+    chatbot: "聊天机器人",
+    pastPapers: "往年试卷",
+    notes: "笔记",
+    quiz: "测验",
+    flashcards: "记忆卡片",
+    games: "游戏",
+    podcast: "播客",
+    workspace: "工作区"
+  },
+  "zh-tw": {
+    welcome: "歡迎",
+    languageLabel: "選擇您的介面語言：",
+    startBtn: "立即開始",
+    home: "主頁",
+    dashboard: "儀表板",
+    chatbot: "聊天機器人",
+    pastPapers: "往年試卷",
+    notes: "筆記",
+    quiz: "測驗",
+    flashcards: "記憶卡片",
+    games: "遊戲",
+    podcast: "播客",
+    workspace: "工作區"
+  },
+  ja: {
+    welcome: "ようこそ",
+    languageLabel: "インターフェース言語を選択：",
+    startBtn: "今すぐ始める",
+    home: "ホーム",
+    dashboard: "ダッシュボード",
+    chatbot: "チャットボット",
+    pastPapers: "過去問",
+    notes: "ノート",
+    quiz: "クイズ",
+    flashcards: "フラッシュカード",
+    games: "ゲーム",
+    podcast: "ポッドキャスト",
+    workspace: "ワークスペース"
+  },
+  ko: {
+    welcome: "환영합니다",
+    languageLabel: "인터페이스 언어를 선택하세요:",
+    startBtn: "지금 시작",
+    home: "홈",
+    dashboard: "대시보드",
+    chatbot: "챗봇",
+    pastPapers: "과거 시험지",
+    notes: "노트",
+    quiz: "퀴즈",
+    flashcards: "플래시카드",
+    games: "게임",
+    podcast: "팟캐스트",
+    workspace: "작업공간"
+  },
+  fr: {
+    welcome: "Bienvenue",
+    languageLabel: "Choisissez votre langue d'interface:",
+    startBtn: "Commencer maintenant",
+    home: "Accueil",
+    dashboard: "Tableau de bord",
+    chatbot: "Chatbot",
+    pastPapers: "Examens Passés",
+    notes: "Notes",
+    quiz: "Quiz",
+    flashcards: "Cartes mémoire",
+    games: "Jeux",
+    podcast: "Podcast",
+    workspace: "Espace de travail"
+  },
+  de: {
+    welcome: "Willkommen",
+    languageLabel: "Wählen Sie Ihre Oberflächensprache:",
+    startBtn: "Jetzt starten",
+    home: "Startseite",
+    dashboard: "Dashboard",
+    chatbot: "Chatbot",
+    pastPapers: "Frühere Prüfungen",
+    notes: "Notizen",
+    quiz: "Quiz",
+    flashcards: "Lernkarten",
+    games: "Spiele",
+    podcast: "Podcast",
+    workspace: "Arbeitsbereich"
+  },
+  ar: {
+    welcome: "مرحباً",
+    languageLabel: "اختر لغة الواجهة:",
+    startBtn: "ابدأ الآن",
+    home: "الصفحة الرئيسية",
+    dashboard: "لوحة التحكم",
+    chatbot: "روبوت الدردشة",
+    pastPapers: "أوراق الامتحانات السابقة",
+    notes: "ملاحظات",
+    quiz: "اختبار",
+    flashcards: "بطاقات تعليمية",
+    games: "ألعاب",
+    podcast: "بودكاست",
+    workspace: "مساحة العمل"
+  },
+  hi: {
+    welcome: "स्वागत है",
+    languageLabel: "अपनी इंटरफ़ेस भाषा चुनें:",
+    startBtn: "अभी शुरू करें",
+    home: "होम",
+    dashboard: "डैशबोर्ड",
+    chatbot: "चैटबॉट",
+    pastPapers: "पिछले प्रश्नपत्र",
+    notes: "नोट्स",
+    quiz: "क्विज़",
+    flashcards: "फ्लैशकार्ड",
+    games: "गेम्स",
+    podcast: "पॉडकास्ट",
+    workspace: "वर्कस्पेस"
+  },
+  ta: {
+    welcome: "வரவேற்கிறோம்",
+    languageLabel: "உங்கள் இடைமுக மொழியைத் தேர்வு செய்யவும்:",
+    startBtn: "இப்போது தொடங்கவும்",
+    home: "முகப்பு",
+    dashboard: "டாஷ்போர்டு",
+    chatbot: "சாட்போட்",
+    pastPapers: "கடந்த தேர்வுகள்",
+    notes: "குறிப்புகள்",
+    quiz: "வினாடி வினா",
+    flashcards: "ஃப்ளாஷ்கார்டுகள்",
+    games: "விளையாட்டுகள்",
+    podcast: "பாட்காஸ்ட்",
+    workspace: "பணியிடம்"
+  },
+  bn: {
+    welcome: "স্বাগতম",
+    languageLabel: "আপনার ইন্টারফেস ভাষা নির্বাচন করুন:",
+    startBtn: "এখনই শুরু করুন",
+    home: "হোম",
+    dashboard: "ড্যাশবোর্ড",
+    chatbot: "চ্যাটবট",
+    pastPapers: "পূর্ববর্তী পরীক্ষা",
+    notes: "নোট",
+    quiz: "কুইজ",
+    flashcards: "ফ্ল্যাশকার্ড",
+    games: "গেমস",
+    podcast: "পডকাস্ট",
+    workspace: "ওয়ার্কস্পেস"
+  }
+};
+
+function changeUILanguage(lang) {
+  // Save to localStorage
+  localStorage.setItem('uiLanguage', lang);
+  
+  // Save to server session
+  fetch('/set_ui_language', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({language: lang})
+  });
+  
+  // Update current page
+  updatePageTranslations(lang);
+}
+
+function updatePageTranslations(lang) {
+  const t = translations[lang] || translations.en;
+  
+  // Update homepage elements
+  const welcomeText = document.getElementById('welcomeText');
+  const languageLabel = document.getElementById('languageLabel');
+  const startBtn = document.getElementById('startBtn');
+  
+  if (welcomeText) welcomeText.textContent = t.welcome;
+  if (languageLabel) languageLabel.textContent = t.languageLabel;
+  if (startBtn) startBtn.textContent = t.startBtn;
+}
+
+// Load saved language on page load
+(function() {
+  const savedLang = localStorage.getItem('uiLanguage') || 'en';
+  document.getElementById('uiLanguage').value = savedLang;
+  updatePageTranslations(savedLang);
+})();
+</script>
+{% endblock %}

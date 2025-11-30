@@ -75,24 +75,349 @@
     <aside class="sidebar">
       <div class="brand">Kancil AI</div>
       <nav class="nav">
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('index') }}" data-i18n="home">Home</a>
+        <a href="{{ url_for('dashboard') }}" data-i18n="dashboard">Dashboard</a>
         <!-- Chat lives at /chatbot (blueprint is registered with url_prefix='/chatbot') -->
-        <a href="/chatbot">Chatbot</a>
-        <a href="{{ url_for('past_papers') }}">Past Papers</a>
-        <div class="muted">Workspace opens after you load or create notes.</div>
+        <a href="/chatbot" data-i18n="chatbot">Chatbot</a>
+        <a href="{{ url_for('past_papers') }}" data-i18n="pastPapers">Past Papers</a>
+        <div class="muted" data-i18n="workspaceHint">Workspace opens after you load or create notes.</div>
       </nav>
     </aside>
 
     <main class="main">
       {% block content %}
-      <h1>Welcome to Kancil AI</h1>
-      <p class="muted">Select a feature from the navigation to get started.</p>
+      <h1 data-i18n="welcomeTitle">Welcome to Kancil AI</h1>
+      <p class="muted" data-i18n="selectFeature">Select a feature from the navigation to get started.</p>
       {% endblock %}
     </main>
   </div>
 
   <script>
+    // Translation dictionary (same as home.html but extended)
+    const translations = {
+      en: {
+        home: "Home", dashboard: "Dashboard", chatbot: "Chatbot", pastPapers: "Past Papers",
+        notes: "Notes", quiz: "Quiz", flashcards: "Flashcards", games: "Games", 
+        podcast: "Podcast", workspace: "Workspace",
+        workspaceHint: "Workspace opens after you load or create notes.",
+        welcomeTitle: "Welcome to Kancil AI",
+        selectFeature: "Select a feature from the navigation to get started.",
+        noteGenerator: "🧠 Note Generator", 
+        noteGeneratorDesc: "Create new notes from any source and jump straight into the Workspace.",
+        textSummarizer: "Text Summarizer",
+        youtubeSummarizer: "YouTube Summarizer", quizGenerator: "Quiz Generator",
+        flashcardGenerator: "Flashcard Generator", gameGenerator: "Game Generator",
+        podcastGenerator: "Podcast Generator", savedNotes: "💾 Saved notes",
+        noSavedNotes: "No saved notes yet. Create some above 👆",
+        uploadMethod: "Upload Method", pasteText: "✍️ From Text", uploadPDF: "📄 From PDF",
+        youtubeURL: "🎥 From YouTube", outputLanguage: "🌍 Output Language",
+        outputLanguageHint: "Your source content can be in any language, but all generated content (notes, podcast, quiz, games) will be in the selected language.",
+        enterText: "Enter your text here…", selectPDF: "Select a PDF file",
+        enterYoutubeURL: "Paste YouTube link or transcript…", 
+        generatingHint: "⏳ This may take a minute depending on the file size or text length.",
+        generate: "Generate", generateWorkspace: "✨ Generate & Open Workspace",
+        viewNotes: "View Notes", deleteNote: "Delete", renameBtn: "Rename", title: "Title",
+        created: "Created", actions: "Actions"
+      },
+      id: {
+        home: "Beranda", dashboard: "Dasbor", chatbot: "Chatbot", pastPapers: "Soal Ujian",
+        notes: "Catatan", quiz: "Kuis", flashcards: "Kartu Flash", games: "Permainan",
+        podcast: "Podcast", workspace: "Ruang Kerja",
+        workspaceHint: "Ruang kerja terbuka setelah Anda memuat atau membuat catatan.",
+        welcomeTitle: "Selamat Datang di Kancil AI",
+        selectFeature: "Pilih fitur dari navigasi untuk memulai.",
+        noteGenerator: "🧠 Pembuat Catatan", 
+        noteGeneratorDesc: "Buat catatan baru dari sumber apa pun dan langsung masuk ke Ruang Kerja.",
+        textSummarizer: "Peringkas Teks",
+        youtubeSummarizer: "Peringkas YouTube", quizGenerator: "Pembuat Kuis",
+        flashcardGenerator: "Pembuat Kartu Flash", gameGenerator: "Pembuat Permainan",
+        podcastGenerator: "Pembuat Podcast", savedNotes: "💾 Catatan Tersimpan",
+        noSavedNotes: "Belum ada catatan tersimpan. Buat beberapa di atas 👆",
+        uploadMethod: "Metode Unggah", pasteText: "✍️ Dari Teks", uploadPDF: "📄 Dari PDF",
+        youtubeURL: "🎥 Dari YouTube", outputLanguage: "🌍 Bahasa Keluaran",
+        outputLanguageHint: "Konten sumber Anda bisa dalam bahasa apa pun, tetapi semua konten yang dihasilkan (catatan, podcast, kuis, permainan) akan dalam bahasa yang dipilih.",
+        enterText: "Masukkan teks Anda di sini…", selectPDF: "Pilih file PDF",
+        enterYoutubeURL: "Tempel tautan atau transkrip YouTube…", 
+        generatingHint: "⏳ Ini mungkin memakan waktu satu menit tergantung pada ukuran file atau panjang teks.",
+        generate: "Buat", generateWorkspace: "✨ Buat & Buka Ruang Kerja",
+        viewNotes: "Lihat Catatan", deleteNote: "Hapus", renameBtn: "Ganti Nama", title: "Judul",
+        created: "Dibuat", actions: "Tindakan"
+      },
+      ms: {
+        home: "Laman Utama", dashboard: "Papan Pemuka", chatbot: "Chatbot", pastPapers: "Kertas Peperiksaan",
+        notes: "Nota", quiz: "Kuiz", flashcards: "Kad Imbasan", games: "Permainan",
+        podcast: "Podcast", workspace: "Ruang Kerja",
+        workspaceHint: "Ruang kerja dibuka selepas anda memuatkan atau mencipta nota.",
+        welcomeTitle: "Selamat Datang ke Kancil AI",
+        selectFeature: "Pilih ciri dari navigasi untuk bermula.",
+        noteGenerator: "Penjana Nota", textSummarizer: "Peringkas Teks",
+        youtubeSummarizer: "Peringkas YouTube", quizGenerator: "Penjana Kuiz",
+        flashcardGenerator: "Penjana Kad Imbasan", gameGenerator: "Penjana Permainan",
+        podcastGenerator: "Penjana Podcast", savedNotes: "Nota Tersimpan",
+        uploadMethod: "Kaedah Muat Naik", pasteText: "Tampal Teks", uploadPDF: "Muat Naik PDF",
+        youtubeURL: "URL YouTube", outputLanguage: "Bahasa Output",
+        enterText: "Masukkan atau tampal teks anda di sini...", selectPDF: "Pilih fail PDF",
+        enterYoutubeURL: "Masukkan URL video YouTube", generate: "Jana",
+        viewNotes: "Lihat Nota", deleteNote: "Padam", title: "Tajuk",
+        created: "Dicipta", actions: "Tindakan"
+      },
+      ur: {
+        home: "گھر", dashboard: "ڈیش بورڈ", chatbot: "چیٹ بوٹ", pastPapers: "ماضی کے پرچے",
+        notes: "نوٹس", quiz: "کوئز", flashcards: "فلیش کارڈز", games: "گیمز",
+        podcast: "پوڈکاسٹ", workspace: "ورک سپیس",
+        workspaceHint: "نوٹس لوڈ یا بنانے کے بعد ورک سپیس کھلتا ہے۔",
+        welcomeTitle: "Kancil AI میں خوش آمدید",
+        selectFeature: "شروع کرنے کے لیے نیویگیشن سے کوئی فیچر منتخب کریں۔",
+        noteGenerator: "نوٹ جنریٹر", textSummarizer: "ٹیکسٹ خلاصہ کار",
+        youtubeSummarizer: "یوٹیوب خلاصہ کار", quizGenerator: "کوئز جنریٹر",
+        flashcardGenerator: "فلیش کارڈ جنریٹر", gameGenerator: "گیم جنریٹر",
+        podcastGenerator: "پوڈکاسٹ جنریٹر", savedNotes: "محفوظ شدہ نوٹس",
+        uploadMethod: "اپ لوڈ کا طریقہ", pasteText: "ٹیکسٹ چسپاں کریں", uploadPDF: "PDF اپ لوڈ کریں",
+        youtubeURL: "یوٹیوب URL", outputLanguage: "آؤٹ پٹ زبان",
+        enterText: "اپنا ٹیکسٹ یہاں درج یا چسپاں کریں...", selectPDF: "PDF فائل منتخب کریں",
+        enterYoutubeURL: "یوٹیوب ویڈیو URL درج کریں", generate: "بنائیں",
+        viewNotes: "نوٹس دیکھیں", deleteNote: "حذف کریں", title: "عنوان",
+        created: "بنایا گیا", actions: "اقدامات"
+      },
+      ne: {
+        home: "गृहपृष्ठ", dashboard: "ड्यासबोर्ड", chatbot: "च्याटबट", pastPapers: "विगतका प्रश्नपत्रहरू",
+        notes: "नोटहरू", quiz: "क्विज", flashcards: "फ्ल्यासकार्डहरू", games: "खेलहरू",
+        podcast: "पोडकास्ट", workspace: "कार्यक्षेत्र",
+        workspaceHint: "नोट लोड वा सिर्जना गरेपछि कार्यक्षेत्र खुल्छ।",
+        welcomeTitle: "Kancil AI मा स्वागत छ",
+        selectFeature: "सुरु गर्न नेभिगेसनबाट एउटा सुविधा छान्नुहोस्।",
+        noteGenerator: "नोट जेनरेटर", textSummarizer: "पाठ सारांशकर्ता",
+        youtubeSummarizer: "यूट्यूब सारांशकर्ता", quizGenerator: "क्विज जेनरेटर",
+        flashcardGenerator: "फ्ल्यासकार्ड जेनरेटर", gameGenerator: "खेल जेनरेटर",
+        podcastGenerator: "पोडकास्ट जेनरेटर", savedNotes: "सुरक्षित नोटहरू",
+        uploadMethod: "अपलोड विधि", pasteText: "पाठ टाँस्नुहोस्", uploadPDF: "PDF अपलोड गर्नुहोस्",
+        youtubeURL: "यूट्यूब URL", outputLanguage: "आउटपुट भाषा",
+        enterText: "आफ्नो पाठ यहाँ प्रविष्ट वा टाँस्नुहोस्...", selectPDF: "PDF फाइल छान्नुहोस्",
+        enterYoutubeURL: "यूट्यूब भिडियो URL प्रविष्ट गर्नुहोस्", generate: "उत्पन्न गर्नुहोस्",
+        viewNotes: "नोटहरू हेर्नुहोस्", deleteNote: "मेटाउनुहोस्", title: "शीर्षक",
+        created: "सिर्जना गरिएको", actions: "कार्यहरू"
+      },
+      es: {
+        home: "Inicio", dashboard: "Panel", chatbot: "Chatbot", pastPapers: "Exámenes Anteriores",
+        notes: "Notas", quiz: "Cuestionario", flashcards: "Tarjetas", games: "Juegos",
+        podcast: "Podcast", workspace: "Espacio de Trabajo",
+        workspaceHint: "El espacio de trabajo se abre después de cargar o crear notas.",
+        welcomeTitle: "Bienvenido a Kancil AI",
+        selectFeature: "Seleccione una función de la navegación para comenzar.",
+        noteGenerator: "Generador de Notas", textSummarizer: "Resumidor de Texto",
+        youtubeSummarizer: "Resumidor de YouTube", quizGenerator: "Generador de Cuestionarios",
+        flashcardGenerator: "Generador de Tarjetas", gameGenerator: "Generador de Juegos",
+        podcastGenerator: "Generador de Podcasts", savedNotes: "Notas Guardadas",
+        uploadMethod: "Método de Carga", pasteText: "Pegar Texto", uploadPDF: "Subir PDF",
+        youtubeURL: "URL de YouTube", outputLanguage: "Idioma de Salida",
+        enterText: "Ingrese o pegue su texto aquí...", selectPDF: "Seleccionar archivo PDF",
+        enterYoutubeURL: "Ingrese la URL del video de YouTube", generate: "Generar",
+        viewNotes: "Ver Notas", deleteNote: "Eliminar", title: "Título",
+        created: "Creado", actions: "Acciones"
+      },
+      "zh-cn": {
+        home: "主页", dashboard: "仪表板", chatbot: "聊天机器人", pastPapers: "往年试卷",
+        notes: "笔记", quiz: "测验", flashcards: "记忆卡片", games: "游戏",
+        podcast: "播客", workspace: "工作区",
+        workspaceHint: "加载或创建笔记后，工作区将打开。",
+        welcomeTitle: "欢迎使用 Kancil AI",
+        selectFeature: "从导航中选择一个功能以开始。",
+        noteGenerator: "笔记生成器", textSummarizer: "文本摘要器",
+        youtubeSummarizer: "YouTube摘要器", quizGenerator: "测验生成器",
+        flashcardGenerator: "记忆卡片生成器", gameGenerator: "游戏生成器",
+        podcastGenerator: "播客生成器", savedNotes: "已保存的笔记",
+        uploadMethod: "上传方式", pasteText: "粘贴文本", uploadPDF: "上传PDF",
+        youtubeURL: "YouTube链接", outputLanguage: "输出语言",
+        enterText: "在此输入或粘贴您的文本...", selectPDF: "选择PDF文件",
+        enterYoutubeURL: "输入YouTube视频链接", generate: "生成",
+        viewNotes: "查看笔记", deleteNote: "删除", title: "标题",
+        created: "创建时间", actions: "操作"
+      },
+      "zh-tw": {
+        home: "主頁", dashboard: "儀表板", chatbot: "聊天機器人", pastPapers: "往年試卷",
+        notes: "筆記", quiz: "測驗", flashcards: "記憶卡片", games: "遊戲",
+        podcast: "播客", workspace: "工作區",
+        workspaceHint: "載入或建立筆記後，工作區將開啟。",
+        welcomeTitle: "歡迎使用 Kancil AI",
+        selectFeature: "從導航中選擇一個功能以開始。",
+        noteGenerator: "筆記生成器", textSummarizer: "文字摘要器",
+        youtubeSummarizer: "YouTube摘要器", quizGenerator: "測驗生成器",
+        flashcardGenerator: "記憶卡片生成器", gameGenerator: "遊戲生成器",
+        podcastGenerator: "播客生成器", savedNotes: "已儲存的筆記",
+        uploadMethod: "上傳方式", pasteText: "貼上文字", uploadPDF: "上傳PDF",
+        youtubeURL: "YouTube連結", outputLanguage: "輸出語言",
+        enterText: "在此輸入或貼上您的文字...", selectPDF: "選擇PDF檔案",
+        enterYoutubeURL: "輸入YouTube影片連結", generate: "生成",
+        viewNotes: "查看筆記", deleteNote: "刪除", title: "標題",
+        created: "建立時間", actions: "操作"
+      },
+      ja: {
+        home: "ホーム", dashboard: "ダッシュボード", chatbot: "チャットボット", pastPapers: "過去問",
+        notes: "ノート", quiz: "クイズ", flashcards: "フラッシュカード", games: "ゲーム",
+        podcast: "ポッドキャスト", workspace: "ワークスペース",
+        workspaceHint: "ノートを読み込むか作成すると、ワークスペースが開きます。",
+        welcomeTitle: "Kancil AIへようこそ",
+        selectFeature: "ナビゲーションから機能を選択して開始してください。",
+        noteGenerator: "ノート生成器", textSummarizer: "テキスト要約器",
+        youtubeSummarizer: "YouTube要約器", quizGenerator: "クイズ生成器",
+        flashcardGenerator: "フラッシュカード生成器", gameGenerator: "ゲーム生成器",
+        podcastGenerator: "ポッドキャスト生成器", savedNotes: "保存されたノート",
+        uploadMethod: "アップロード方法", pasteText: "テキストを貼り付け", uploadPDF: "PDFをアップロード",
+        youtubeURL: "YouTube URL", outputLanguage: "出力言語",
+        enterText: "テキストをここに入力または貼り付けてください...", selectPDF: "PDFファイルを選択",
+        enterYoutubeURL: "YouTubeビデオのURLを入力", generate: "生成",
+        viewNotes: "ノートを表示", deleteNote: "削除", title: "タイトル",
+        created: "作成日時", actions: "操作"
+      },
+      ko: {
+        home: "홈", dashboard: "대시보드", chatbot: "챗봇", pastPapers: "과거 시험지",
+        notes: "노트", quiz: "퀴즈", flashcards: "플래시카드", games: "게임",
+        podcast: "팟캐스트", workspace: "작업공간",
+        workspaceHint: "노트를 로드하거나 생성하면 작업공간이 열립니다.",
+        welcomeTitle: "Kancil AI에 오신 것을 환영합니다",
+        selectFeature: "시작하려면 탐색에서 기능을 선택하세요.",
+        noteGenerator: "노트 생성기", textSummarizer: "텍스트 요약기",
+        youtubeSummarizer: "YouTube 요약기", quizGenerator: "퀴즈 생성기",
+        flashcardGenerator: "플래시카드 생성기", gameGenerator: "게임 생성기",
+        podcastGenerator: "팟캐스트 생성기", savedNotes: "저장된 노트",
+        uploadMethod: "업로드 방법", pasteText: "텍스트 붙여넣기", uploadPDF: "PDF 업로드",
+        youtubeURL: "YouTube URL", outputLanguage: "출력 언어",
+        enterText: "여기에 텍스트를 입력하거나 붙여넣으세요...", selectPDF: "PDF 파일 선택",
+        enterYoutubeURL: "YouTube 비디오 URL 입력", generate: "생성",
+        viewNotes: "노트 보기", deleteNote: "삭제", title: "제목",
+        created: "생성됨", actions: "작업"
+      },
+      fr: {
+        home: "Accueil", dashboard: "Tableau de bord", chatbot: "Chatbot", pastPapers: "Examens Passés",
+        notes: "Notes", quiz: "Quiz", flashcards: "Cartes mémoire", games: "Jeux",
+        podcast: "Podcast", workspace: "Espace de travail",
+        workspaceHint: "L'espace de travail s'ouvre après avoir chargé ou créé des notes.",
+        welcomeTitle: "Bienvenue sur Kancil AI",
+        selectFeature: "Sélectionnez une fonctionnalité dans la navigation pour commencer.",
+        noteGenerator: "Générateur de Notes", textSummarizer: "Résumeur de Texte",
+        youtubeSummarizer: "Résumeur YouTube", quizGenerator: "Générateur de Quiz",
+        flashcardGenerator: "Générateur de Cartes", gameGenerator: "Générateur de Jeux",
+        podcastGenerator: "Générateur de Podcasts", savedNotes: "Notes Enregistrées",
+        uploadMethod: "Méthode de Téléchargement", pasteText: "Coller le Texte", uploadPDF: "Télécharger PDF",
+        youtubeURL: "URL YouTube", outputLanguage: "Langue de Sortie",
+        enterText: "Entrez ou collez votre texte ici...", selectPDF: "Sélectionner un fichier PDF",
+        enterYoutubeURL: "Entrez l'URL de la vidéo YouTube", generate: "Générer",
+        viewNotes: "Voir les Notes", deleteNote: "Supprimer", title: "Titre",
+        created: "Créé", actions: "Actions"
+      },
+      de: {
+        home: "Startseite", dashboard: "Dashboard", chatbot: "Chatbot", pastPapers: "Frühere Prüfungen",
+        notes: "Notizen", quiz: "Quiz", flashcards: "Lernkarten", games: "Spiele",
+        podcast: "Podcast", workspace: "Arbeitsbereich",
+        workspaceHint: "Der Arbeitsbereich wird nach dem Laden oder Erstellen von Notizen geöffnet.",
+        welcomeTitle: "Willkommen bei Kancil AI",
+        selectFeature: "Wählen Sie eine Funktion aus der Navigation, um zu beginnen.",
+        noteGenerator: "Notizenersteller", textSummarizer: "Textzusammenfasser",
+        youtubeSummarizer: "YouTube-Zusammenfasser", quizGenerator: "Quiz-Generator",
+        flashcardGenerator: "Lernkarten-Generator", gameGenerator: "Spiel-Generator",
+        podcastGenerator: "Podcast-Generator", savedNotes: "Gespeicherte Notizen",
+        uploadMethod: "Upload-Methode", pasteText: "Text Einfügen", uploadPDF: "PDF Hochladen",
+        youtubeURL: "YouTube-URL", outputLanguage: "Ausgabesprache",
+        enterText: "Geben Sie Ihren Text hier ein oder fügen Sie ihn ein...", selectPDF: "PDF-Datei auswählen",
+        enterYoutubeURL: "YouTube-Video-URL eingeben", generate: "Generieren",
+        viewNotes: "Notizen Anzeigen", deleteNote: "Löschen", title: "Titel",
+        created: "Erstellt", actions: "Aktionen"
+      },
+      ar: {
+        home: "الصفحة الرئيسية", dashboard: "لوحة التحكم", chatbot: "روبوت الدردشة", pastPapers: "أوراق الامتحانات السابقة",
+        notes: "ملاحظات", quiz: "اختبار", flashcards: "بطاقات تعليمية", games: "ألعاب",
+        podcast: "بودكاست", workspace: "مساحة العمل",
+        workspaceHint: "تفتح مساحة العمل بعد تحميل أو إنشاء الملاحظات.",
+        welcomeTitle: "مرحباً بك في Kancil AI",
+        selectFeature: "حدد ميزة من التنقل للبدء.",
+        noteGenerator: "منشئ الملاحظات", textSummarizer: "ملخص النصوص",
+        youtubeSummarizer: "ملخص يوتيوب", quizGenerator: "منشئ الاختبارات",
+        flashcardGenerator: "منشئ البطاقات التعليمية", gameGenerator: "منشئ الألعاب",
+        podcastGenerator: "منشئ البودكاست", savedNotes: "الملاحظات المحفوظة",
+        uploadMethod: "طريقة التحميل", pasteText: "لصق النص", uploadPDF: "تحميل PDF",
+        youtubeURL: "رابط يوتيوب", outputLanguage: "لغة الإخراج",
+        enterText: "أدخل أو الصق النص هنا...", selectPDF: "اختر ملف PDF",
+        enterYoutubeURL: "أدخل رابط فيديو يوتيوب", generate: "إنشاء",
+        viewNotes: "عرض الملاحظات", deleteNote: "حذف", title: "العنوان",
+        created: "تاريخ الإنشاء", actions: "الإجراءات"
+      },
+      hi: {
+        home: "होम", dashboard: "डैशबोर्ड", chatbot: "चैटबॉट", pastPapers: "पिछले प्रश्नपत्र",
+        notes: "नोट्स", quiz: "क्विज़", flashcards: "फ्लैशकार्ड", games: "गेम्स",
+        podcast: "पॉडकास्ट", workspace: "वर्कस्पेस",
+        workspaceHint: "नोट्स लोड या बनाने के बाद वर्कस्पेस खुलता है।",
+        welcomeTitle: "Kancil AI में आपका स्वागत है",
+        selectFeature: "शुरू करने के लिए नेविगेशन से एक फ़ीचर चुनें।",
+        noteGenerator: "नोट जेनरेटर", textSummarizer: "टेक्स्ट सारांशकर्ता",
+        youtubeSummarizer: "YouTube सारांशकर्ता", quizGenerator: "क्विज़ जेनरेटर",
+        flashcardGenerator: "फ्लैशकार्ड जेनरेटर", gameGenerator: "गेम जेनरेटर",
+        podcastGenerator: "पॉडकास्ट जेनरेटर", savedNotes: "सहेजे गए नोट्स",
+        uploadMethod: "अपलोड विधि", pasteText: "टेक्स्ट पेस्ट करें", uploadPDF: "PDF अपलोड करें",
+        youtubeURL: "YouTube URL", outputLanguage: "आउटपुट भाषा",
+        enterText: "अपना टेक्स्ट यहां दर्ज या पेस्ट करें...", selectPDF: "PDF फ़ाइल चुनें",
+        enterYoutubeURL: "YouTube वीडियो URL दर्ज करें", generate: "जेनरेट करें",
+        viewNotes: "नोट्स देखें", deleteNote: "हटाएं", title: "शीर्षक",
+        created: "बनाया गया", actions: "कार्यवाही"
+      },
+      ta: {
+        home: "முகப்பு", dashboard: "டாஷ்போர்டு", chatbot: "சாட்போட்", pastPapers: "கடந்த தேர்வுகள்",
+        notes: "குறிப்புகள்", quiz: "வினாடி வினா", flashcards: "ஃப்ளாஷ்கார்டுகள்", games: "விளையாட்டுகள்",
+        podcast: "பாட்காஸ்ட்", workspace: "பணியிடம்",
+        workspaceHint: "குறிப்புகளை ஏற்றிய அல்லது உருவாக்கிய பிறகு பணியிடம் திறக்கும்.",
+        welcomeTitle: "Kancil AI க்கு வரவேற்கிறோம்",
+        selectFeature: "தொடங்க வழிசெலுத்தலில் இருந்து ஒரு அம்சத்தைத் தேர்ந்தெடுக்கவும்.",
+        noteGenerator: "குறிப்பு உருவாக்கி", textSummarizer: "உரை சுருக்கி",
+        youtubeSummarizer: "YouTube சுருக்கி", quizGenerator: "வினாடி வினா உருவாக்கி",
+        flashcardGenerator: "ஃப்ளாஷ்கார்டு உருவாக்கி", gameGenerator: "விளையாட்டு உருவாக்கி",
+        podcastGenerator: "பாட்காஸ்ட் உருவாக்கி", savedNotes: "சேமிக்கப்பட்ட குறிப்புகள்",
+        uploadMethod: "பதிவேற்ற முறை", pasteText: "உரையை ஒட்டவும்", uploadPDF: "PDF பதிவேற்றவும்",
+        youtubeURL: "YouTube URL", outputLanguage: "வெளியீட்டு மொழி",
+        enterText: "உங்கள் உரையை இங்கே உள்ளிடவும் அல்லது ஒட்டவும்...", selectPDF: "PDF கோப்பைத் தேர்ந்தெடுக்கவும்",
+        enterYoutubeURL: "YouTube வீடியோ URL ஐ உள்ளிடவும்", generate: "உருவாக்கவும்",
+        viewNotes: "குறிப்புகளைக் காண்க", deleteNote: "நீக்கு", title: "தலைப்பு",
+        created: "உருவாக்கப்பட்டது", actions: "செயல்கள்"
+      },
+      bn: {
+        home: "হোম", dashboard: "ড্যাশবোর্ড", chatbot: "চ্যাটবট", pastPapers: "পূর্ববর্তী পরীক্ষা",
+        notes: "নোট", quiz: "কুইজ", flashcards: "ফ্ল্যাশকার্ড", games: "গেমস",
+        podcast: "পডকাস্ট", workspace: "ওয়ার্কস্পেস",
+        workspaceHint: "নোট লোড বা তৈরি করার পরে ওয়ার্কস্পেস খুলবে।",
+        welcomeTitle: "Kancil AI তে স্বাগতম",
+        selectFeature: "শুরু করতে নেভিগেশন থেকে একটি বৈশিষ্ট্য নির্বাচন করুন।",
+        noteGenerator: "নোট জেনারেটর", textSummarizer: "টেক্সট সারসংক্ষেপকারী",
+        youtubeSummarizer: "YouTube সারসংক্ষেপকারী", quizGenerator: "কুইজ জেনারেটর",
+        flashcardGenerator: "ফ্ল্যাশকার্ড জেনারেটর", gameGenerator: "গেম জেনারেটর",
+        podcastGenerator: "পডকাস্ট জেনারেটর", savedNotes: "সংরক্ষিত নোট",
+        uploadMethod: "আপলোড পদ্ধতি", pasteText: "টেক্সট পেস্ট করুন", uploadPDF: "PDF আপলোড করুন",
+        youtubeURL: "YouTube URL", outputLanguage: "আউটপুট ভাষা",
+        enterText: "আপনার টেক্সট এখানে লিখুন বা পেস্ট করুন...", selectPDF: "PDF ফাইল নির্বাচন করুন",
+        enterYoutubeURL: "YouTube ভিডিও URL লিখুন", generate: "তৈরি করুন",
+        viewNotes: "নোট দেখুন", deleteNote: "মুছুন", title: "শিরোনাম",
+        created: "তৈরি হয়েছে", actions: "কার্যকলাপ"
+      }
+    };
+
+    // Function to translate page elements
+    function translatePage(lang) {
+      const t = translations[lang] || translations.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+          if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.placeholder = t[key];
+          } else {
+            el.textContent = t[key];
+          }
+        }
+      });
+    }
+
+    // Load and apply saved language
+    (function() {
+      const savedLang = localStorage.getItem('uiLanguage') || 'en';
+      translatePage(savedLang);
+    })();
+    
     // Highlight active link based on current path
     (function(){
       const path = location.pathname.replace(/\/+$/,'') || '/';

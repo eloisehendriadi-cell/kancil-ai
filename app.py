@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import json
 import importlib
-from flask import Flask, render_template, send_from_directory, redirect
+from flask import Flask, render_template, send_from_directory, redirect, request, jsonify, session
 
 # ---------- writable paths (Render-safe) ----------
 def _writable_base() -> str:
@@ -102,6 +102,14 @@ def create_app() -> Flask:
     @app.route("/past-papers", endpoint="past_papers")
     def past_papers():
         return render_template("past_papers.html", title="Past Papers")
+    
+    @app.route("/set_ui_language", methods=["POST"])
+    def set_ui_language():
+        """Store UI language preference in session."""
+        data = request.get_json(silent=True) or {}
+        language = data.get("language", "en")
+        session["ui_language"] = language
+        return jsonify({"ok": True, "language": language})
 
     @app.route("/uploads/<path:filename>", endpoint="uploaded_file")
     def uploaded_file(filename: str):

@@ -115,6 +115,9 @@ def _get_language_instruction(language: str) -> str:
     language_map = {
         "english": "in English",
         "bahasa": "in Bahasa Indonesia",
+        "malay": "in Bahasa Malaysia (Melayu)",
+        "urdu": "in Urdu",
+        "nepali": "in Nepali",
         "spanish": "in Spanish",
         "french": "in French",
         "german": "in German",
@@ -751,7 +754,7 @@ def api_generate_quiz():
         print(f"[WORKSPACE] Cache is VALID, reading for incremental generation")
         cached_quiz = _read_json("quiz.json") or []
         cached_count = len(cached_quiz)
-        offset = cached_count // 7  # Every ~7 questions, move to next content window
+        offset = cached_count // 3  # Every 3 questions, move to next content window for more variety
     
     print(f"[WORKSPACE] Cached questions: {cached_count}, using offset: {offset}")
     
@@ -767,37 +770,92 @@ def api_generate_quiz():
         
         # Get language preference
         language = _get_output_language()
+        print(f"[WORKSPACE] Generating quiz in language: {language}")
         
-        # Pass offset to enable sliding window for long sources
-        # Try with offset first, fall back to no offset for compatibility
+        # Pass offset and language to enable sliding window for long sources
+        # Generate quiz with proper error handling
+        batch = None
+        generation_error = None
         try:
+            print(f"[WORKSPACE] Calling quiz generation function...")
             batch = _make_quiz_items(src, title, generate_count, offset, language)
-        except TypeError:
-            # Fallback for old signature without language/offset
-            try:
-                print(f"[WORKSPACE] Trying quiz generation without language parameter")
-                batch = _make_quiz_items(src, title, generate_count, offset)
-            except TypeError:
-                print(f"[WORKSPACE] Quiz function doesn't support offset, using legacy mode")
-                batch = _make_quiz_items(src, title, generate_count)
-        
-        if not batch:
-            print(f"[WORKSPACE] First attempt returned empty, retrying...")
-            time.sleep(1)  # Brief pause before retry
-            try:
-                batch = _make_quiz_items(src, title, generate_count, offset, language)
-            except TypeError:
+            print(f"[WORKSPACE] Quiz generation completed, got {len(batch or [])} items")
+        except Exception as gen_error:
+            # Check if it's a parameter error vs API error
+            error_str = str(gen_error).lower()
+            error_type = type(gen_error).__name__
+            print(f"[WORKSPACE] Generation error: {error_type}: {gen_error}")
+            
+            if "unexpected keyword argument" in error_str or ("takes" in error_str and "positional argument" in error_str):
+                # This is a signature mismatch, try fallback
+                print(f"[WORKSPACE] Function signature mismatch, trying without language parameter")
                 try:
                     batch = _make_quiz_items(src, title, generate_count, offset)
-                except TypeError:
-                    batch = _make_quiz_items(src, title, generate_count)
+                    print(f"[WORKSPACE] Fallback succeeded (without language), got {len(batch or [])} items")
+                except Exception as offset_error:
+                    offset_error_str = str(offset_error).lower()
+                    if "unexpected keyword argument" in offset_error_str:
+                        print(f"[WORKSPACE] Trying without offset parameter")
+                        try:
+                            batch = _make_quiz_items(src, title, generate_count)
+                            print(f"[WORKSPACE] Fallback succeeded (without offset), got {len(batch or [])} items")
+                        except Exception as final_error:
+                            generation_error = final_error
+                            print(f"[WORKSPACE] All fallbacks failed: {type(final_error).__name__}: {final_error}")
+                    else:
+                        # This is a real error, save it
+                        generation_error = offset_error
+                        print(f"[WORKSPACE] Real error occurred: {type(offset_error).__name__}: {offset_error}")
+            else:
+                # This is not a signature error, save it
+                generation_error = gen_error
         
-        print(f"[WORKSPACE] Quiz generation returned {len(batch or [])} items")
+        # If we got an error and no results, raise it now
+        if generation_error and not batch:
+            print(f"[WORKSPACE] Raising generation error: {generation_error}")
+            raise generation_error
+        
+        # If batch is empty but no error, try one retry
+        if not batch and not generation_error:
+            print(f"[WORKSPACE] First attempt returned empty (no error), retrying once after 2 second pause...")
+            time.sleep(2)  # Longer pause before retry
+            try:
+                batch = _make_quiz_items(src, title, generate_count, offset, language)
+                print(f"[WORKSPACE] Retry succeeded, got {len(batch or [])} items")
+            except Exception as retry_error:
+                error_str = str(retry_error).lower()
+                print(f"[WORKSPACE] Retry error: {type(retry_error).__name__}: {retry_error}")
+                
+                if "unexpected keyword argument" in error_str or ("takes" in error_str and "positional argument" in error_str):
+                    try:
+                        batch = _make_quiz_items(src, title, generate_count, offset)
+                        print(f"[WORKSPACE] Retry fallback succeeded (without language)")
+                    except Exception as retry_offset_error:
+                        retry_offset_str = str(retry_offset_error).lower()
+                        if "unexpected keyword argument" in retry_offset_str:
+                            try:
+                                batch = _make_quiz_items(src, title, generate_count)
+                                print(f"[WORKSPACE] Retry fallback succeeded (without offset)")
+                            except Exception as final_retry_error:
+                                generation_error = final_retry_error
+                        else:
+                            generation_error = retry_offset_error
+                else:
+                    generation_error = retry_error
+        
+        # If still have an error and no results, raise it
+        if generation_error and not batch:
+            print(f"[WORKSPACE] Raising retry error: {generation_error}")
+            raise generation_error
+        
+        print(f"[WORKSPACE] Final quiz generation result: {len(batch or [])} items")
     except Exception as e:
         import traceback as _tb
-        tb = _tb.format_exc()[-800:]
+        full_tb = _tb.format_exc()
+        tb = full_tb[-1200:]  # Increased from 800 to get more context
         error_msg = f"Quiz generation failed: {type(e).__name__}: {e}"
-        print(f"[WORKSPACE] {error_msg}\\n{tb}")
+        print(f"[WORKSPACE] ERROR: {error_msg}")
+        print(f"[WORKSPACE] Full traceback:\n{full_tb}")
         
         # Provide more helpful error messages
         if "timeout" in str(e).lower() or "timed out" in str(e).lower():
@@ -810,6 +868,18 @@ def api_generate_quiz():
             return jsonify({
                 "ok": False,
                 "error": "Cannot connect to the LLM service. Please check your internet connection and API configuration.",
+                "trace": tb
+            }), 502
+        elif "rate" in str(e).lower() and "limit" in str(e).lower():
+            return jsonify({
+                "ok": False,
+                "error": "API rate limit exceeded. Please wait a moment and try again.",
+                "trace": tb
+            }), 502
+        elif "api" in str(e).lower() and ("key" in str(e).lower() or "auth" in str(e).lower()):
+            return jsonify({
+                "ok": False,
+                "error": "API authentication failed. Please check your API key configuration.",
                 "trace": tb
             }), 502
         else:

@@ -124,11 +124,11 @@
 <div class="ws-wrap card" style="padding:0;">
   <!-- Left sidebar -->
   <aside class="ws-side">
-    <button class="tab-btn active" data-tab="notes">📝 <span>Notes</span></button>
-    <button class="tab-btn" data-tab="podcast">🎙️ <span>Podcast</span></button>
-    <button class="tab-btn" data-tab="quiz">❓ <span>Quiz</span></button>
-    <button class="tab-btn" data-tab="flashcards">🧠 <span>Flashcards</span></button>
-    <button class="tab-btn" data-tab="game">🎮 <span>Games</span></button>
+    <button class="tab-btn active" data-tab="notes">📝 <span data-i18n="notes">Notes</span></button>
+    <button class="tab-btn" data-tab="podcast">🎙️ <span data-i18n="podcast">Podcast</span></button>
+    <button class="tab-btn" data-tab="quiz">❓ <span data-i18n="quiz">Quiz</span></button>
+    <button class="tab-btn" data-tab="flashcards">🧠 <span data-i18n="flashcards">Flashcards</span></button>
+    <button class="tab-btn" data-tab="game">🎮 <span data-i18n="games">Games</span></button>
   </aside>
 
   <!-- Main pane -->
@@ -760,33 +760,13 @@
     try {
       updateLoadingProgress(10, 'Generating quiz questions...');
       
-      // Always force generate new questions to get a larger pool
-      const res = await postJSON(WS.quiz, { force: true });
+      // Request only 3 questions for faster game start - game only needs a few at a time
+      const res = await postJSON(WS.quiz, { count: 3, force: true });
       gameState.questions = res.items || res.questions || [];
       
-      updateLoadingProgress(50, `Loaded ${gameState.questions.length} questions...`);
+      updateLoadingProgress(80, `Loaded ${gameState.questions.length} questions...`);
       
       console.log(`Loaded ${gameState.questions.length} questions for game`);
-      
-      if (gameState.questions.length < 10) {
-        // If we got fewer than 10, try to generate more
-        updateLoadingProgress(60, 'Generating more questions...');
-        console.log('Generating more questions...');
-        const res2 = await postJSON(WS.quiz, { force: true });
-        const moreQuestions = res2.items || res2.questions || [];
-        
-        updateLoadingProgress(80, 'Merging questions...');
-        
-        // Merge and deduplicate
-        const allQuestions = [...gameState.questions];
-        moreQuestions.forEach(q => {
-          if (!allQuestions.find(existing => existing.question === q.question)) {
-            allQuestions.push(q);
-          }
-        });
-        gameState.questions = allQuestions;
-        console.log(`Total questions after merge: ${gameState.questions.length}`);
-      }
       
       updateLoadingProgress(90, 'Preparing game...');
       
