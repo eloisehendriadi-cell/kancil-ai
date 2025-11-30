@@ -95,14 +95,14 @@
 </style>
 
 <header class="toolbar" style="justify-content:flex-start;gap:12px;margin-bottom:10px">
-  <a class="btn" href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+  <a class="btn" href="{{ url_for('dashboard') }}" data-i18n="backToDashboard">← Back to dashboard</a>
   <div class="ws-toolbar" style="margin:0;">
     <div class="src-wrap">
-      <span class="ws-muted">Source:</span>
+      <span class="ws-muted" data-i18n="source">Source:</span>
       <input id="ws_title" type="text" value="{{ session.get('shared_source_title','Untitled') }}">
     </div>
   </div>
-  <button id="save-workspace-btn" class="btn primary" style="margin-left:auto;">💾 Save Workspace</button>
+  <button id="save-workspace-btn" class="btn primary" style="margin-left:auto;" data-i18n="saveWorkspace">💾 Save Workspace</button>
 </header>
 
 <!-- Source setter - HIDDEN -->
@@ -138,7 +138,7 @@
     <!-- Notes -->
     <section id="tab-notes" class="tab">
       <div class="ws-actions">
-        <button id="regen-notes" class="btn">↻ Regenerate notes</button>
+        <button id="regen-notes" class="btn" data-i18n="regenerateNotes">↻ Regenerate notes</button>
       </div>
       <div id="notes_html" class="prose ws-card"></div>
     </section>
@@ -146,7 +146,7 @@
     <!-- Podcast -->
     <section id="tab-podcast" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-podcast" class="btn">↻ Regenerate podcast</button>
+        <button id="regen-podcast" class="btn" data-i18n="regeneratePodcast">↻ Regenerate podcast</button>
       </div>
       
       <!-- Audio Player (shown when audio is available) -->
@@ -170,7 +170,7 @@
     <!-- Quiz (embedded quiz.html player) -->
     <section id="tab-quiz" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-quiz" class="btn">↻ Regenerate quiz</button>
+        <button id="regen-quiz" class="btn" data-i18n="regenerateQuiz">↻ Regenerate quiz</button>
       </div>
       <div class="quiz-frame-wrap">
         <iframe
@@ -187,7 +187,7 @@
     <!-- Flashcards -->
     <section id="tab-flashcards" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-flash" class="btn">↻ Regenerate flashcards</button>
+        <button id="regen-flash" class="btn" data-i18n="regenerateFlashcards">↻ Regenerate flashcards</button>
       </div>
       
       <!-- Large Flip Card Section -->
@@ -266,7 +266,7 @@
 
       <!-- Mini Cards Grid at Bottom -->
       <div style="margin-top:48px;">
-        <h3 style="margin-bottom:16px;">All Questions</h3>
+        <h3 style="margin-bottom:16px;" data-i18n="allQuestions">All Questions</h3>
         <div id="cards_grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;"></div>
       </div>
     </section>
@@ -278,9 +278,9 @@
         <!-- Left: Scores and Grid -->
         <div style="flex:1;">
           <div style="margin-bottom:16px;">
-            <div style="font-size:13px;color:#6b7280;margin-bottom:2px;">Highest score:</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:2px;" data-i18n="highestScore">Highest score:</div>
             <div style="font-size:20px;font-weight:700;color:#111827;" id="game-highest">0</div>
-            <div style="font-size:13px;color:#6b7280;margin-top:12px;margin-bottom:2px;">Score:</div>
+            <div style="font-size:13px;color:#6b7280;margin-top:12px;margin-bottom:2px;" data-i18n="score">Score:</div>
             <div style="font-size:20px;font-weight:700;color:#3b82f6;" id="game-score">0</div>
           </div>
 
@@ -682,6 +682,15 @@
   })();
 
   // ===== GAME LOGIC =====
+  // Translation helper
+  function t(key) {
+    const lang = localStorage.getItem('uiLanguage') || 'en';
+    if (window.translations && window.translations[lang]) {
+      return window.translations[lang][key] || key;
+    }
+    return key;
+  }
+  
   const BOARD_SIZE = 10;
   const CELL_SIZE = 38;
 
@@ -929,7 +938,7 @@
     const correctAnswer = q.answer_index !== undefined ? q.answer_index : q.answer;
 
     document.getElementById('question-card').style.display = 'block';
-    document.getElementById('question-title').textContent = `Question ${gameState.currentQuestionIndex + 1}:`;
+    document.getElementById('question-title').textContent = `${t('question')} ${gameState.currentQuestionIndex + 1}:`;
     document.getElementById('question-text').textContent = q.question || 'Question text';
     document.getElementById('question-feedback').style.display = 'none';
 
@@ -1192,7 +1201,7 @@
 
   function showGameOver() {
     document.getElementById('gameover-screen').style.display = 'block';
-    document.getElementById('final-score').textContent = `Score: ${gameState.score}`;
+    document.getElementById('final-score').textContent = `${t('finalScore')} ${gameState.score}`;
     
     // Check if new high score
     if (gameState.score >= gameState.highScore && gameState.score > 0) {

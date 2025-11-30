@@ -41,7 +41,7 @@ BAD_OPTIONS = {
     "both a and b", "both b and c", "all", "none",
 }
 YES_NO_STEM = re.compile(r"^(?:is|are|can|does|do|did|will|should|has|have)\b.*\?$", re.I)
-ONLY_PUNCT  = re.compile(r"^\W+$")
+ONLY_PUNCT  = re.compile(r"^\W+$", re.UNICODE)
 CODE_FENCE  = re.compile(r"```(?:json)?|```", re.I)
 WORDTOK     = re.compile(r"\w+", re.UNICODE)
 
@@ -95,7 +95,7 @@ def _near_dup(a: str, b: str) -> bool:
         return False
     inter = len(sa & sb)
     union = len(sa | sb)
-    return inter / max(1, union) >= 0.8
+    return inter / max(1, union) >= 0.75
 
 def _options_ok(opts: List[str]) -> bool:
     if len(opts) != 4:
@@ -103,8 +103,8 @@ def _options_ok(opts: List[str]) -> bool:
     norm = [str(o or "").strip() for o in opts]
     if any((not o) or ONLY_PUNCT.match(o) for o in norm):
         return False
-    # Be very lenient for multi-language - allow up to 12 words and 80 characters
-    if any(_word_count(o) < 1 or _word_count(o) > 12 or len(o) > 80 for o in norm):
+    # Be very lenient for multi-language - allow up to 15 words and 100 characters
+    if any(_word_count(o) < 1 or _word_count(o) > 15 or len(o) > 100 for o in norm):
         return False
     if len(set(o.lower() for o in norm)) < 4:
         return False
@@ -114,8 +114,8 @@ def _options_ok(opts: List[str]) -> bool:
                 return False
     if any(o.lower() in BAD_OPTIONS for o in norm):
         return False
-    # Very lenient punctuation check - allow up to 5 punctuation marks
-    if any(len(re.sub(r"[\w\s\-]", "", o, flags=re.UNICODE)) > 5 for o in norm):
+    # Very lenient punctuation check - allow up to 8 punctuation marks
+    if any(len(re.sub(r"[\w\s\-]", "", o, flags=re.UNICODE)) > 8 for o in norm):
         return False
     return True
 
@@ -231,11 +231,15 @@ def _build_prompt(topic: str, notes_plain: str, n: int, language: str = "english
         "spanish": "in Spanish",
         "french": "in French",
         "german": "in German",
-        "mandarin": "in Mandarin Chinese",
+        "mandarin": "in Mandarin Chinese (Simplified)",
+        "chinese_simplified": "in Mandarin Chinese (Simplified)",
+        "chinese_traditional": "in Mandarin Chinese (Traditional)",
         "japanese": "in Japanese",
         "korean": "in Korean",
         "arabic": "in Arabic",
-        "hindi": "in Hindi"
+        "hindi": "in Hindi",
+        "tamil": "in Tamil",
+        "bengali": "in Bengali"
     }
     lang_instruction = language_map.get(language.lower(), "in English")
     
