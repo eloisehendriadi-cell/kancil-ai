@@ -41,11 +41,35 @@ except Exception:
     try:
         from notes_app import summarize_text  # type: ignore
     except Exception:
+        # Define helper function before fallback
+        def _get_language_instruction_fallback(language: str) -> str:
+            """Get language-specific instruction for LLM prompts."""
+            language_map = {
+                "english": "in English",
+                "bahasa": "in Bahasa Indonesia",
+                "spanish": "in Spanish",
+                "french": "in French",
+                "german": "in German",
+                "mandarin": "in Mandarin Chinese",
+                "japanese": "in Japanese",
+                "korean": "in Korean",
+                "arabic": "in Arabic",
+                "hindi": "in Hindi"
+            }
+            return language_map.get(language.lower(), "in English")
+        
         # super simple fallback
-        def summarize_text(txt: str) -> str:  # type: ignore
+        def summarize_text(txt: str, language: str = "english") -> str:  # type: ignore
             plain = re.sub(r"<[^>]+>", " ", txt or "")
             plain = re.sub(r"\s+", " ", plain).strip()
-            return f"<h2>Summary</h2><p>{plain[:1200]}</p>"
+            lang_instr = _get_language_instruction_fallback(language)
+            prompt = f"Create structured study notes {lang_instr} from this content:\n\n{plain[:3000]}\n\nFormat as HTML with headers and bullet points."
+            try:
+                from llm_client import llm_complete as _llm_complete_fallback
+                html = _llm_complete_fallback(prompt, temperature=0.3, max_tokens=800)
+                return html if html else f"<h2>Summary</h2><p>{plain[:1200]}</p>"
+            except:
+                return f"<h2>Summary</h2><p>{plain[:1200]}</p>"
 
 # --------------------------------------------------------------------------------------
 # Blueprint
@@ -79,6 +103,31 @@ def _ws_dir() -> str:
     d = os.path.join(WS_STORE, key)
     os.makedirs(d, exist_ok=True)
     return d
+
+
+def _get_output_language() -> str:
+    """Get the output language preference from session, default to English."""
+    return session.get("output_language", "english").strip()
+
+
+def _get_language_instruction(language: str) -> str:
+    """Get language-specific instruction for LLM prompts."""
+    language_map = {
+        "english": "in English",
+        "bahasa": "in Bahasa Indonesia",
+        "malay": "in Bahasa Malaysia (Melayu)",
+        "urdu": "in Urdu",
+        "nepali": "in Nepali",
+        "spanish": "in Spanish",
+        "french": "in French",
+        "german": "in German",
+        "mandarin": "in Mandarin Chinese",
+        "japanese": "in Japanese",
+        "korean": "in Korean",
+        "arabic": "in Arabic",
+        "hindi": "in Hindi"
+    }
+    return language_map.get(language.lower(), "in English")
 
 
 def _write_text(name: str, text: str) -> None:
@@ -485,37 +534,61 @@ def use_saved():
 @workspace_bp.post("/seed", endpoint="seed_workspace")
 def seed_workspace():
     """Seed workspace with new source material, properly clearing previous state."""
-    body = request.get_json(silent=True) or {}
-    title = (body.get("title") or "Untitled").strip()
-    text = (body.get("text") or "").strip()
-    notes_html = (body.get("notes_html") or "").strip()
-    prebuild_quiz = bool(body.get("prebuild_quiz"))
+    try:
+        body = request.get_json(silent=True) or {}
+        title = (body.get("title") or "Untitled").strip()
+        text = (body.get("text") or "").strip()
+        notes_html = (body.get("notes_html") or "").strip()
+        prebuild_quiz = bool(body.get("prebuild_quiz"))
+        output_language = (body.get("output_language") or "english").strip()
+        
+        print(f"[WORKSPACE] Seeding workspace with language: {output_language}")
 
-    if not text:
-        return jsonify({"ok": False, "error": "No source text provided."}), 400
+        if not text:
+            return jsonify({"ok": False, "error": "No source text provided."}), 400
 
-    # IMPORTANT: Completely reset previous workspace state
-    _reset_session()
-    
-    # Set new source (creates new workspace key and directory)
-    _set_source(title, text)
+        # IMPORTANT: Completely reset previous workspace state
+        _reset_session()
+        
+        # Set new source (creates new workspace key and directory)
+        _set_source(title, text)
+        
+        # Store language preference in session for all features
+        session["output_language"] = output_language
+        print(f"[WORKSPACE] Language preference stored: {output_language}")
 
-    if notes_html:
-        _write_text("notes.html", notes_html)
-    else:
-        try:
-            _write_text("notes.html", summarize_text(text))
-        except Exception:
-            pass
+        if notes_html:
+            _write_text("notes.html", notes_html)
+        else:
+            try:
+                result = summarize_text(text, output_language)
+                _write_text("notes.html", result)
+                print(f"[WORKSPACE] Notes generated successfully in {output_language}")
+            except Exception as e:
+                print(f"[WORKSPACE] Error generating notes: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
+                # Write simple fallback
+                plain = text[:1200] if len(text) > 1200 else text
+                _write_text("notes.html", f"<h2>Summary</h2><p>{plain}</p>")
 
-    if prebuild_quiz and _make_quiz_items:
-        try:
-            items = _make_quiz_items(text, title or "Topic", 10)
-            _write_json("quiz.json", items)
-        except Exception:
-            pass
+        if prebuild_quiz and _make_quiz_items:
+            try:
+                items = _make_quiz_items(text, title or "Topic", 10, 0, output_language)
+                _write_json("quiz.json", items)
+                print(f"[WORKSPACE] Quiz generated successfully in {output_language}")
+            except Exception as e:
+                print(f"[WORKSPACE] Error generating quiz: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
 
-    return jsonify({"ok": True, "title": title})
+        return jsonify({"ok": True, "title": title})
+        
+    except Exception as e:
+        print(f"[WORKSPACE] Fatal error in seed_workspace: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": f"Server error: {str(e)}"}), 500
 
 # --------------------------------------------------------------------------------------
 # APIs with caching
@@ -547,7 +620,8 @@ def api_generate_notes():
         if cached:
             return jsonify({"ok": True, "html": cached})
 
-    html = summarize_text(src)
+    language = _get_output_language()
+    html = summarize_text(src, language)
     _write_text("notes.html", html)
     session["ws_cache_key"] = _hash(src)
     return jsonify({"ok": True, "html": html})
@@ -581,9 +655,11 @@ def api_generate_podcast():
 
     title = session.get("shared_source_title", "Untitled")
     plain = _strip_html_to_text(notes_html) if notes_html else _strip_html_to_text(src)
-    prompt = f"""Turn this study note into a clear 3–4 minute podcast script.
+    language = _get_output_language()
+    lang_instr = _get_language_instruction(language)
+    prompt = f"""Turn this study note into a clear 3–4 minute podcast script {lang_instr}.
 - Conversational, friendly teacher tone
-- Two speakers: Host: and Guest: (label each turn)
+- Two speakers: Host (James) and Guest (Mary) - label each turn as "Host:" and "Guest:"
 - Include light signposting and a brief recap
 - No hallucinations; stick strictly to the note content
 
@@ -678,7 +754,7 @@ def api_generate_quiz():
         print(f"[WORKSPACE] Cache is VALID, reading for incremental generation")
         cached_quiz = _read_json("quiz.json") or []
         cached_count = len(cached_quiz)
-        offset = cached_count // 7  # Every ~7 questions, move to next content window
+        offset = cached_count // 3  # Every 3 questions, move to next content window for more variety
     
     print(f"[WORKSPACE] Cached questions: {cached_count}, using offset: {offset}")
     
@@ -692,29 +768,94 @@ def api_generate_quiz():
         if src_length > 10000:
             print(f"[WORKSPACE] Warning: Very long source ({src_length} chars) may cause slower generation")
         
-        # Pass offset to enable sliding window for long sources
-        # Try with offset first, fall back to no offset for compatibility
+        # Get language preference
+        language = _get_output_language()
+        print(f"[WORKSPACE] Generating quiz in language: {language}")
+        
+        # Pass offset and language to enable sliding window for long sources
+        # Generate quiz with proper error handling
+        batch = None
+        generation_error = None
         try:
-            batch = _make_quiz_items(src, title, generate_count, offset)
-        except TypeError:
-            # Fallback for old signature without offset
-            print(f"[WORKSPACE] Quiz function doesn't support offset, using legacy mode")
-            batch = _make_quiz_items(src, title, generate_count)
+            print(f"[WORKSPACE] Calling quiz generation function...")
+            batch = _make_quiz_items(src, title, generate_count, offset, language)
+            print(f"[WORKSPACE] Quiz generation completed, got {len(batch or [])} items")
+        except Exception as gen_error:
+            # Check if it's a parameter error vs API error
+            error_str = str(gen_error).lower()
+            error_type = type(gen_error).__name__
+            print(f"[WORKSPACE] Generation error: {error_type}: {gen_error}")
+            
+            if "unexpected keyword argument" in error_str or ("takes" in error_str and "positional argument" in error_str):
+                # This is a signature mismatch, try fallback
+                print(f"[WORKSPACE] Function signature mismatch, trying without language parameter")
+                try:
+                    batch = _make_quiz_items(src, title, generate_count, offset)
+                    print(f"[WORKSPACE] Fallback succeeded (without language), got {len(batch or [])} items")
+                except Exception as offset_error:
+                    offset_error_str = str(offset_error).lower()
+                    if "unexpected keyword argument" in offset_error_str:
+                        print(f"[WORKSPACE] Trying without offset parameter")
+                        try:
+                            batch = _make_quiz_items(src, title, generate_count)
+                            print(f"[WORKSPACE] Fallback succeeded (without offset), got {len(batch or [])} items")
+                        except Exception as final_error:
+                            generation_error = final_error
+                            print(f"[WORKSPACE] All fallbacks failed: {type(final_error).__name__}: {final_error}")
+                    else:
+                        # This is a real error, save it
+                        generation_error = offset_error
+                        print(f"[WORKSPACE] Real error occurred: {type(offset_error).__name__}: {offset_error}")
+            else:
+                # This is not a signature error, save it
+                generation_error = gen_error
         
-        if not batch:
-            print(f"[WORKSPACE] First attempt returned empty, retrying...")
-            time.sleep(1)  # Brief pause before retry
+        # If we got an error and no results, raise it now
+        if generation_error and not batch:
+            print(f"[WORKSPACE] Raising generation error: {generation_error}")
+            raise generation_error
+        
+        # If batch is empty but no error, try one retry
+        if not batch and not generation_error:
+            print(f"[WORKSPACE] First attempt returned empty (no error), retrying once after 2 second pause...")
+            time.sleep(2)  # Longer pause before retry
             try:
-                batch = _make_quiz_items(src, title, generate_count, offset)
-            except TypeError:
-                batch = _make_quiz_items(src, title, generate_count)
+                batch = _make_quiz_items(src, title, generate_count, offset, language)
+                print(f"[WORKSPACE] Retry succeeded, got {len(batch or [])} items")
+            except Exception as retry_error:
+                error_str = str(retry_error).lower()
+                print(f"[WORKSPACE] Retry error: {type(retry_error).__name__}: {retry_error}")
+                
+                if "unexpected keyword argument" in error_str or ("takes" in error_str and "positional argument" in error_str):
+                    try:
+                        batch = _make_quiz_items(src, title, generate_count, offset)
+                        print(f"[WORKSPACE] Retry fallback succeeded (without language)")
+                    except Exception as retry_offset_error:
+                        retry_offset_str = str(retry_offset_error).lower()
+                        if "unexpected keyword argument" in retry_offset_str:
+                            try:
+                                batch = _make_quiz_items(src, title, generate_count)
+                                print(f"[WORKSPACE] Retry fallback succeeded (without offset)")
+                            except Exception as final_retry_error:
+                                generation_error = final_retry_error
+                        else:
+                            generation_error = retry_offset_error
+                else:
+                    generation_error = retry_error
         
-        print(f"[WORKSPACE] Quiz generation returned {len(batch or [])} items")
+        # If still have an error and no results, raise it
+        if generation_error and not batch:
+            print(f"[WORKSPACE] Raising retry error: {generation_error}")
+            raise generation_error
+        
+        print(f"[WORKSPACE] Final quiz generation result: {len(batch or [])} items")
     except Exception as e:
         import traceback as _tb
-        tb = _tb.format_exc()[-800:]
+        full_tb = _tb.format_exc()
+        tb = full_tb[-1200:]  # Increased from 800 to get more context
         error_msg = f"Quiz generation failed: {type(e).__name__}: {e}"
-        print(f"[WORKSPACE] {error_msg}\\n{tb}")
+        print(f"[WORKSPACE] ERROR: {error_msg}")
+        print(f"[WORKSPACE] Full traceback:\n{full_tb}")
         
         # Provide more helpful error messages
         if "timeout" in str(e).lower() or "timed out" in str(e).lower():
@@ -727,6 +868,18 @@ def api_generate_quiz():
             return jsonify({
                 "ok": False,
                 "error": "Cannot connect to the LLM service. Please check your internet connection and API configuration.",
+                "trace": tb
+            }), 502
+        elif "rate" in str(e).lower() and "limit" in str(e).lower():
+            return jsonify({
+                "ok": False,
+                "error": "API rate limit exceeded. Please wait a moment and try again.",
+                "trace": tb
+            }), 502
+        elif "api" in str(e).lower() and ("key" in str(e).lower() or "auth" in str(e).lower()):
+            return jsonify({
+                "ok": False,
+                "error": "API authentication failed. Please check your API key configuration.",
                 "trace": tb
             }), 502
         else:

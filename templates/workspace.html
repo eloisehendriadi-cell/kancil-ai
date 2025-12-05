@@ -95,14 +95,14 @@
 </style>
 
 <header class="toolbar" style="justify-content:flex-start;gap:12px;margin-bottom:10px">
-  <a class="btn" href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+  <a class="btn" href="{{ url_for('dashboard') }}" data-i18n="backToDashboard">← Back to dashboard</a>
   <div class="ws-toolbar" style="margin:0;">
     <div class="src-wrap">
-      <span class="ws-muted">Source:</span>
+      <span class="ws-muted" data-i18n="source">Source:</span>
       <input id="ws_title" type="text" value="{{ session.get('shared_source_title','Untitled') }}">
     </div>
   </div>
-  <button id="save-workspace-btn" class="btn primary" style="margin-left:auto;">💾 Save Workspace</button>
+  <button id="save-workspace-btn" class="btn primary" style="margin-left:auto;" data-i18n="saveWorkspace">💾 Save Workspace</button>
 </header>
 
 <!-- Source setter - HIDDEN -->
@@ -124,11 +124,11 @@
 <div class="ws-wrap card" style="padding:0;">
   <!-- Left sidebar -->
   <aside class="ws-side">
-    <button class="tab-btn active" data-tab="notes">📝 <span>Notes</span></button>
-    <button class="tab-btn" data-tab="podcast">🎙️ <span>Podcast</span></button>
-    <button class="tab-btn" data-tab="quiz">❓ <span>Quiz</span></button>
-    <button class="tab-btn" data-tab="flashcards">🧠 <span>Flashcards</span></button>
-    <button class="tab-btn" data-tab="game">🎮 <span>Games</span></button>
+    <button class="tab-btn active" data-tab="notes">📝 <span data-i18n="notes">Notes</span></button>
+    <button class="tab-btn" data-tab="podcast">🎙️ <span data-i18n="podcast">Podcast</span></button>
+    <button class="tab-btn" data-tab="quiz">❓ <span data-i18n="quiz">Quiz</span></button>
+    <button class="tab-btn" data-tab="flashcards">🧠 <span data-i18n="flashcards">Flashcards</span></button>
+    <button class="tab-btn" data-tab="game">🎮 <span data-i18n="games">Games</span></button>
   </aside>
 
   <!-- Main pane -->
@@ -138,7 +138,7 @@
     <!-- Notes -->
     <section id="tab-notes" class="tab">
       <div class="ws-actions">
-        <button id="regen-notes" class="btn">↻ Regenerate notes</button>
+        <button id="regen-notes" class="btn" data-i18n="regenerateNotes">↻ Regenerate notes</button>
       </div>
       <div id="notes_html" class="prose ws-card"></div>
     </section>
@@ -146,7 +146,7 @@
     <!-- Podcast -->
     <section id="tab-podcast" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-podcast" class="btn">↻ Regenerate podcast</button>
+        <button id="regen-podcast" class="btn" data-i18n="regeneratePodcast">↻ Regenerate podcast</button>
       </div>
       
       <!-- Audio Player (shown when audio is available) -->
@@ -170,7 +170,7 @@
     <!-- Quiz (embedded quiz.html player) -->
     <section id="tab-quiz" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-quiz" class="btn">↻ Regenerate quiz</button>
+        <button id="regen-quiz" class="btn" data-i18n="regenerateQuiz">↻ Regenerate quiz</button>
       </div>
       <div class="quiz-frame-wrap">
         <iframe
@@ -187,7 +187,7 @@
     <!-- Flashcards -->
     <section id="tab-flashcards" class="tab" style="display:none;">
       <div class="ws-actions">
-        <button id="regen-flash" class="btn">↻ Regenerate flashcards</button>
+        <button id="regen-flash" class="btn" data-i18n="regenerateFlashcards">↻ Regenerate flashcards</button>
       </div>
       
       <!-- Large Flip Card Section -->
@@ -266,7 +266,7 @@
 
       <!-- Mini Cards Grid at Bottom -->
       <div style="margin-top:48px;">
-        <h3 style="margin-bottom:16px;">All Questions</h3>
+        <h3 style="margin-bottom:16px;" data-i18n="allQuestions">All Questions</h3>
         <div id="cards_grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;"></div>
       </div>
     </section>
@@ -278,9 +278,9 @@
         <!-- Left: Scores and Grid -->
         <div style="flex:1;">
           <div style="margin-bottom:16px;">
-            <div style="font-size:13px;color:#6b7280;margin-bottom:2px;">Highest score:</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:2px;" data-i18n="highestScore">Highest score:</div>
             <div style="font-size:20px;font-weight:700;color:#111827;" id="game-highest">0</div>
-            <div style="font-size:13px;color:#6b7280;margin-top:12px;margin-bottom:2px;">Score:</div>
+            <div style="font-size:13px;color:#6b7280;margin-top:12px;margin-bottom:2px;" data-i18n="score">Score:</div>
             <div style="font-size:20px;font-weight:700;color:#3b82f6;" id="game-score">0</div>
           </div>
 
@@ -682,6 +682,15 @@
   })();
 
   // ===== GAME LOGIC =====
+  // Translation helper
+  function t(key) {
+    const lang = localStorage.getItem('uiLanguage') || 'en';
+    if (window.translations && window.translations[lang]) {
+      return window.translations[lang][key] || key;
+    }
+    return key;
+  }
+  
   const BOARD_SIZE = 10;
   const CELL_SIZE = 38;
 
@@ -760,33 +769,13 @@
     try {
       updateLoadingProgress(10, 'Generating quiz questions...');
       
-      // Always force generate new questions to get a larger pool
-      const res = await postJSON(WS.quiz, { force: true });
+      // Request only 3 questions for faster game start - game only needs a few at a time
+      const res = await postJSON(WS.quiz, { count: 3, force: true });
       gameState.questions = res.items || res.questions || [];
       
-      updateLoadingProgress(50, `Loaded ${gameState.questions.length} questions...`);
+      updateLoadingProgress(80, `Loaded ${gameState.questions.length} questions...`);
       
       console.log(`Loaded ${gameState.questions.length} questions for game`);
-      
-      if (gameState.questions.length < 10) {
-        // If we got fewer than 10, try to generate more
-        updateLoadingProgress(60, 'Generating more questions...');
-        console.log('Generating more questions...');
-        const res2 = await postJSON(WS.quiz, { force: true });
-        const moreQuestions = res2.items || res2.questions || [];
-        
-        updateLoadingProgress(80, 'Merging questions...');
-        
-        // Merge and deduplicate
-        const allQuestions = [...gameState.questions];
-        moreQuestions.forEach(q => {
-          if (!allQuestions.find(existing => existing.question === q.question)) {
-            allQuestions.push(q);
-          }
-        });
-        gameState.questions = allQuestions;
-        console.log(`Total questions after merge: ${gameState.questions.length}`);
-      }
       
       updateLoadingProgress(90, 'Preparing game...');
       
@@ -877,7 +866,18 @@
       
       // Always force generate new questions to get a larger pool
       const res = await postJSON(WS.quiz, { force: true });
+      
+      console.log('Quiz API response:', res);
+      
+      if (!res || !res.ok) {
+        throw new Error(res?.error || 'Quiz generation failed');
+      }
+      
       gameState.questions = res.items || res.questions || [];
+      
+      if (gameState.questions.length === 0) {
+        throw new Error('No questions were generated. Please check if your source content has enough text.');
+      }
       
       updateLoadingProgress(50, `Loaded ${gameState.questions.length} questions...`);
       
@@ -911,10 +911,10 @@
       updateLoadingProgress(100, 'Ready!');
     } catch (e) {
       console.error('Failed to load questions:', e);
-      // Fallback questions
-      gameState.questions = [
-        { question: 'Sample question?', options: ['A', 'B', 'C', 'D'], answer_index: 0 }
-      ];
+      alert('Failed to generate questions: ' + e.message + '\n\nPlease make sure you have uploaded source content in your workspace.');
+      // Go back to start screen instead of using fallback
+      gameState.mode = 'start';
+      renderUI();
     }
   }
 
@@ -938,7 +938,7 @@
     const correctAnswer = q.answer_index !== undefined ? q.answer_index : q.answer;
 
     document.getElementById('question-card').style.display = 'block';
-    document.getElementById('question-title').textContent = `Question ${gameState.currentQuestionIndex + 1}:`;
+    document.getElementById('question-title').textContent = `${t('question')} ${gameState.currentQuestionIndex + 1}:`;
     document.getElementById('question-text').textContent = q.question || 'Question text';
     document.getElementById('question-feedback').style.display = 'none';
 
@@ -1201,7 +1201,7 @@
 
   function showGameOver() {
     document.getElementById('gameover-screen').style.display = 'block';
-    document.getElementById('final-score').textContent = `Score: ${gameState.score}`;
+    document.getElementById('final-score').textContent = `${t('finalScore')} ${gameState.score}`;
     
     // Check if new high score
     if (gameState.score >= gameState.highScore && gameState.score > 0) {

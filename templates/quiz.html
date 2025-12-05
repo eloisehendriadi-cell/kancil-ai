@@ -70,6 +70,7 @@
     {% if not embed %}
       <button id="qz-regenerate" class="qz-btn">↻ Regenerate quiz</button>
     {% endif %}
+    <button id="qz-end" class="qz-btn" style="background:#ef4444;color:white;border-color:#ef4444;" data-i18n="endQuiz">End Quiz</button>
     <span class="qz-pill">{{ topic }}</span>
     <span id="qz-status" class="qz-prog"></span>
   </div>
@@ -101,11 +102,11 @@
 
     <div class="qz-ctrls">
       <div class="qz-left">
-        <button id="qz-prev" class="qz-btn">← Previous</button>
+        <button id="qz-prev" class="qz-btn" data-i18n="previous">← Previous</button>
       </div>
       <div class="qz-right">
         <button id="qz-toggle-expl" class="qz-btn">Show explanation</button>
-        <button id="qz-next" class="qz-btn primary">Next →</button>
+        <button id="qz-next" class="qz-btn primary" data-i18n="next">Next →</button>
       </div>
     </div>
   </div>
@@ -115,6 +116,9 @@
     <div id="qz-expl-text"></div>
   </div>
 </div>
+
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none;"></canvas>
 
 <!-- Full-screen loader mask (first load) -->
 <div id="qz-mask" class="qz-mask" aria-hidden="true">
@@ -135,6 +139,23 @@
   const TOPIC = "{{ topic|replace('\"','\\\"') }}";
   const WS_KEY = "{{ session.get('ws_key', '') }}"; // Include workspace session key
   const STORAGE_KEY = `ai_tutor_quiz:${API}:${TOPIC}:${WS_KEY}`;
+  
+  // Translation helper - get translations from parent window (base.html)
+  function t(key) {
+    try {
+      const lang = localStorage.getItem('uiLanguage') || 'en';
+      if (window.parent && window.parent.translations && window.parent.translations[lang]) {
+        return window.parent.translations[lang][key] || key;
+      }
+    } catch(e) {}
+    // Fallback translations for standalone use
+    const fallback = {
+      score: 'Score', question: 'Question', previous: '← Previous', next: 'Next →',
+      showExplanation: 'Show explanation', hideExplanation: 'Hide explanation',
+      generatingQuestions: 'Generating questions…'
+    };
+    return fallback[key] || key;
+  }
 
   const status     = document.getElementById('qz-status');
   const titleEl    = document.getElementById('qz-title');
@@ -148,6 +169,7 @@
   const progress   = document.getElementById('qz-progress');
   const scoreEl    = document.getElementById('qz-score');
   const regenBtn   = document.getElementById('qz-regenerate');
+  const endBtn     = document.getElementById('qz-end');
   const mask       = document.getElementById('qz-mask');
   const card       = document.getElementById('qz-card');
   const cardLoader = document.getElementById('qz-card-loading');
@@ -159,6 +181,7 @@
   let corrects = 0, attempts = 0;
   let explOpen = false;
   const seen = new Set();
+  let answerHistory = []; // Track answers for feedback
 
   const BATCH = 3;  // Fetch 3 questions at a time
   const PREFETCH_AT = 1;  // Prefetch when 1 question remains
@@ -173,7 +196,7 @@
       window.parent.postMessage({type:'quiz-embed-height', value:h}, '*');
     }catch(_){}
   }
-  function updateScore(){ scoreEl.textContent = `Score: ${corrects} / ${attempts}`; }
+  function updateScore(){ scoreEl.textContent = `${t('score')}: ${corrects} / ${attempts}`; }
 
   // ---------- explanations ----------
   function sanitizeText(s){ return (s || '').toString(); }
@@ -186,7 +209,7 @@
   function setExplanationVisible(show){
     explOpen = !!show;
     explBox.classList.toggle('show', explOpen);
-    toggleEx.textContent = explOpen ? 'Hide explanation' : 'Show explanation';
+    toggleEx.textContent = explOpen ? t('hideExplanation') : t('showExplanation');
     updateExplanationArea();
     postHeight();
     saveState();
@@ -293,6 +316,19 @@
     nodes[sel].classList.add('selected');
     const cIdx = correctIndexOf(q);
 
+    const isCorrect = (sel === cIdx);
+    
+    // Track answer for results page
+    if (firstAttempt) {
+      answerHistory.push({
+        question: q.question || 'Unknown question',
+        selected: sel,
+        correct: cIdx,
+        isCorrect: isCorrect,
+        topic: extractTopic(q.question || '')
+      });
+    }
+
     if (sel === cIdx){
       nodes[sel].classList.add('correct');
       const m = nodes[sel].querySelector('.qz-mark'); if (m) m.textContent = '✓';
@@ -308,6 +344,24 @@
     }
 
     updateExplanationArea(); // always sync text
+  }
+  
+  function extractTopic(question) {
+    // Extract topic keywords from question for feedback
+    const q = (question || '').toLowerCase();
+    if (q.includes('proportion')) {
+      if (q.includes('direct')) return 'direct proportion';
+      if (q.includes('inverse')) return 'inverse proportion';
+      return 'proportion';
+    }
+    if (q.includes('equation')) return 'equations';
+    if (q.includes('formula')) return 'formulas';
+    if (q.includes('calculate') || q.includes('computation')) return 'calculations';
+    if (q.includes('graph')) return 'graphs';
+    if (q.includes('function')) return 'functions';
+    // Generic topic extraction - first significant word
+    const words = question.match(/\b[A-Z][a-z]+\b/g) || [];
+    return words[0] ? words[0].toLowerCase() : 'this topic';
   }
 
   function select(i){
@@ -334,7 +388,7 @@
     }
 
     const q = items[idx];
-    titleEl.textContent = `Question ${idx+1}`;
+    titleEl.textContent = `${t('question')} ${idx+1}`;
     stemEl.textContent  = q.question || '';
     progress.textContent = `${idx+1} / ${items.length}`;
     prevBtn.disabled = (idx === 0);
@@ -504,7 +558,7 @@
   // regenerate
   if (regenBtn) regenBtn.addEventListener('click', async () => {
     clearState();
-    items = []; idx = 0; answered = {}; attempts = 0; corrects = 0; seen.clear();
+    items = []; idx = 0; answered = {}; attempts = 0; corrects = 0; seen.clear(); answerHistory = [];
     setExplanationVisible(false);
     updateScore(); render();
     showMask(true);
@@ -516,6 +570,216 @@
       setStatus('Error: ' + e.message);
     } finally { showMask(false); }
   });
+  
+  // end quiz button
+  if (endBtn) endBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to end the quiz? You can view your results and feedback.')) {
+      showResults();
+    }
+  });
+  
+  function showResults() {
+    // Trigger confetti
+    triggerConfetti();
+    
+    // Calculate accuracy
+    const accuracy = answerHistory.length > 0 
+      ? Math.round((answerHistory.filter(a => a.isCorrect).length / answerHistory.length) * 100)
+      : 0;
+    
+    // Analyze topics
+    const topicPerformance = {};
+    answerHistory.forEach(answer => {
+      const topic = answer.topic || 'general';
+      if (!topicPerformance[topic]) {
+        topicPerformance[topic] = { correct: 0, total: 0 };
+      }
+      topicPerformance[topic].total++;
+      if (answer.isCorrect) {
+        topicPerformance[topic].correct++;
+      }
+    });
+    
+    // Find weak topics
+    const weakTopics = Object.entries(topicPerformance)
+      .filter(([topic, stats]) => (stats.correct / stats.total) < 0.75)
+      .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total))
+      .map(([topic]) => topic);
+    
+    // Find strong topics
+    const strongTopics = Object.entries(topicPerformance)
+      .filter(([topic, stats]) => (stats.correct / stats.total) >= 0.75)
+      .map(([topic]) => topic);
+    
+    // Build results message
+    let resultsHTML = `
+      <div style="text-align:center;padding:30px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border-radius:16px;margin:20px 0;">
+        <div style="font-size:72px;font-weight:bold;margin-bottom:10px;">${accuracy}%</div>
+        <div style="font-size:20px;opacity:0.9;">Accuracy</div>
+        <div style="margin-top:20px;font-size:16px;opacity:0.8;">
+          ${answerHistory.filter(a => a.isCorrect).length}/${answerHistory.length} correct answers
+        </div>
+      </div>
+      
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px 0;">
+        <h3 style="margin-top:0;">📊 Performance Analysis</h3>
+    `;
+    
+    if (accuracy >= 90) {
+      resultsHTML += '<p style="color:#059669;">🌟 <strong>Outstanding!</strong> You have excellent mastery of this topic.</p>';
+    } else if (accuracy >= 75) {
+      resultsHTML += '<p style="color:#0891b2;">👏 <strong>Great job!</strong> You have a strong understanding with room for minor improvements.</p>';
+    } else if (accuracy >= 60) {
+      resultsHTML += '<p style="color:#d97706;">👍 <strong>Good effort!</strong> You have a decent grasp, but reviewing some concepts would help.</p>';
+    } else {
+      resultsHTML += '<p style="color:#dc2626;">📖 <strong>Keep learning!</strong> This topic needs more study. Practice makes perfect!</p>';
+    }
+    
+    // Topic breakdown
+    if (Object.keys(topicPerformance).length > 0) {
+      resultsHTML += '<div style="margin-top:16px;"><strong>Topic Breakdown:</strong></div>';
+      Object.entries(topicPerformance).forEach(([topic, stats]) => {
+        const percent = Math.round((stats.correct / stats.total) * 100);
+        const emoji = percent >= 75 ? '✅' : percent >= 50 ? '⚠️' : '❌';
+        const color = percent >= 75 ? '#059669' : percent >= 50 ? '#d97706' : '#dc2626';
+        resultsHTML += `
+          <div style="margin:8px 0;padding:10px;background:#f9fafb;border-radius:8px;border-left:3px solid ${color};">
+            <div style="display:flex;justify-content:space-between;">
+              <span>${emoji} <strong style="text-transform:capitalize;">${topic}</strong></span>
+              <span style="color:${color};font-weight:bold;">${percent}%</span>
+            </div>
+            <div style="font-size:13px;color:#6b7280;">${stats.correct}/${stats.total} correct</div>
+          </div>
+        `;
+      });
+    }
+    
+    resultsHTML += '</div>';
+    
+    // Recommendations
+    resultsHTML += '<div style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid #3b82f6;border-radius:12px;padding:20px;margin:20px 0;">';
+    resultsHTML += '<h3 style="margin-top:0;">💡 Study Recommendations</h3>';
+    
+    if (weakTopics.length > 0) {
+      resultsHTML += '<div style="margin-bottom:16px;"><strong style="color:#dc2626;">📌 Focus Areas:</strong><ul style="margin:8px 0;padding-left:20px;">';
+      weakTopics.forEach(topic => {
+        resultsHTML += `<li style="margin:4px 0;">Review <strong style="text-transform:capitalize;">${topic}</strong> - spend extra time understanding the core concepts.</li>`;
+      });
+      resultsHTML += '</ul></div>';
+    }
+    
+    if (strongTopics.length > 0) {
+      resultsHTML += '<div><strong style="color:#059669;">✨ Strengths:</strong><ul style="margin:8px 0;padding-left:20px;">';
+      strongTopics.forEach(topic => {
+        resultsHTML += `<li style="margin:4px 0;">Great job with <strong style="text-transform:capitalize;">${topic}</strong>!</li>`;
+      });
+      resultsHTML += '</ul></div>';
+    }
+    
+    resultsHTML += '</div>';
+    
+    // Action buttons
+    resultsHTML += `
+      <div style="text-align:center;margin:20px 0;">
+        <button onclick="location.reload()" class="qz-btn primary" style="padding:10px 20px;margin:0 5px;">🔄 Retake Quiz</button>
+        <button onclick="document.getElementById('results-screen').style.display='none';document.getElementById('qz-card').style.display='block';" class="qz-btn" style="padding:10px 20px;margin:0 5px;">← Back to Quiz</button>
+      </div>
+    `;
+    
+    // Create results screen
+    const resultsDiv = document.createElement('div');
+    resultsDiv.id = 'results-screen';
+    resultsDiv.innerHTML = `
+      <div style="max-width:800px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <h1 style="font-size:48px;margin:20px 0;">🎉</h1>
+          <h2 style="margin:10px 0;">Congratulations!</h2>
+          <p style="color:#6b7280;">You've completed the quiz</p>
+        </div>
+        ${resultsHTML}
+      </div>
+    `;
+    
+    // Hide quiz, show results
+    card.style.display = 'none';
+    document.querySelector('.qz-bar').style.display = 'none';
+    document.querySelector('.qz-wrap').appendChild(resultsDiv);
+    
+    // Scroll to top
+    window.scrollTo({top: 0, behavior: 'smooth'});
+    postHeight();
+  }
+  
+  function triggerConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    if (!canvas) return;
+    
+    canvas.style.display = 'block';
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const confetti = [];
+    const confettiCount = 150;
+    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500'];
+    
+    for (let i = 0; i < confettiCount; i++) {
+      confetti.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        r: Math.random() * 6 + 4,
+        d: Math.random() * confettiCount,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngleIncrement: Math.random() * 0.07 + 0.05,
+        tiltAngle: 0
+      });
+    }
+    
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      confetti.forEach((c, i) => {
+        ctx.beginPath();
+        ctx.lineWidth = c.r / 2;
+        ctx.strokeStyle = c.color;
+        ctx.moveTo(c.x + c.tilt + c.r, c.y);
+        ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r);
+        ctx.stroke();
+        
+        c.tiltAngle += c.tiltAngleIncrement;
+        c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+        c.x += Math.sin(c.d);
+        c.tilt = Math.sin(c.tiltAngle - i / 3) * 15;
+        
+        if (c.y > canvas.height) {
+          confetti[i] = {
+            x: Math.random() * canvas.width,
+            y: -20,
+            r: c.r,
+            d: c.d,
+            color: c.color,
+            tilt: c.tilt,
+            tiltAngleIncrement: c.tiltAngleIncrement,
+            tiltAngle: c.tiltAngle
+          };
+        }
+      });
+    }
+    
+    let frame = 0;
+    function animate() {
+      draw();
+      frame++;
+      if (frame < 200) {
+        requestAnimationFrame(animate);
+      } else {
+        canvas.style.display = 'none';
+      }
+    }
+    
+    animate();
+  }
 
   // boot
   (async () => {

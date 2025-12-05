@@ -230,5 +230,377 @@
     "podcast": "**Podcast Script: Understanding Direct and Inverse Proportion**\n\n**Host:** Welcome back to our educational podcast! Today, we’re diving into a fascinating topic that’s essential for anyone studying for their IGCSEs: Direct and Inverse Proportion. I’m your host, and joining me today is our friendly math expert, [Guest's Name]. \n\n**Guest:** Hi everyone! I’m excited to be here and talk about these concepts that are not only important for exams but also for real-life applications!\n\n**Host:** Absolutely! So, let’s start with the basics. What exactly is direct proportion?\n\n**Guest:** Great question! Direct proportion occurs when two quantities increase or decrease at the same rate. This means they are linked by a constant multiplier, which we call the Constant of Proportionality. \n\n**Host:** So, if I understand correctly, if one quantity goes up, the other does too, right?\n\n**Guest:** Exactly! You can express this relationship algebraically as \\( y \\propto x \\) or \\( y = kx \\), where \\( k \\) is that constant multiplier.\n\n**Host:** Got it! Now, what about inverse proportion? How does that differ?\n\n**Guest:** Inverse proportion is quite different. Here, when one quantity increases, the other decreases, but they maintain a constant product. This can be expressed as \\( y \\propto \\frac{1}{x} \\) or \\( xy = k \\).\n\n**Host:** That’s interesting! Can you give us some real-life examples to illustrate these concepts?\n\n**Guest:** Sure! Let’s take a look at a supermarket example. If 6 kg of rice costs $24, then for 13 kg, the cost would be $52. This is a direct proportion because as the quantity of rice increases, the cost increases at the same rate.\n\n**Host:** That’s a clear example! And what about inverse proportion?\n\n**Guest:** For inverse proportion, consider a construction scenario. If 5 workers take 150 days to build one house, then 10 workers would take just 75 days, and 12 workers would take about 62.5 days. Here, as the number of workers increases, the time taken decreases.\n\n**Host:** That’s a great illustration of how these concepts apply in real life! Now, how do we find unknown quantities using these relationships?\n\n**Guest:** You can use the algebraic expressions we discussed earlier. First, identify the quantities involved and determine if the relationship is direct or inverse. Then, apply the appropriate formula to find your unknown values.\n\n**Host:** And what about graphical representations? How do these relationships look on a graph?\n\n**Guest:** Good point! Direct proportions yield straight-line graphs that pass through the origin, while inverse proportions create hyperbolic graphs. It’s a visual way to see how the quantities relate to each other.\n\n**Host:** Before we wrap up, let’s do a quick recap of the key concepts we covered today.\n\n**Guest:** Sure! We learned that direct proportion means one quantity increases or decreases with another at the same rate, while inverse proportion means one quantity increases as the other decreases. The constant of proportionality links these quantities in direct proportion.\n\n**Host:** And we also discussed how to identify these relationships, use algebraic expressions to find unknowns, and how they can be represented graphically. \n\n**Guest:** Exactly! And remember, understanding these concepts can",
     "high_score": 0,
     "timestamp": 1764148386.785826
+  },
+  {
+    "title": "L24_-_Answer_for_consideration",
+    "content": "<style>\n  .hi-imp { background: #fff3a6; padding: 0 .15em; border-radius: .25rem }\n  table { border-collapse: collapse; width: 100%; background: #fff }\n  th, td { border: 1px solid #e5e7eb; padding: 8px 10px; vertical-align: top }\n  thead th { background: #f8fafc; }\n  h1, h2, h3 { margin-top: 1.1rem; }\n</style>\n<h1>🌿 🧠 主题概述</h1>\n<ul>\n<li>学习中文的方法包括听中文歌、看中国电视剧和电影、做听写练习等。</li>\n<li>在中文课堂上，学生学习汉字、拼音、声调和语法等内容。</li>\n<li>汉字的书写和声调的使用是学习中文的难点。</li>\n<li>学习中文有助于更好地理解中国文化，交朋友和增加工作机会。</li>\n<li>学习中文的方法包括参加比赛、旅行和与中国朋友聊天。</li>\n</ul>\n<h2>🔑 关键概念</h2>\n<ul>\n<li><mark class=\"hi-imp\">汉字 (Hànzì)</mark>: 中文字符。</li>\n<li><mark class=\"hi-imp\">拼音 (Pīnyīn)</mark>: 中文的罗马拼音系统。</li>\n<li><mark class=\"hi-imp\">声调 (Shēngdiào)</mark>: 语音的音调，影响词义。</li>\n<li><mark class=\"hi-imp\">语法 (Yǔfǎ)</mark>: 语言的结构规则。</li>\n<li><mark class=\"hi-imp\">方法 (Fāngfǎ)</mark>: 学习的方式或途径。</li>\n</ul>\n<h2>🧬 过程 / 机制</h2>\n<ol>\n<li>学习中文的方法：<br>\n   - 听中文歌 → 增强听力和词汇。<br>\n   - 看中国电视剧和电影 → 提高语言理解能力。<br>\n   - 多做练习和听写 → 加强书写和听力技能。<br>\n   - 参加中文比赛 → 提升语言应用能力。<br>\n   - 旅行到中国 → 体验语言和文化。</li>\n</ol>\n<h2>📊 比较与表格</h2>\n<table>\n<thead>\n<tr>\n<th>词汇</th>\n<th>定义</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>汉字</td>\n<td>中文字符</td>\n</tr>\n<tr>\n<td>拼音</td>\n<td>中文的罗马拼音系统</td>\n</tr>\n<tr>\n<td>声调</td>\n<td>语音的音调</td>\n</tr>\n<tr>\n<td>语法</td>\n<td>语言的结构规则</td>\n</tr>\n<tr>\n<td>方法</td>\n<td>学习的方式</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th>因素</th>\n<th>原因 → 结果 (如何改变结果)</th>\n<th>证据 / 示例</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>汉字书写</td>\n<td>难度高 → 学习时间增加</td>\n<td>汉字很难写，需要记住很多笔画。</td>\n</tr>\n<tr>\n<td>声调使用</td>\n<td>重要性高 → 意义改变</td>\n<td>不同的声调会改变意思。</td>\n</tr>\n</tbody>\n</table>\n<h2>💡 应用 / 示例</h2>\n<ul>\n<li>学习中文可以帮助更好地了解中国文化，如历史和美食。</li>\n<li>学习中文可以交更多朋友，增加工作机会。</li>\n</ul>\n<h2>⚠️ 误解与陷阱</h2>\n<ul>\n<li>学习中文并不只是记忆汉字，还包括理解语法和声调的重要性。</li>\n</ul>\n<h2>✍️ 小测验</h2>\n<ul>\n<li>Q: 学习中文的好处是什么？</li>\n<li>Answer: 更好地理解中国文化，交朋友和增加工作机会。</li>\n<li>Q: 学习中文最难的部分是什么？</li>\n<li>Answer: 汉字的书写和声调的使用。</li>\n<li>Q: 学习中文的方法有哪些？</li>\n<li>Answer: 听歌、看电影、做练习、参加比赛和旅行。</li>\n</ul>",
+    "source": "Page 1 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \nName:  Topic: Unit E – 国际视野 \nL24 – 学中文 Class: 10 Foreign Language  \n \nVocabulary \n学中文 \nLearning Chinese  \n1. Learning Methods (学习方法 - Xuéxí fāngfǎ) \nHanzi Pinyin Meaning \n方法 fāngfǎ method, way \n听中文歌 tīng zhōngwén gē to listen to Chinese songs \n看中国电视剧 kàn zhōngguó diànshìjù to watch Chinese TV dramas \n看中国电影 kàn zhōngguó diànyǐng to watch Chinese movies \n多做听写练习 duō zuò tīngxiě liànxí to do more dictation exercises \n常查词典 cháng chá cídiǎn to often look up words in the \ndictionary \n多做练习 duō zuò liànxí to do more exercises \n参加中文比赛 cānjiā zhōngwén bǐsài to participate in Chinese \ncompetitions \n去中国旅行 qù zhōngguó lǚxíng to travel to China \n跟中国朋友网上\n聊天 \ngēn zhōngguó péngyou wǎngshang \nliáotiān \nto chat online with Chinese \nfriends \n \n \n                                                        \n \n \n \n \n \nPage 2 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \n2. In the Chinese Classroom (在中文课堂上 - Zài Zhōngwén kètáng shang) \nHanzi Pinyin Meaning \n笔画 bǐhuà stroke (of a character) \n笔顺 bǐshùn stroke order \n田字格 tiánzìgé grid (for writing characters) \n写字 xiězì to write characters \n汉字 Hànzì Chinese characters \n拼音 pīnyīn pinyin (romanization system) \n声调 shēngdiào tones \n国语 Guóyǔ The official name of Mandarin in Taiwan \n普通话 Pǔtōnghuà Standard Chinese (Mainland) \n口音 kǒuyīn accent \n发音 fāyīn pronunciation \n词语 cíyǔ words and phrases \n生词 shēngcí new words / vocabulary \n单词 dāncí (single) word \n句子 jùzi sentence \n口语 kǒuyǔ speaking \n听力 tīnglì listening \n阅读 yuèdú reading \n                                                        \n \n \n \n \n \nPage 3 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \nHanzi Pinyin Meaning \n沟通/交流 gōutōng / jiāoliú to communicate \n课本 kèběn textbook \n教学 jiàoxué teaching \n答案 dá'àn answer key \n复习 fùxí to review \n语法 yǔfǎ grammar \n难度 nándù difficulty \n3. Difficulties & Importance (难点与重要性 - Nándiǎn yǔ Zhòngyàoxìng) \nHanzi Pinyin Meaning \n难 nán difficult \n容易 róngyì easy \n重要 zhòngyào important \n好处 hǎochu benefit, advantage \n汉字很难写。 hànzì hěn nán xiě. Chinese characters are very difficult to \nwrite. \n不同的声调会改变意\n思。 \nBùtóng de shēngdiào huì \ngǎibiàn yìsi. \nDifferent tones can change the \nmeaning. \n中文语法跟英文语法\n不一样。 \nzhōngwén yǔfǎ gēn yīngwén \nyǔfǎ bù yíyàng. \nChinese grammar is different from \nEnglish grammar. \n更好地了解中国文\n化。 \ngèng hǎo de liǎojiě zhōngguó \nwénhuà. To better understand Chinese culture. \n                                                        \n \n \n \n \n \nPage 4 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \nHanzi Pinyin Meaning \n交更多朋友 jiāo gèngduō péngyou to make more friends \n有更多工作机会 yǒu gèngduō gōngzuò jīhuì to have more job opportunities \n \n你觉得中文难学吗？为什么？ \n• 我\nwǒ\n觉\njué\n得\nde\n中\nzhōng\n文\nwén\n有\nyǒu\n点\ndiǎn\n难\nnán\n学\nxué\n。主\nzhǔ\n要\nyào\n有\nyǒu\n两\nliǎng\n个\ngè\n原\nyuán\n因\nyīn\n：第\ndì\n一\nyī\n，汉\nhàn\n字\nzì\n很\nhěn\n难\nnán\n写\nxiě\n，要\nyào\n记\njì\n住\nzhù\n很\nhěn\n多\nduō\n笔\nbǐ\n画\nhuà\n。第\ndì\n二\nèr\n，声\nshēng\n调\ndiào\n非\nfēi\n常\ncháng\n重\nzhòng\n要\nyào\n，不\nbù\n同\ntóng\n的\nde\n声\nshēng\n调\ndiào\n会\nhuì\n完\nwán\n全\nquán\n改\ngǎi\n变\nbiàn\n一\nyī\n个\ngè\n词\ncí\n的\nde\n意\nyì\n思\nsi\n。 \n \n\"I think Chinese is somewhat difficult to learn. There are two main reasons: First, Chinese \ncharacters are very difficult to write; you have to remember many strokes. Second, tones are \nvery important; different tones can completely change the meaning of a word.\" \n你觉得中文最难的什么？ \n• 对\nduì\n我\nwǒ\n来\nlái\n说\nshuō\n，中\nzhōng\n文\nwén\n最\nzuì\n难\nnán\n的\nde\n部\nbù\n分\nfen\n是\nshì\n声\nshēng\n调\ndiào\n和\nhé\n语\nyǔ\n法\nfǎ\n。因\nyīn\n为\nwéi\n中\nzhōng\n文\nwén\n的\nde\n语\nyǔ\n法\nfǎ\n跟\ngēn\n英\nyīng\n语\nyǔ\n的\nde\n语\nyǔ\n法\nfǎ\n不\nbù\n一\nyí\n样\nyàng\n，所\nsuǒ\n以\nyǐ\n有\nyǒu\n时\nshí\n候\nhou\n我\nwǒ\n会\nhuì\n觉\njué\n得\nde\n不\nbù\n习\nxí\n惯\nguàn\n。 \n \n\"For me, the most difficult parts of Chinese are the tones and the grammar. Because Chinese \ngrammar is different from English grammar, I sometimes find it unfamiliar.\" \n \n \n \n \n \n \n \n                                                        \n \n \n \n \n \nPage 5 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \nVocabulary for Question 4: Importance & Benefits (重要性与好处 - Zhòngyàoxìng yǔ Hǎochu) \nHanzi Pinyin Meaning \n重要 zhòngyào important \n好处 hǎochu benefit, \nadvantage \n了解 liǎojiě to understand \n中国文化 zhōngguó \nwénhuà Chinese culture \n交朋友 jiāo péngyou to make friends \n更多 gèng duō more \nHanzi Pinyin Meaning \n工作机会 gōngzuò \njīhuì \njob \nopportunities \n有用的技\n能 \nyǒuyòng de \njìnéng useful skill \n旅行 lǚxíng to travel \n沟通 gōutōng to communicate \n全世界 quán shìjiè all over the \nworld \nAnswer 4: \n你觉得学中文重要吗？为什么？ \n• 是\nshì\n的\nde\n，我\nwǒ\n觉\njué\n得\nde\n学\nxué\n中\nzhōng\n文\nwén\n非\nfēi\n常\ncháng\n重\nzhòng\n要\nyào\n。现\nxiàn\n在\nzài\n中\nzhōng\n国\nguó\n在\nzài\n世\nshì\n界\njiè\n上\nshàng\n的\nde\n作\nzuò\n用\nyòng\n越\nyuè\n来\nlái\n越\nyuè\n大\ndà\n，会\nhuì\n中\nzhōng\n文\nwén\n是\nshì\n一\nyī\n项\nxiàng\n非\nfēi\n常\ncháng\n有\nyǒu\n用\nyòng\n的\nde\n技\njì\n能\nnéng\n。 \n\"Yes, I think learning Chinese is very important. Now China's role in the world is getting bigger \nand bigger, and knowing Chinese is a very useful skill.\" \n学中文对你有什么好处？ \n• 学\nxué\n中\nzhōng\n文\nwén\n对\nduì\n我\nwǒ\n有\nyǒu\n很\nhěn\n多\nduō\n好\nhǎo\n处\nchu\n。首\nshǒu\n先\nxiān\n，我\nwǒ\n可\nkě\n以\nyǐ\n更\ngèng\n好\nhǎo\n地\ndì\n了\nliǎo\n解\njiě\n中\nzhōng\n国\nguó\n文\nwén\n化\nhuà\n，比\nbǐ\n如\nrú\n中国的历\nlì\n史\nshǐ\n和\nhé\n美\nměi\n食\nshí\n。其\nqí\n次\ncì\n，我\nwǒ\n可\nkě\n以\nyǐ\n和\nhé\n更\ngèng\n多\nduō\n的\nde\n中\nzhōng\n国\nguó\n人\nrén\n交\njiāo\n朋\npéng\n友\nyǒu\n，以\nyǐ\n后\nhòu\n也\nyě\n可\nkě\n能\nnéng\n有\nyǒu\n更\ngèng\n多\nduō\n的\nde\n工\ngōng\n作\nzuò\n机\njī\n会\nhuì\n。 \n\"Learning Chinese has many benefits for me. First, I can better understand Chinese culture, like \nits history and food. Second, I can make friends with more Chinese people, and in the future, I \nmight also have more job opportunities.\" \n \n                                                        \n \n \n \n \n \nPage 6 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \nVocabulary for Question 5: Methods (方法 - Fāngfǎ) \nHanzi Pinyin Meaning \n方法 fāngfǎ method \n最有趣 zuì yǒuqù the most interesting \n最有用 zuì yǒuyòng the most useful \n唱歌 chànggē to sing \n听中文歌 tīng Zhōngwén gē to listen to Chinese songs \n中文流行音乐 Zhōngwén liúxíng yīnyuè Chinese pop music \n看电影 kàn diànyǐng to watch movies \n看电视剧 kàn diànshìjù to watch TV dramas \n学单词 xué dāncí to learn vocabulary \n一边...一边... yìbiān... yìbiān... while... (doing two things simultaneously) \n轻松 qīngsōng relaxed, easy \n网上聊天 wǎngshang liáotiān to chat online \nAnswer 5: \n你觉得怎样学中文最有意思/有用？ \n• 我\nwǒ\n觉\njué\n得\nde\n唱\nchàng\n歌\ngē\n学\nxué\n中\nzhōng\n文\nwén\n最\nzuì\n有\nyǒu\n趣\nqù\n。我\nwǒ\n特\ntè\n别\nbié\n喜\nxǐ\n欢\nhuan\n听\ntīng\n中\nzhōng\n文\nwén\n流\nliú\n行\nxíng\n音\nyīn\n乐\nyuè\n，一\nyì\n边\nbiān\n听\ntīng\n歌\ngē\n一\nyì\n边\nbiān\n就\njiù\n能\nnéng\n轻\nqīng\n松\nsōng\n地\ndì\n学\nxué\n到\ndào\n新\nxīn\n单\ndān\n词\ncí\n和\nhé\n正\nzhèng\n确\nquè\n的\nde\n发\nfā\n音\nyīn\n。 \n\"I think learning Chinese through singing is the most interesting. I really like listening to Chinese \npop music; I can learn new vocabulary and correct pronunciation easily while listening to songs.\" \n \n                                                        \n \n \n \n \n \nPage 7 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \nSpeaking Questions \n1.  你学中文多久了？/ 你是从什么时候开始学中文的？ \n我学中文三年了。我是从二零二一年开始学中文的。 \n\"I have been learning Chinese for three years. I started learning Chinese in 2021.\" \n2. 你觉得学中文重要吗？为什么？ \n我\nwǒ\n觉\njué\n得\nde\n学\nxué\n中\nzhōng\n文\nwén\n很\nhěn\n重\nzhòng\n要\nyào\n，因\nyīn\n为\nwéi\n可\nkě\n以\nyǐ\n说\nshuō\n中\nzhōng\n文\nwén\n的\nde\n人\nrén\n很\nhěn\n多\nduō\n，而\nér\n且\nqiě\n学\nxué\n会\nhuì\n中\nzhōng\n文\nwén\n以\nyǐ\n后\nhòu\n会\nhuì\n有\nyǒu\n更\ngèng\n多\nduō\n工\ngōng\n作\nzuò\n机\njī\n会\nhuì\n。 \n\"I think learning Chinese is very important because there are many people who speak Chinese, and \nalso, after learning Chinese, you will have more job opportunities.\" \n3. 你觉得中文难不难学？为什么？ \n我\nwǒ\n觉\njué\n得\nde\n中\nzhōng\n文\nwén\n有\nyǒu\n点\ndiǎn\n难\nnán\n。特\ntè\n别\nbié\n是\nshì\n汉\nhàn\n字\nzì\n和\nhé\n声\nshēng\n调\ndiào\n很\nhěn\n难\nnán\n。汉\nhàn\n字\nzì\n很\nhěn\n难\nnán\n写\nxiě\n，不\nbù\n同\ntóng\n的\nde\n声\nshēng\n调\ndiào\n也\nyě\n会\nhuì\n改\ngǎi\n变\nbiàn\n意\nyì\n思\nsi\n。 \n\"I think Chinese is a bit difficult. Especially the characters and tones are hard. Characters are difficult \nto write, and different tones can change the meaning.\" \n4. 除了中文，你还会说什么外语？在哪儿学的? \n除\nchú\n了\nle\n中\nzhōng\n文\nwén\n，我\nwǒ\n还\nhái\n会\nhuì\n说\nshuō\n英\nyīng\n语\nyǔ\n。我\nwǒ\n是\nshì\n在\nzài\n学\nxué\n校\nxiào\n学\nxué\n习\nxí\n的\nde\n英\nyīng\n语\nyǔ\n，通过\ntōngguò\n上课\nshàngkè\n、看\nkàn\n书\nshū\n、练\nliàn\n习\nxí\n听\ntīng\n力\nlì\n和\nhé\n口\nkǒu\n语\nyǔ\n慢\nmàn\n慢\nmàn\n提\ntí\n高\ngāo\n的\nde\n。我\nwǒ\n觉\njué\n得\nde\n学\nxué\n习\nxí\n外\nwài\n语\nyǔ\n很\nhěn\n有\nyǒu\n用\nyòng\n，可\nkě\n以\nyǐ\n帮\nbāng\n助\nzhù\n我\nwǒ\n和\nhé\n不\nbù\n同\ntóng\n国\nguó\n家\njiā\n的\nde\n人\nrén\n交\njiāo\n流\nliú\n，了\nliǎo\n解\njiě\n更\ngèng\n多\nduō\n的\nde\n文\nwén\n化\nhuà\n。 \nBesides Chinese, I can also speak English. I learned English at school, and I improved gradually by \nattending classes, reading books, and practicing listening and speaking. I think learning a foreign \nlanguage is very useful because it can help me communicate with people from different countries \nand understand more about their cultures. \n \n5. 你觉得学中文什么最难？为什么？ \n我\nwǒ\n觉\njué\n得\nde\n学\nxué\n中\nzhōng\n文\nwén\n最\nzuì\n难\nnán\n的\nde\n是\nshì\n声\nshēng\n调\ndiào\n。因\nyīn\n为\nwéi\n如\nrú\n果\nguǒ\n声\nshēng\n调\ndiào\n不\nbú\n对\nduì\n，别\nbié\n人\nrén\n就\njiù\n听\ntīng\n不\nbù\n懂\ndǒng\n，有\nyǒu\n时\nshí\n候\nhou\n还\nhái\n会\nhuì\n误\nwù\n会\nhuì\n我\nwǒ\n的\nde\n意\nyì\n思\nsi\n。 \n\"I think the hardest part of learning Chinese is the tones. Because if the tone is wrong, people can't \nunderstand, and sometimes they misunderstand what I mean.\" \n \n                                                        \n \n \n \n \n \nPage 8 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \n6. 你的中文老师是怎么样的? \n• 我\nwǒ\n的\nde\n中\nzhōng\n文\nwén\n老\nlǎo\n师\nshī\n非\nfēi\n常\ncháng\n好\nhǎo\n。她\ntā\n很\nhěn\n有\nyǒu\n耐\nnài\n心\nxīn\n，也\nyě\n很\nhěn\n热\nrè\n情\nqíng\n。 \nMy Chinese teacher is very good. She is very patient and enthusiastic. \n• 她\ntā\n总\nzǒng\n是\nshì\n用\nyòng\n有\nyǒu\n趣\nqù\n的\nde\n方\nfāng\n法\nfǎ\n教\njiào\n我\nwǒ\n们\nmen\n。比\nbǐ\n如\nrú\n，她\ntā\n用\nyòng\n游\nyóu\n戏\nxì\n和\nhé\n活\nhuó\n动\ndòng\n帮\nbāng\n助\nzhù\n我\nwǒ\n们\nmen\n记\njì\n住\nzhù\n生\nshēng\n词\ncí\n和\nhé\n语\nyǔ\n法\nfǎ\n。 \nShe always uses interesting methods to teach us, for example, she uses games and activities to \nhelp us remember new vocabulary and grammar. \n• 她\ntā\n经\njīng\n常\ncháng\n让\nràng\n我\nwǒ\n们\nmen\n练\nliàn\n习\nxí\n对\nduì\n话\nhuà\n和\nhé\n口\nkǒu\n语\nyǔ\n。她\ntā\n给\ngěi\n我\nwǒ\n们\nmen\n看\nkàn\n中\nzhōng\n国\nguó\n的\nde\n电\ndiàn\n影\nyǐng\n和\nhé\n短\nduǎn\n视\nshì\n频\npín\n。 \nShe often lets us practice conversations and speaking, and also shows us Chinese movies and \nshort videos. \n• 课\nk è\n堂\ntáng\n气\nq ì\n氛\nfēn\n很\nhěn\n轻\nqīng\n松\nsōng\n，我\nw ǒ\n们\nmen\n可\nk ě\n以\ny ǐ\n随\nsuí\n时\nshí\n问\nwèn\n问\nwèn\n题\nt í\n。她\nt ā\n总\nzǒng\n是\nshì\n鼓\ng ǔ\n励\nl ì\n我\nw ǒ\n们\nmen\n，不\nb ú\n怕\np à\n我\nw ǒ\n们\nmen\n说\nshuō\n错\ncuò\n。\n她\ntā\n还\nhái\n会\nhuì\n讲\njiǎng\n一\nyì\n些\nxiē\n中\nzhōng\n国\nguó\n的\nde\n文\nwén\n化\nhuà\n和\nhé\n生\nshēng\n活\nhuó\n习\nxí\n惯\nguàn\n。 \nThe classroom atmosphere is very relaxed, and we can ask questions anytime. She always \nencourages us and isn't afraid of us making mistakes. She also tells us about some Chinese \nculture and lifestyle habits. \n• 她\ntā\n纠\njiū\n正\nzhèng\n我\nwǒ\n的\nde\n发\nfā\n音\nyīn\n很\nhěn\n仔\nzǐ\n细\nxì\n。她\ntā\n教\njiào\n我\nwǒ\n们\nmen\n怎\nzěn\n么\nme\n用\nyòng\n新\nxīn\n学\nxué\n的\nde\n词\ncí\n语\nyǔ\n造\nzào\n自\nzì\n然\nrán\n的\nde\n句\njù\n子\nzi\n。她\ntā\n布\nbù\n置\nzhì\n的\nde\n作\nzuò\n业\nyè\n不\nbù\n太\ntài\n多\nduō\n，但\ndàn\n是\nshì\n很\nhěn\n有\nyǒu\n用\nyòng\n。 \nShe corrects my pronunciation very carefully and teaches us how to use newly learned words to \nform natural sentences. The homework she assigns isn't too much, but it's very useful. \n• 我\nwǒ\n觉\njué\n得\nde\n遇\nyù\n到\ndào\n一\nyī\n个\ngè\n好\nhǎo\n老\nlǎo\n师\nshī\n对\nduì\n学\nxué\n习\nx í\n语\ny ǔ\n言\nyán\n很\nhěn\n重\nzhòng\n要\nyào\n。我\nwǒ\n的\nde\n中\nzhōng\n文\nwén\n老\nlǎo\n师\nshī\n让\nràng\n我\nwǒ\n越\nyuè\n来\nlái\n越\nyuè\n喜\nxǐ\n欢\nhuan\n学\nxué\n习\nxí\n中\nzhōng\n文\nwén\n \nI think meeting a good teacher is very important for learning a language, and my Chinese \nteacher makes me like learning Chinese more and more. \n \n7. 你在中文课上学了什么？ \n在\nzài\n中\nzhōng\n文\nwén\n课\nkè\n上\nshàng\n，我\nwǒ\n们\nmen\n学\nxué\n语\nyǔ\n法\nfǎ\n、生\nshēng\n词\ncí\n、听\ntīng\n力\nlì\n、口\nkǒu\n语\nyǔ\n，也\nyě\n学\nxué\n怎\nzěn\n么\nme\n写\nxiě\n汉\nhàn\n字\nzì\n和\nhé\n正\nzhèng\n确\nquè\n的\nde\n笔\nbǐ\n顺\nshùn\n。 \n\"In Chinese class, we learn grammar, new vocabulary, listening, speaking, and also how to write \nChinese characters with the correct stroke order.\" \n \n \n                                                        \n \n \n \n \n \nPage 9 of 9 \n \n                                                                                         SECONDARY SCHOOL \n \nChinese Language Department                                                                            2025-2026 \n  \n \n8. 你打算以后去中国学中文吗？为什么？ \nOption 1: (Yes, I plan to) \n是\nshì\n的\nde\n，我\nwǒ\n打\ndǎ\n算\nsuàn\n以\nyǐ\n后\nhòu\n去\nqù\n中\nzhōng\n国\nguó\n留\nliú\n学\nxué\n。因\nyīn\n为\nwéi\n我\nwǒ\n觉\njué\n得\nde\n在\nzài\n一\nyī\n个\ngè\n中\nzhōng\n文\nwén\n的\nde\n语\nyǔ\n言\nyán\n环\nhuán\n境\njìng\n里\nlǐ\n学\nxué\n习\nxí\n，是\nshì\n提\ntí\n高\ngāo\n中\nzhōng\n文\nwén\n水\nshuǐ\n平\npíng\n最\nzuì\n快\nkuài\n、最\nzuì\n有\nyǒu\n效\nxiào\n的\nde\n方\nfāng\n法\nfǎ\n。我\nwǒ\n可\nkě\n以\nyǐ\n体\ntǐ\n验\nyàn\n中\nzhōng\n国\nguó\n的\nde\n日\nrì\n常\ncháng\n生\nshēng\n活\nhuó\n和\nhé\n文\nwén\n化\nhuà\n，交\njiāo\n很\nhěn\n多\nduō\n中\nzhōng\n国\nguó\n朋\npéng\n友\nyou\n，并\nbìng\n且\nqiě\n练\nliàn\n习\nxí\n我\nwǒ\n的\nde\n听\ntīng\n力\nlì\n和\nhé\n口\nkǒu\n语\nyǔ\n。 \n \n\"Yes, I plan to study abroad in China in the future. Because I think studying in a Chinese language \nenvironment is the fastest and most effective way to improve my Chinese level. I can experience \nChinese daily life and culture, make many Chinese friends, and practice my listening and speaking.\" \nOption 2: (It would be a good idea) \n如\nrú\n果\nguǒ\n以\nyǐ\n后\nhòu\n有\nyǒu\n机\njī\n会\nhuì\n，我\nwǒ\n一\nyí\n定\ndìng\n想\nxiǎng\n去\nqù\n中\nzhōng\n国\nguó\n学\nxué\n中\nzhōng\n文\nwén\n。沉\nchén\n浸\njìn\n式\nshì\n学\nxué\n习\nxí\n非\nfēi\n常\ncháng\n有\nyǒu\n帮\nbāng\n助\nzhù\n。我\nwǒ\n可\nkě\n以\nyǐ\n去\nqù\n中\nzhōng\n国\nguó\n的\nde\n大\ndà\n学\nxué\n参\ncān\n加\njiā\n一\nyī\n个\ngè\n暑\nshǔ\n假\njià\n项\nxiàng\n目\nmù\n，这\nzhè\n样\nyàng\n既\njì\n能\nnéng\n学\nxué\n中\nzhōng\n文\nwén\n，又\nyòu\n能\nnéng\n旅\nlǚ\n行\nxíng\n。 \n\"If I have the opportunity in the future, I would definitely like to go to China to study Chinese. \nImmersive learning is very helpful. I could go to a Chinese university to join a summer program; this \nway I could both study Chinese and travel.\" \nOption 3: (No, I don't plan to) \n我\nwǒ\n不\nbù\n太\ntài\n确\nquè\n定\ndìng\n。虽\nsuī\n然\nrán\n去\nqù\n中\nzhōng\n国\nguó\n学\nxué\n中\nzhōng\n文\nwén\n是\nshì\n一\nyī\n个\ngè\n很\nhěn\n好\nhǎo\n的\nde\n机\njī\n会\nhuì\n，但\ndàn\n是\nshì\n现\nxiàn\n在\nzài\n对\nduì\n我\nwǒ\n来\nlái\n说\nshuō\n可\nkě\n能\nnéng\n不\nbù\n太\ntài\n方\nfāng\n便\nbiàn\n。我\nwǒ\n打\ndǎ\n算\nsuàn\n先\nxiān\n在\nzài\n这\nzhè\n里\nlǐ\n努\nnǔ\n力\nlì\n上\nshàng\n课\nkè\n，多\nduō\n看\nkàn\n中\nzhōng\n文\nwén\n电\ndiàn\n影\nyǐng\n和\nhé\n听\ntīng\n音\nyīn\n乐\nyuè\n来\nlái\n提\ntí\n高\ngāo\n我\nwǒ\n的\nde\n中\nzhōng\n文\nwén\n。 \n\"I'm not so sure. Although going to China to study Chinese is a great opportunity, it might not be \nvery convenient for me right now. I plan to work hard in my classes here first, and watch more \nChinese movies and listen to music to improve my Chinese.\" \n9. 你觉得怎样学中文最有意思？ \n我\nwǒ\n觉\njué\n得\nde\n听\ntīng\n中\nzhōng\n文\nwén\n歌\ngē\n和\nhé\n看\nkàn\n中\nzhōng\n国\nguó\n电\ndiàn\n影\nyǐng\n最\nzuì\n有\nyǒu\n意\nyì\n思\nsi\n。我\nwǒ\n可\nkě\n以\nyǐ\n一\nyì\n边\nbiān\n听\ntīng\n音\nyīn\n乐\nyuè\n，一\nyì\n边\nbiān\n轻\nqīng\n松\nsōng\n地\ndì\n学\nxué\n新\nxīn\n词\ncí\n语\nyǔ\n。 \n\"I think listening to Chinese songs and watching Chinese movies is the most interesting. I can listen \nto music and learn new words in a relaxed way at the same time.\"",
+    "quiz": [
+      {
+        "question": "学习中文的哪种方法被认为是最有趣的？",
+        "options": [
+          "看中国电影",
+          "听中文歌",
+          "参加中文比赛",
+          "多做练习"
+        ],
+        "answer_index": 1,
+        "explanation": "听中文歌 — 根据笔记，学习中文通过唱歌被认为是最有趣的，特别是听中文流行音乐。",
+        "supporting_sentence": "听中文歌 tīng zhōngwén gē to listen to Chinese songs"
+      },
+      {
+        "question": "学习中文的一个重要好处是什么？",
+        "options": [
+          "可以更好地了解中国文化",
+          "可以更容易地学习其他语言",
+          "可以减少工作机会",
+          "可以避免与人交流"
+        ],
+        "answer_index": 0,
+        "explanation": "根据笔记，学习中文的好处之一是可以更好地了解中国文化。",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "中文语法与哪种语言的语法不同？",
+        "options": [
+          "法语",
+          "西班牙语",
+          "英语",
+          "德语"
+        ],
+        "answer_index": 2,
+        "explanation": "笔记中提到中文语法与英文语法不一样，因此正确答案是英语。",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "在学习中文时，最难的部分是什么？",
+        "options": [
+          "汉字的书写",
+          "声调的使用",
+          "语法的理解",
+          "词汇的记忆"
+        ],
+        "answer_index": 1,
+        "explanation": "学习中文时，最难的部分是声调，因为声调不对会导致误解。正确选项是“声调的使用”。",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "学习中文的最大好处是什么？",
+        "options": [
+          "可以更好地了解中国文化",
+          "可以更容易找到工作",
+          "可以与更多的人交朋友",
+          "可以提高英语水平"
+        ],
+        "answer_index": 0,
+        "explanation": "学习中文的好处之一是可以更好地了解中国文化，例如历史和美食。正确选项是“可以更好地了解中国文化”。",
+        "supporting_sentence": "Based on source material"
+      },
+      {
+        "question": "你认为学习中文最有趣的方法是什么？",
+        "options": [
+          "看电影",
+          "唱歌",
+          "学习语法",
+          "写汉字"
+        ],
+        "answer_index": 1,
+        "explanation": "学习中文时，唱歌被认为是最有趣的方法，因为可以轻松地学习新单词和发音。正确选项是“唱歌”。",
+        "supporting_sentence": "唱歌 chànggē to sing"
+      }
+    ],
+    "flashcards": [
+      {
+        "front": "学中文 (Xué zhōngwén)",
+        "back": "Learning Chinese"
+      },
+      {
+        "front": "方法 (fāngfǎ)",
+        "back": "method, way"
+      },
+      {
+        "front": "听中文歌 (tīng zhōngwén gē)",
+        "back": "to listen to Chinese songs"
+      },
+      {
+        "front": "看中国电视剧 (kàn zhōngguó diànshìjù)",
+        "back": "to watch Chinese TV dramas"
+      },
+      {
+        "front": "看中国电影 (kàn zhōngguó diànyǐng)",
+        "back": "to watch Chinese movies"
+      },
+      {
+        "front": "多做练习 (duō zuò liànxí)",
+        "back": "to do more exercises"
+      },
+      {
+        "front": "汉字 (Hànzì)",
+        "back": "Chinese characters"
+      },
+      {
+        "front": "声调 (shēngdiào)",
+        "back": "tones"
+      },
+      {
+        "front": "中文语法 (zhōngwén yǔfǎ)",
+        "back": "Chinese grammar"
+      },
+      {
+        "front": "重要 (zhòngyào)",
+        "back": "important"
+      },
+      {
+        "front": "好处 (hǎochu)",
+        "back": "benefit, advantage"
+      },
+      {
+        "front": "交朋友 (jiāo péngyou)",
+        "back": "to make friends"
+      },
+      {
+        "front": "有更多工作机会 (yǒu gèngduō gōngzuò jīhuì)",
+        "back": "to have more job opportunities"
+      },
+      {
+        "front": "学习中文的重要性 (xuéxí zhōngwén de zhòngyàoxìng)",
+        "back": "Learning Chinese is very important."
+      },
+      {
+        "front": "中文的难点 (zhōngwén de nán diǎn)",
+        "back": "The difficulties of Chinese."
+      },
+      {
+        "front": "通过唱歌学中文 (tōngguò chànggē xué zhōngwén)",
+        "back": "Learning Chinese through singing is interesting."
+      }
+    ],
+    "podcast": "",
+    "high_score": 0,
+    "timestamp": 1764542449.794281
+  },
+  {
+    "title": "Transport in Animals",
+    "content": "<style>\n  .hi-imp { background: #fff3a6; padding: 0 .15em; border-radius: .25rem }\n  table { border-collapse: collapse; width: 100%; background: #fff }\n  th, td { border: 1px solid #e5e7eb; padding: 8px 10px; vertical-align: top }\n  thead th { background: #f8fafc; }\n  h1, h2, h3 { margin-top: 1.1rem; }\n</style>\n<h1>🌿 🧠 Topic Overview</h1>\n<ul>\n<li>The <mark class=\"hi-imp\">circulatory system</mark> in mammals consists of blood vessels, the heart, and valves to ensure one-way blood flow.</li>\n<li>Blood is composed of plasma, red blood cells, white blood cells, and platelets.</li>\n<li>The heart functions as a pump, facilitating double circulation: pulmonary and systemic.</li>\n<li><mark class=\"hi-imp\">Arteries</mark> carry oxygenated blood away from the heart, while <mark class=\"hi-imp\">veins</mark> return deoxygenated blood.</li>\n<li><mark class=\"hi-imp\">Capillaries</mark> link arteries and veins, allowing for substance exchange with tissue cells.</li>\n</ul>\n<h2>🔑 Key Concepts</h2>\n<ul>\n<li><mark class=\"hi-imp\">Blood</mark>: A fluid tissue that transports nutrients, gases, and waste.</li>\n<li><mark class=\"hi-imp\">Heart</mark>: The muscular organ that pumps blood through the circulatory system.</li>\n<li><strong>Arteries</strong>: Blood vessels with thick walls that carry blood away from the heart.</li>\n<li><strong>Veins</strong>: Blood vessels with thinner walls that return blood to the heart.</li>\n<li><strong>Capillaries</strong>: Microscopic vessels where gas and nutrient exchange occurs.</li>\n<li><strong>Pulse</strong>: The rhythmic expansion of arteries with each heartbeat.</li>\n</ul>\n<h2>🧬 Processes / Mechanisms</h2>\n<ol>\n<li>Blood is pumped from the heart into arteries under high pressure.</li>\n<li>Arteries branch into smaller arterioles, leading to capillaries.</li>\n<li>In capillaries, oxygen and nutrients diffuse into tissue cells, while waste products enter the blood.</li>\n<li>Deoxygenated blood returns through venules to veins and back to the heart.</li>\n</ol>\n<h2>📊 Comparisons &amp; Tables</h2>\n<table>\n<thead>\n<tr>\n<th>Component</th>\n<th>Function</th>\n<th>Structure</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Arteries</td>\n<td>Carry oxygenated blood</td>\n<td>Thick muscular walls, small lumen</td>\n</tr>\n<tr>\n<td>Veins</td>\n<td>Carry deoxygenated blood</td>\n<td>Thin walls, large lumen, valves present</td>\n</tr>\n<tr>\n<td>Capillaries</td>\n<td>Exchange substances</td>\n<td>One-cell thick walls</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th>Factor</th>\n<th>Cause → Effect (how outcome changes)</th>\n<th>Evidence / Example</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Blood Pressure</td>\n<td>High pressure in arteries → Faster blood flow</td>\n<td>Blood is pumped from the heart under high pressure</td>\n</tr>\n<tr>\n<td>Muscle Contraction</td>\n<td>Increased activity → Higher pulse rate</td>\n<td>Physical activity increases heart rate for oxygen delivery</td>\n</tr>\n</tbody>\n</table>\n<h2>💡 Applications / Examples</h2>\n<ul>\n<li>The <strong>four-chambered heart</strong> separates oxygenated and deoxygenated blood, enhancing efficiency.</li>\n<li><strong>Coronary heart disease</strong> can result from atherosclerosis, leading to heart attacks.</li>\n</ul>\n<h2>⚠️ Misconceptions &amp; Pitfalls</h2>\n<ul>\n<li>Not stated in source.</li>\n</ul>\n<h2>✍️ Mini-Quiz (3 quick checks)</h2>\n<ul>\n<li>Q: What is the main function of capillaries?</li>\n<li>Answer: To link arteries to veins and facilitate substance exchange.</li>\n<li>Q: How does the structure of arteries relate to their function?</li>\n<li>Answer: Thick muscular walls allow them to withstand high pressure.</li>\n<li>Q: What is the role of valves in veins?</li>\n<li>Answer: To prevent backflow of blood as it returns to the heart.</li>\n</ul>",
+    "source": "© 2021 Marshall Cavendish Education Pte Ltd 1\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n1\nCHAPTER 9TRANSPORT IN ANIMALS\nThe following content has not been through the Cambridge Assessment International Education endorsement process.\n© 2021 Marshall Cavendish Education Pte Ltd 2\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n2\nIn this section, you will learn the following:•Describe the circulatory system as a system of blood vessels with a pump and valves to ensure one-way flow of blood.•List the components of blood.•Identify red and white blood cells in photomicrographs and diagrams. •State the functions of red blood cells, white blood cells, platelets and plasma.• Identify lymphocytes and phagocytes in photomicrographs and diagrams.• State the functions of lymphocytes and phagocytes. •State the roles of blood clotting.• Describe the process of clotting.\n9.1 Transport System: Structure and Composition of Blood \n\n© 2021 Marshall Cavendish Education Pte Ltd 3\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n3\n\n© 2021 Marshall Cavendish Education Pte Ltd 4\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n4\nTransportation of substance in animalsSimple unicellular organismOxygen, nutrients and waste products diffuse easily through the cell membrane of a simple unicellular organism.\nComplex multicellular organismTransport system in mammals consists of: •Blood vessels•Blood•Heart•ValvesThe main transport systemin humans is the circulatory system.\nA highly magnified unicellular organism\nThe human circulatory system\n© 2021 Marshall Cavendish Education Pte Ltd 5\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n5\nLet’s Investigate 9A\n•Drawing of a red blood cell should look like the red blood cell in Figures 9.2 and 9.4.•Drawings of different types of white blood cells should look like the white blood cells in Figures 9.2 and 9.4.\n© 2021 Marshall Cavendish Education Pte Ltd 6\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n6\n9.3 Transport in Animals In this section, you will learn the following: •Describe the single circulation of fish.•Describe the double circulation of mammals.•Explain the advantages of a double circulation.\n\n© 2021 Marshall Cavendish Education Pte Ltd 7\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n7\nSingle circulation of fish\nSingle circulation in a fish\nIn some animals such as fish, blood flows through the heart once during each circuit of the body àsingle circulation.\n\n© 2021 Marshall Cavendish Education Pte Ltd 8\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n8\n\n© 2021 Marshall Cavendish Education Pte Ltd 9\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n9\n\n© 2021 Marshall Cavendish Education Pte Ltd 10\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n10\nLinks the lungs to the heart\nCirculates blood around the body\nDouble circulation in a mammal\nDouble circulation of mammalsIn mammals, blood flows through the heart twice during each circuit of the body àdouble circulation.Double circulation in mammals consists of the pulmonary circulation & thesystemic circulation.\n\n© 2021 Marshall Cavendish Education Pte Ltd 11\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n11\n\n© 2021 Marshall Cavendish Education Pte Ltd 12\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n12\n\n© 2021 Marshall Cavendish Education Pte Ltd 13\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n13\nAdvantages of a double circulation •Four-chambered heart ensures separation of oxygenated blood from deoxygenated blood.\n•Blood flows more slowly through the lungs, allowing sufficient time for it to be well oxygenated.\n•Oxygenated blood is distributed to the body tissues more quickly.\n\n© 2021 Marshall Cavendish Education Pte Ltd 14\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n14\n\n© 2021 Marshall Cavendish Education Pte Ltd 15\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n15\n\n© 2021 Marshall Cavendish Education Pte Ltd 16\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n16\nBlood as a fluid tissue\nBlood spun at high-speed can be separated out into layers\nBlood smear under a light microscope\n\n© 2021 Marshall Cavendish Education Pte Ltd 17\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n17\nMain components of blood1.Plasma 2.Red blood cells\n3.White blood cells4.Platelets\nplasma\n© 2021 Marshall Cavendish Education Pte Ltd 18\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n18\n\n© 2021 Marshall Cavendish Education Pte Ltd 19\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n19\n\n© 2021 Marshall Cavendish Education Pte Ltd 20\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n20\n\n© 2021 Marshall Cavendish Education Pte Ltd 21\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n21\n\n© 2021 Marshall Cavendish Education Pte Ltd 22\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n22\n\n© 2021 Marshall Cavendish Education Pte Ltd 23\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n23\n\n© 2021 Marshall Cavendish Education Pte Ltd 24\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n24\n\n© 2021 Marshall Cavendish Education Pte Ltd 25\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n25\n\n© 2021 Marshall Cavendish Education Pte Ltd 26\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n26\n\n© 2021 Marshall Cavendish Education Pte Ltd 27\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n27\n\n© 2021 Marshall Cavendish Education Pte Ltd 28\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n28\n\n© 2021 Marshall Cavendish Education Pte Ltd 29\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n29\n\n© 2021 Marshall Cavendish Education Pte Ltd 30\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n30\n\n© 2021 Marshall Cavendish Education Pte Ltd 31\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n31\n\n© 2021 Marshall Cavendish Education Pte Ltd 32\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n32\n9.2 The Circulatory System In this section, you will learn the following:•State the functions of capillaries.• Explain how the structure and function of capillaries are related. •State that blood from the heart is pumped away through arteries and returns to the heart through veins.•Describe the structure of arteries, veins and capillaries.• Explain how the structure of arteries and veins relates to the pressure of the blood that they transport.\n\n© 2021 Marshall Cavendish Education Pte Ltd 33\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n33\n\n© 2021 Marshall Cavendish Education Pte Ltd 34\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n34\nComponents of the Circulatory System\nThe circulatory system\n\n© 2021 Marshall Cavendish Education Pte Ltd 35\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n35\nCross-section of an artery Light micrograph of transverse section (T.S) through an artery and a vein (20⨉magnification) \nArteries\n\n© 2021 Marshall Cavendish Education Pte Ltd 36\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n36\nVeins\nHow the semilunar valve in a vein works \nHow skeletal muscles help blood flow in the vein \nCross-section of a vein \n\n© 2021 Marshall Cavendish Education Pte Ltd 37\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n37\n\n© 2021 Marshall Cavendish Education Pte Ltd 38\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n38\n\n© 2021 Marshall Cavendish Education Pte Ltd 39\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n39\nDemonstrating the presence of valves in veins\nAction of valves in the veins of an arm \nTissue fluid The tiny spaces between tissue cells contain a colourlessliquid known as tissue fluid. Tissue cells are bathed with tissue fluid.\n© 2021 Marshall Cavendish Education Pte Ltd 40\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n40\nThe relationship between a blood capillary, tissue fluid and tissue cells \nHow are substances transferred between capillaries and tissue cells?\n© 2021 Marshall Cavendish Education Pte Ltd 41\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n41\n\n© 2021 Marshall Cavendish Education Pte Ltd 42\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n42\n\n© 2021 Marshall Cavendish Education Pte Ltd 43\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n43\n\n© 2021 Marshall Cavendish Education Pte Ltd 44\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n44\n\n© 2021 Marshall Cavendish Education Pte Ltd 45\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n45\nComparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs) \nCarry deoxygenated blood (except for the pulmonary veins which carry oxygenated blood from the lungs to the heart) \nBlood changes from oxygenated at the arteriole end to deoxygenated at the venule end \nHow are substances transferred between capillaries and tissue cells?\n© 2021 Marshall Cavendish Education Pte Ltd 46\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n46\nComparison of arteries, veins and capillaries Arteries Veins CapillariesFlowBlood under high pressure Blood under low pressure Pressure of blood reduces as blood flows from arteriole to venule end Blood moves in pulses, reflecting the rhythmic, pumping action of the heart No pulse No pulse \nBlood flows rapidly Blood flows slowly Blood flows slowly \nHow are substances transferred between capillaries and tissue cells?\n© 2021 Marshall Cavendish Education Pte Ltd 47\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n47\nLet’s Practise 9.1 and 9.2State the main function(s) of the following.\n(a)  Why do large animals such as mammals need a transport system?(b)  Name the type of transport system found in mammals.(c)  Describe three structural differences between arteries, veins and capillaries. \n(a)(b) (c)(d)\n1\n2\nA lymphocyteA phagocyteA red blood cellA platelet\n© 2021 Marshall Cavendish Education Pte Ltd 48\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n48\n9.4 The Heart In this section, you will learn the following:•Identify the structures of the mammalian heart.• Explain and compare the relative thickness of the muscle walls of the left and right ventricles and the atria.• Explain the importance of the septum.• Identify the atrioventricular and semilunar valves in the mammalian heart. • Describe how the heart functions in terms of contraction of the atria and ventricles, and action of the valves.•State that ECG, pulse rate and listening to the sound of valves closing may be used to monitor the activity of the heart. •Identify the main blood vessels to and from the heart, lungs and kidney.• Identify the hepatic artery, hepatic veins and hepatic portal vein as the main blood vessels to and from the liver. •Investigate and describe the effect of physical activity on heart rate.• Explain the effect of physical activity on the heart rate.\n\n© 2021 Marshall Cavendish Education Pte Ltd 49\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n49\n\n© 2021 Marshall Cavendish Education Pte Ltd 50\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n50\nStructure of the heart\nThe mammalian heart and its associated blood vessels \n\n© 2021 Marshall Cavendish Education Pte Ltd 51\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n51\nSimplified representation of a mammalian heart\nThe mammalian heart\n\n© 2021 Marshall Cavendish Education Pte Ltd 52\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n52\n\n© 2021 Marshall Cavendish Education Pte Ltd 53\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n53\nWhat path does blood take through the heart?\nPath of blood through the heart \n\n© 2021 Marshall Cavendish Education Pte Ltd 54\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n54\nHow the heart works\nMode of action of the heart\nVentricular contractionVentricular relaxation\n© 2021 Marshall Cavendish Education Pte Ltd 55\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n55\n\n© 2021 Marshall Cavendish Education Pte Ltd 56\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n56\nBlood PressureBlood pressure is the force of the blood exerted on the walls of the blood vessels. \nUsing a sphygmomanometer to measure blood pressure \nThe pulse A pulse is produced after every ventricular contraction.\nElectrocardiogram (ECG) \nNormal heart activity in an ECG \nAn ECG monitors the functioning of the heart by measuring its electrical activity.\n\n© 2021 Marshall Cavendish Education Pte Ltd 57\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n57\nLet’s Investigate 9B•The effect of gravity is exerted more strongly when you stand up. Hence, more effort is required to pump blood throughout the body and the pulse rate changes.•During physical exercise, more energy is needed for muscle contraction. This leads to an increase in aerobic respiration.•The heart will have to beat faster so that oxygen and glucose can be transported more quickly to the muscles to meet the increase in demand. This also allows for the carbon dioxide produced to be transported quickly from the muscles to the lungs for removal.•The higher the fitness level, the lower the pulse rate.\n© 2021 Marshall Cavendish Education Pte Ltd 58\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n58\nMeasuring pulse rate with two right fingers \nPhysical activity increases the pulse rate so that oxygen and glucose can be transported more quickly to the muscles to meet the increase in demand. \n\n© 2021 Marshall Cavendish Education Pte Ltd 59\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n59\nArteries and veins of the human circulatory system\nThe main arteries and veins of the human circulatory system \n\n© 2021 Marshall Cavendish Education Pte Ltd 60\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n60\n\n© 2021 Marshall Cavendish Education Pte Ltd 61\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n61\n\n© 2021 Marshall Cavendish Education Pte Ltd 62\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n62\n\n© 2021 Marshall Cavendish Education Pte Ltd 63\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n63\nLet’s Practise 9.3 and 9.4\n4Use the information given in the figure to answer the following questions.\nDiagrammatic representation of blood pressure in the circulatory system of a mammal \n(a)In which region of the circulatory system is the pressure lowest?(b)In which region of the circulatory system is there the greatest fall in pressure?(c)How many times is the rise in pressure in the left ventricle greater than the rise in pressure in the left atrium?(d)How is the blood pressure of a human measured?\n© 2021 Marshall Cavendish Education Pte Ltd 64\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n64\n9.5 Coronary Heart Disease In this section, you will learn the following: •Describe coronary heart disease and state some of the risk factors.•Discuss how diet and exercise can reduce the risk of coronary heart disease. \n\n© 2021 Marshall Cavendish Education Pte Ltd 65\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n65\nTransverse sections of two arteries\nWhat is a heart attack?Blockage of the coronary arteries can cause a heart attack.That region of heart muscles dies when it does not receive enough oxygen and nutrients. This becomes fatal when a large region of the heart is damaged.\n\n© 2021 Marshall Cavendish Education Pte Ltd 66\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n66\nCauses of coronary heart disease\nAn artery with fatty substances deposited in lumen \nAtherosclerosis is the condition in which fatty substances are deposited on the inner surface of the coronary artery.Thrombus is a blood clot that forms in an artery.Factors that increase risk of coronary heart disease include•a diet rich in cholesterol and saturated animal fats,•emotional stress,•smoking.\n\n© 2021 Marshall Cavendish Education Pte Ltd 67\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n67\nRisk factors for heart disease•Smoking •Unhealthy diet•Gender•Age \n •Lack of exercise•Stress•Genetic factors\n© 2021 Marshall Cavendish Education Pte Ltd 68\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n68\nPreventive measures against coronary heart diseaseProper diet Proper stress management \nAvoiding smokingRegular physical exercise\n\n© 2021 Marshall Cavendish Education Pte Ltd 69\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n69\n2When a coronary artery is blocked, it can be replaced during surgery. A vein taken from another part of the patient’s body is used to join the aorta to the coronary artery to bypass the blockage (Figure 9.27 on Student’s Book p. 168). This surgery is known as coronary by-pass. Great care must be taken when the vein is sewn into place.\nWhy must great care be taken to make sure that the vein is the correct way round?\nLet’s Practise 9.5\nCoronary by-pass\n\n© 2021 Marshall Cavendish Education Pte Ltd 70\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n70\nWhat have you learned?Can you draw your own mind map?\n\n© 2021 Marshall Cavendish Education Pte Ltd 71\nPowerPoint Slides for Cambridge IGCSETMBiology Student's Book\n71\nWhat have you learned?Can you draw your own mind map?",
+    "quiz": [
+      {
+        "question": "Which type of circulation is characterized by blood flowing through the heart twice during each circuit of the body?",
+        "options": [
+          "Single circulation",
+          "Double circulation",
+          "Pulmonary circulation",
+          "Systemic circulation"
+        ],
+        "answer_index": 1,
+        "explanation": "Double circulation is defined in the notes as the type of circulation in mammals where blood flows through the heart twice during each circuit of the body.",
+        "supporting_sentence": "Double circulation of mammalsIn mammals, blood flows through the heart twice during each circuit of the body àdouble circulation.Double circulation in mammals consists of the pulmonary circulation & thesystemic circulation"
+      },
+      {
+        "question": "What structural feature distinguishes arteries from veins?",
+        "options": [
+          "Arteries have thinner walls than veins",
+          "Veins have a larger lumen than arteries",
+          "Arteries carry deoxygenated blood",
+          "Veins have more elastic tissue than arteries"
+        ],
+        "answer_index": 1,
+        "explanation": "Veins have a larger lumen than arteries — The notes specify that arteries have thick muscular walls with much elastic tissue, while veins have thin muscular walls with little elastic tissue and a larger lumen relative to their diameter.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs)"
+      },
+      {
+        "question": "What is the primary function of red blood cells in the circulatory system?",
+        "options": [
+          "To fight infections",
+          "To transport oxygen",
+          "To aid in blood clotting",
+          "To carry nutrients"
+        ],
+        "answer_index": 1,
+        "explanation": "To transport oxygen — Red blood cells are primarily responsible for transporting oxygen throughout the body, as stated in the notes regarding the functions of blood components.",
+        "supporting_sentence": "Explain how the structure of arteries and veins relates to the pressure of the blood that they transport"
+      },
+      {
+        "question": "What is the primary function of capillaries in the circulatory system?",
+        "options": [
+          "Transport blood away from the heart",
+          "Link arteries to veins",
+          "Store oxygenated blood",
+          "Regulate blood pressure"
+        ],
+        "answer_index": 1,
+        "explanation": "Capillaries serve to link arteries to veins, facilitating the exchange of substances between blood and tissue cells.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs)"
+      },
+      {
+        "question": "What structural feature distinguishes veins from arteries?",
+        "options": [
+          "Thick muscular walls",
+          "Presence of semilunar valves",
+          "Small lumen relative to diameter",
+          "High blood pressure"
+        ],
+        "answer_index": 1,
+        "explanation": "Presence of semilunar valves — Veins have semilunar valves present to prevent backflow of blood, which is a key structural difference from arteries.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs)"
+      },
+      {
+        "question": "Which type of blood vessel carries oxygenated blood away from the heart?",
+        "options": [
+          "Veins",
+          "Capillaries",
+          "Arteries",
+          "Venules"
+        ],
+        "answer_index": 2,
+        "explanation": "Arteries carry oxygenated blood away from the heart, except for the pulmonary arteries which carry deoxygenated blood to the lungs.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs)"
+      },
+      {
+        "question": "What is the primary function of arteries in the circulatory system?",
+        "options": [
+          "Carry blood towards the heart",
+          "Link arteries to veins",
+          "Carry blood away from the heart",
+          "Transport oxygenated blood only"
+        ],
+        "answer_index": 2,
+        "explanation": "Arteries primarily function to carry blood away from the heart, as stated in the notes.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs)"
+      },
+      {
+        "question": "What happens to blood pressure as blood flows from the arteriole end to the venule end of capillaries?",
+        "options": [
+          "It increases significantly",
+          "It remains constant",
+          "It reduces",
+          "It fluctuates rapidly"
+        ],
+        "answer_index": 2,
+        "explanation": "It reduces — The notes indicate that the pressure of blood reduces as blood flows from the arteriole end to the venule end.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesFlowBlood under high pressure Blood under low pressure Pressure of blood reduces as blood flows from arteriole to venule end Blood moves in pulses, reflecting the rhythmic, pumping action of the heart No pulse No pulse"
+      },
+      {
+        "question": "Which type of blood vessel has walls that are one-cell thick?",
+        "options": [
+          "Arteries",
+          "Veins",
+          "Capillaries",
+          "Venules"
+        ],
+        "answer_index": 2,
+        "explanation": "Capillaries have walls that are one-cell thick, allowing for efficient exchange of substances between blood and tissue cells.",
+        "supporting_sentence": "Comparison of arteries, veins and capillaries Arteries Veins CapillariesStructureHave thick muscular walls with much elastic tissue Have thin muscular walls with little elastic tissue Have one-cell thick walls with no muscular or elastic tissue Have small lumen relative to diameter Have large lumen relative to diameter Have large lumen relative to diameter Semilunar valves absent Semilunar valves present Semilunar valves absent FunctionCarry blood away from the heart Carry blood towards the heart Link arteries to veins Carry oxygenated blood (except for pulmonary arteries which carry deoxygenated blood from the heart to the lungs)"
+      },
+      {
+        "question": "What happens to blood as it flows from the arteriole end to the venule end of capillaries?",
+        "options": [
+          "It remains oxygenated",
+          "It becomes deoxygenated",
+          "It increases in pressure",
+          "It decreases in temperature"
+        ],
+        "answer_index": 1,
+        "explanation": "It becomes deoxygenated — Blood changes from oxygenated at the arteriole end to deoxygenated at the venule end, as mentioned in the notes.",
+        "supporting_sentence": "Blood changes from oxygenated at the arteriole end to deoxygenated at the venule end"
+      },
+      {
+        "question": "What happens to blood pressure as blood flows from the arteriole to the venule end of capillaries?",
+        "options": [
+          "It increases significantly",
+          "It remains constant",
+          "It decreases",
+          "It fluctuates rapidly"
+        ],
+        "answer_index": 2,
+        "explanation": "It decreases — The notes indicate that the pressure of blood reduces as it flows from the arteriole to the venule end.",
+        "supporting_sentence": "What is a heart attack?Blockage of the coronary arteries can cause a heart attack.That region of heart muscles dies when it does not receive enough oxygen and nutrients"
+      },
+      {
+        "question": "What happens to blood as it flows from the arteriole end to the venule end of a capillary?",
+        "options": [
+          "It remains oxygenated",
+          "It becomes deoxygenated",
+          "It increases in pressure",
+          "It changes direction"
+        ],
+        "answer_index": 1,
+        "explanation": "It becomes deoxygenated — Blood changes from oxygenated at the arteriole end to deoxygenated at the venule end, as mentioned in the notes.",
+        "supporting_sentence": "Blood changes from oxygenated at the arteriole end to deoxygenated at the venule end"
+      }
+    ],
+    "flashcards": [
+      {
+        "front": "What is the main transport system in humans?",
+        "back": "The circulatory system."
+      },
+      {
+        "front": "What are the main components of blood?",
+        "back": "Plasma, red blood cells, white blood cells, platelets."
+      },
+      {
+        "front": "What type of circulation do fish have?",
+        "back": "Single circulation."
+      },
+      {
+        "front": "What type of circulation do mammals have?",
+        "back": "Double circulation."
+      },
+      {
+        "front": "What are the two components of double circulation in mammals?",
+        "back": "Pulmonary circulation and systemic circulation."
+      },
+      {
+        "front": "What is a key advantage of double circulation?",
+        "back": "Separation of oxygenated and deoxygenated blood."
+      },
+      {
+        "front": "What is the function of red blood cells?",
+        "back": "Transport oxygen."
+      },
+      {
+        "front": "What is the function of white blood cells?",
+        "back": "Immune response."
+      },
+      {
+        "front": "What is the role of platelets?",
+        "back": "Blood clotting."
+      },
+      {
+        "front": "What is plasma?",
+        "back": "The liquid component of blood that carries cells and nutrients."
+      },
+      {
+        "front": "How do arteries differ from veins?",
+        "back": "Arteries have thick muscular walls; veins have thin walls with valves."
+      },
+      {
+        "front": "What is the function of capillaries?",
+        "back": "Link arteries to veins and facilitate substance exchange."
+      },
+      {
+        "front": "What is blood pressure?",
+        "back": "The force of blood exerted on the walls of blood vessels."
+      },
+      {
+        "front": "What causes coronary heart disease?",
+        "back": "Blockage of coronary arteries, often due to atherosclerosis."
+      },
+      {
+        "front": "What are some risk factors for coronary heart disease?",
+        "back": "Smoking, unhealthy diet, lack of exercise, stress."
+      },
+      {
+        "front": "What is a heart attack?",
+        "back": "When a region of heart muscle dies due to lack of oxygen and nutrients."
+      },
+      {
+        "front": "How can coronary heart disease be prevented?",
+        "back": "Proper diet, stress management, avoiding smoking, regular exercise."
+      }
+    ],
+    "podcast": "**Podcast Script: Transport in Animals**\n\n**Host:** Welcome back to our podcast, where we dive into the fascinating world of biology! I’m your host, James.\n\n**Guest:** And I’m Mary! Today, we’re going to explore the circulatory system in mammals, a vital topic that keeps our bodies functioning smoothly.\n\n**Host:** Absolutely, Mary! So, let’s kick things off with a quick overview. The circulatory system consists of blood vessels, the heart, and valves that ensure blood flows in one direction. \n\n**Guest:** Right! And blood itself is quite interesting. It’s made up of plasma, red blood cells, white blood cells, and platelets. Each component plays a crucial role in transporting nutrients, gases, and waste throughout the body.\n\n**Host:** Speaking of the heart, it’s essentially a muscular pump that facilitates what we call double circulation. This means we have two circuits: the pulmonary circuit, which carries blood to the lungs, and the systemic circuit, which delivers blood to the rest of the body.\n\n**Guest:** Exactly! Now, let’s break down the types of blood vessels. Arteries carry oxygenated blood away from the heart, while veins return deoxygenated blood. And then we have capillaries, which are tiny vessels that connect arteries and veins. They’re where the real magic happens—substance exchange with tissue cells!\n\n**Host:** That’s a great point, Mary! So, to recap, we have blood as a fluid tissue, the heart as the pump, arteries with thick walls carrying blood away, veins with thinner walls bringing blood back, and capillaries where the exchange occurs.\n\n**Guest:** Yes, and let’s not forget about the pulse! It’s the rhythmic expansion of arteries with each heartbeat, which is a good indicator of our heart’s activity.\n\n**Host:** Now, let’s dive into the processes involved. Blood is pumped from the heart into arteries under high pressure. As arteries branch into smaller arterioles, they lead to the capillaries. \n\n**Guest:** In those capillaries, oxygen and nutrients diffuse into tissue cells, while waste products enter the blood. Then, the deoxygenated blood makes its way back through venules to the veins and returns to the heart.\n\n**Host:** And if we compare the structures of these blood vessels, we see some interesting differences. Arteries have thick muscular walls and a small lumen, while veins have thinner walls, a larger lumen, and valves to prevent backflow.\n\n**Guest:** That’s right! And capillaries are unique with their one-cell thick walls, which makes them perfect for exchanging substances efficiently.\n\n**Host:** Now, let’s touch on some key factors. For instance, high blood pressure in arteries leads to faster blood flow, and increased physical activity raises our pulse rate as our bodies demand more oxygen.\n\n**Guest:** And it’s important to highlight some applications. The four-chambered heart is a fantastic adaptation that separates oxygenated and deoxygenated blood, enhancing efficiency. However, conditions like coronary heart disease can arise from issues like atherosclerosis, which can lead to heart attacks.\n\n**Host:** That’s a crucial point, Mary. Now, before we wrap up, let’s do a quick mini-quiz to reinforce what we’ve learned today!\n\n**Guest:** Great idea! Here’s the first question: What is the main function of capillaries?\n\n**Host:** The answer",
+    "high_score": 0,
+    "timestamp": 1764736095.398581
   }
 ]

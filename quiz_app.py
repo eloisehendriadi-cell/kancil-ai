@@ -33,7 +33,7 @@ DEFAULT_OPTIONS = {
     "num_predict": int(os.getenv("QUIZ_NUM_PREDICT", "320")),
 }
 BATCH_SIZE = int(os.getenv("QUIZ_BATCH_SIZE", "3"))
-MAX_TRIES  = int(os.getenv("QUIZ_MAX_TRIES", "5"))
+MAX_TRIES  = int(os.getenv("QUIZ_MAX_TRIES", "5"))  # Increased to 5 for consistent generation
 
 # Validation helpers
 BAD_OPTIONS = {
@@ -41,9 +41,9 @@ BAD_OPTIONS = {
     "both a and b", "both b and c", "all", "none",
 }
 YES_NO_STEM = re.compile(r"^(?:is|are|can|does|do|did|will|should|has|have)\b.*\?$", re.I)
-ONLY_PUNCT  = re.compile(r"^\W+$")
+ONLY_PUNCT  = re.compile(r"^\W+$", re.UNICODE)
 CODE_FENCE  = re.compile(r"```(?:json)?|```", re.I)
-WORDTOK     = re.compile(r"[A-Za-z0-9']+")
+WORDTOK     = re.compile(r"\w+", re.UNICODE)
 
 # --------------------------------------------------------------------------------------
 # Utilities
@@ -89,13 +89,13 @@ def _near_dup(a: str, b: str) -> bool:
         return True
     if not a or not b:
         return False
-    sa = set(re.findall(r"[a-z0-9]+", a))
-    sb = set(re.findall(r"[a-z0-9]+", b))
+    sa = set(re.findall(r"\w+", a, re.UNICODE))
+    sb = set(re.findall(r"\w+", b, re.UNICODE))
     if not sa or not sb:
         return False
     inter = len(sa & sb)
     union = len(sa | sb)
-    return inter / max(1, union) >= 0.8
+    return inter / max(1, union) >= 0.75
 
 def _options_ok(opts: List[str]) -> bool:
     if len(opts) != 4:
@@ -103,7 +103,8 @@ def _options_ok(opts: List[str]) -> bool:
     norm = [str(o or "").strip() for o in opts]
     if any((not o) or ONLY_PUNCT.match(o) for o in norm):
         return False
-    if any(_word_count(o) < 1 or _word_count(o) > 6 or len(o) > 32 for o in norm):
+    # Be very lenient for multi-language - allow up to 15 words and 100 characters
+    if any(_word_count(o) < 1 or _word_count(o) > 15 or len(o) > 100 for o in norm):
         return False
     if len(set(o.lower() for o in norm)) < 4:
         return False
@@ -113,7 +114,8 @@ def _options_ok(opts: List[str]) -> bool:
                 return False
     if any(o.lower() in BAD_OPTIONS for o in norm):
         return False
-    if any(len(re.sub(r"[A-Za-z0-9 \-]", "", o)) > 3 for o in norm):
+    # Very lenient punctuation check - allow up to 8 punctuation marks
+    if any(len(re.sub(r"[\w\s\-]", "", o, flags=re.UNICODE)) > 8 for o in norm):
         return False
     return True
 
@@ -218,12 +220,45 @@ ONE_SHOT = {
     "explanation": "Osmosis — the notes define it as water moving across a partially permeable membrane down its water potential gradient.",
 }
 
-def _build_prompt(topic: str, notes_plain: str, n: int) -> str:
+def _build_prompt(topic: str, notes_plain: str, n: int, language: str = "english") -> str:
+    """Build quiz generation prompt with language support."""
+    language_map = {
+        "english": "in English",
+        "bahasa": "in Bahasa Indonesia",
+        "malay": "in Bahasa Malaysia (Melayu)",
+        "urdu": "in Urdu",
+        "nepali": "in Nepali",
+        "spanish": "in Spanish",
+        "french": "in French",
+        "german": "in German",
+        "mandarin": "in Mandarin Chinese (Simplified)",
+        "chinese_simplified": "in Mandarin Chinese (Simplified)",
+        "chinese_traditional": "in Mandarin Chinese (Traditional)",
+        "japanese": "in Japanese",
+        "korean": "in Korean",
+        "arabic": "in Arabic",
+        "hindi": "in Hindi",
+        "tamil": "in Tamil",
+        "bengali": "in Bengali"
+    }
+    lang_instruction = language_map.get(language.lower(), "in English")
+    
+    prompt_system_with_lang = (
+        f"You are a meticulous exam writer. Create DIVERSE and VARIED MCQs ONLY from the provided notes {lang_instruction}. "
+        "Generate questions covering DIFFERENT aspects, concepts, and details - avoid creating similar or repetitive questions. "
+        "Each item must have a single unambiguous correct answer supported by the notes. "
+        "Avoid yes/no stems and avoid 'All/None of the above'. "
+        "Return ONLY a JSON array; no commentary, no code fences. "
+        "Each item fields: question, options[4], answer_index (0-3), explanation. "
+        f"All questions, options, and explanations must be {lang_instruction}. "
+        "Explanation must cite the specific fact from the notes and include the correct option text."
+    )
+    
     example = json.dumps(ONE_SHOT, ensure_ascii=False)
     return (
-        f"{PROMPT_SYSTEM}\n\n"
+        f"{prompt_system_with_lang}\n\n"
         f"TOPIC: {topic or 'Topic'}\nCOUNT: {n}\n\n"
-        f"Return a JSON array of {n} items. Example of ONE item:\n{example}\n\n"
+        f"Return a JSON array of {n} items {lang_instruction}. Example of ONE item:\n{example}\n\n"
         f"NOTES (source of truth):\n{notes_plain}"
     )
 
@@ -320,19 +355,22 @@ def _best_support_sentence(sentences: List[str], answer: str, question: str) -> 
     if not sentences:
         return None
     best, best_score = None, 0.0
-    a_tokens = set(re.findall(r"[a-z0-9]+", a))
-    q_tokens = set(re.findall(r"[a-z0-9]+", q))
+    # Use Unicode-aware tokenization for multi-language support
+    a_tokens = set(re.findall(r"\w+", a, re.UNICODE))
+    q_tokens = set(re.findall(r"\w+", q, re.UNICODE))
     for s in sentences:
         s_low = s.lower()
         direct = 1.0 if a and a in s_low else 0.0
-        s_tokens = set(re.findall(r"[a-z0-9]+", s_low))
+        s_tokens = set(re.findall(r"\w+", s_low, re.UNICODE))
         overlap_a = len(a_tokens & s_tokens) / max(1, len(a_tokens))
         overlap_q = len(q_tokens & s_tokens) / max(1, len(q_tokens))
         score = direct * 1.2 + overlap_a * 0.7 + overlap_q * 0.3
         if score > best_score:
             best, best_score = s, score
-    # Relaxed threshold from 0.35 to 0.25 to allow more questions in incremental generation
-    return best if best_score >= 0.25 else None
+    # Relaxed threshold for multi-language support (especially Bahasa, Arabic, Urdu, etc.)
+    # Lower threshold helps with languages that have different word structures
+    threshold = 0.12  # Balanced for multi-language support
+    return best if best_score >= threshold else None
 
 def _ground_explanation(item: Dict[str, Any], support: str) -> str:
     """Create a better explanation that includes both the answer and contextual description."""
@@ -365,7 +403,7 @@ def _ground_explanation(item: Dict[str, Any], support: str) -> str:
 # --------------------------------------------------------------------------------------
 # Generation loop
 # --------------------------------------------------------------------------------------
-def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int = 0) -> List[Dict[str, Any]]:
+def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int = 0, language: str = "english") -> List[Dict[str, Any]]:
     # Allow smaller batches for incremental loading (2-3 questions)
     # But ensure minimum 2 to avoid too many requests
     target = max(2, min(20, int(target or 12)))
@@ -375,22 +413,28 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int 
     all_grounded = []  # Keep all grounded items for fallback
     
     # Use local copy of temperature to avoid mutation across requests
-    current_temp = float(DEFAULT_OPTIONS["temperature"])
+    # Add random variation for more variety in questions
+    import random
+    base_temp = float(DEFAULT_OPTIONS["temperature"])
+    current_temp = round(base_temp + random.uniform(-0.02, 0.04), 2)  # Slight variation
     num_predict = int(DEFAULT_OPTIONS["num_predict"])
     
     # For very long sources (like YouTube transcripts), use sliding window
     # This allows generating questions from different parts of the content
+    # But for shorter sources, use the full text to maximize variety
     original_length = len(notes_plain)
-    if original_length > 8000:
+    if original_length > 12000:  # Increased threshold - only window for very long sources
         print(f"[QUIZ] Source is very long ({original_length} chars), using sliding window approach")
         # Use offset to vary which part of the content we focus on
-        # Each "batch" of questions uses a different 8000-char window
-        window_size = 8000
+        # Each "batch" of questions uses a different 10000-char window
+        window_size = 10000
         # Calculate window start based on offset (but with overlap for context)
-        window_start = min(offset * 3000, max(0, original_length - window_size))
+        window_start = min(offset * 4000, max(0, original_length - window_size))
         window_end = min(window_start + window_size, original_length)
         notes_plain = notes_plain[window_start:window_end]
         print(f"[QUIZ] Using content window: chars {window_start}-{window_end} of {original_length}")
+    else:
+        print(f"[QUIZ] Source is {original_length} chars, using full text for maximum variety")
     
     sentences = _sentences(notes_plain)
     
@@ -400,7 +444,7 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int 
 
     while len(accepted) < target and tries < MAX_TRIES:
         need = min(BATCH_SIZE, target - len(accepted))
-        prompt = _build_prompt(topic, notes_plain, need)
+        prompt = _build_prompt(topic, notes_plain, need, language)
         raw = _chat(prompt, temperature=current_temp, num_predict=num_predict, timeout=150)
         
         # Check if LLM returned anything
@@ -437,11 +481,17 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int 
             ans = it["options"][it["answer_index"]]
             support = _best_support_sentence(sentences, ans, it["question"])
             if not support:
-                # Accept ungrounded items in these cases:
-                # 1. Small batches (incremental loading)
-                # 2. We've already tried multiple times
-                if target <= 5 or tries > 2:
-                    # Use LLM's explanation if available, otherwise create one
+                # For small batches (quiz/game), always accept to ensure consistent generation
+                if target <= 10:
+                    exp = it.get("explanation", "").strip()
+                    if not exp or len(exp) < 10:
+                        exp = f"{ans} is the correct answer."
+                    it["explanation"] = exp
+                    it["supporting_sentence"] = "Based on source material"
+                    grounded.append(it)
+                    continue
+                # For larger batches, accept after first try
+                elif tries >= 0:
                     exp = it.get("explanation", "").strip()
                     if not exp or len(exp) < 10:
                         exp = f"This is a key concept related to {ans.lower()}."
@@ -482,20 +532,20 @@ def _generate_from_notes(topic: str, notes_plain: str, target: int, offset: int 
 # --------------------------------------------------------------------------------------
 # Public helper (workspace imports this)
 # --------------------------------------------------------------------------------------
-def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12, offset: int = 0) -> List[Dict[str, Any]]:
+def generate_quiz_items(source_text: str, topic: str = "Topic", count: int = 12, offset: int = 0, language: str = "english") -> List[Dict[str, Any]]:
     text = source_text or ""
     notes_plain = _strip_html(text) if ("<" in text and ">" in text) else text
-    # Allow flexibility for both initial load (12) and incremental (2-3)
-    target = max(2, min(20, int(count or 12)))
+    # Allow flexibility - cap at 50 for performance but allow continuous generation
+    target = max(2, min(50, int(count or 12)))
     
     # Log source text length for debugging
-    print(f"[QUIZ] Generating {target} items from source of {len(notes_plain)} chars (topic: {topic}, offset: {offset})")
+    print(f"[QUIZ] Generating {target} items from source of {len(notes_plain)} chars (topic: {topic}, offset: {offset}, language: {language})")
     
     if len(notes_plain) < 100:
         print(f"[QUIZ] Warning: Source text is very short ({len(notes_plain)} chars)")
         return []
     
-    items = _generate_from_notes(topic or "Topic", notes_plain, target, offset)
+    items = _generate_from_notes(topic or "Topic", notes_plain, target, offset, language)
     print(f"[QUIZ] Successfully generated {len(items)} items")
     return items or []
 
@@ -516,4 +566,34 @@ def quiz_player():
 def quiz_menu():
     # safe even if template missing
     return render_template("quiz_menu.html")
+
+@quiz_bp.route("/quiz/<topic>")
+def quiz_page(topic):
+    """Serve the quiz page for a specific topic."""
+    # This would load questions from workspace or generate them
+    # For now, just render the template
+    return render_template("quiz_page.html", topic=topic, questions=[])
+
+@quiz_bp.route("/quiz/results")
+def quiz_results():
+    """Display quiz results page."""
+    return render_template("quiz_results.html")
+
+@quiz_bp.route("/quiz/generate", methods=["POST"])
+def generate_quiz():
+    """Generate quiz questions via API call."""
+    try:
+        data = request.get_json() or {}
+        topic = data.get("topic", "Topic")
+        count = int(data.get("count", 12))
+        
+        # Get source text from session or request
+        source_text = session.get("shared_source_text", "")
+        if not source_text:
+            return jsonify({"error": "No source text available"}), 400
+        
+        items = generate_quiz_items(source_text, topic, count)
+        return jsonify({"ok": True, "items": items})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 

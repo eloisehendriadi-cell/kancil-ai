@@ -3,34 +3,67 @@
 
 {% block content %}
 <header class="toolbar" style="justify-content:space-between; margin-bottom:1rem;">
-  <a class="btn" href="{{ url_for('index') }}">← Back to home</a>
+  <a class="btn" href="{{ url_for('index') }}" data-i18n="backToHome">← Back to home</a>
   <strong class="muted">Kancil AI</strong>
 </header>
 
 <section class="card" style="margin-bottom:1rem;">
-  <h2 style="margin:0 0 .5rem 0">🧠 Note Generator</h2>
-  <p class="muted" style="margin:.25rem 0 1rem 0;">
+  <h2 style="margin:0 0 .5rem 0" data-i18n="noteGenerator">🧠 Note Generator</h2>
+  <p class="muted" style="margin:.25rem 0 1rem 0;" data-i18n="noteGeneratorDesc">
     Create new notes from any source and jump straight into the Workspace.
   </p>
 
   <form id="inline-notes-form">
     <div style="display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:.5rem;">
-      <label><input type="radio" name="method" value="text" checked> ✍️ From Text</label>
-      <label><input type="radio" name="method" value="pdf"> 📄 From PDF</label>
-      <label><input type="radio" name="method" value="youtube"> 🎥 From YouTube</label>
+      <label><input type="radio" name="method" value="text" checked> <span data-i18n="pasteText">✍️ From Text</span></label>
+      <label><input type="radio" name="method" value="pdf"> <span data-i18n="uploadPDF">📄 From PDF</span></label>
+      <label><input type="radio" name="method" value="youtube"> <span data-i18n="youtubeURL">🎥 From YouTube</span></label>
+    </div>
+    
+    <!-- Language Selection -->
+    <div style="margin-bottom:.8rem;">
+      <label style="display:block; font-weight:600; margin-bottom:.4rem; color:#374151;" data-i18n="outputLanguage">
+        🌍 Output Language
+      </label>
+      <select id="output_language" style="
+        width:100%; 
+        padding:0.6rem; 
+        border:1px solid #d1d5db; 
+        border-radius:8px; 
+        font-size:15px;
+        background:white;
+        cursor:pointer;
+      ">
+        <option value="english">English</option>
+        <option value="bahasa">Bahasa Indonesia</option>
+        <option value="malay">Bahasa Malaysia (Melayu)</option>
+        <option value="urdu">Urdu (اردو - Pakistan)</option>
+        <option value="nepali">Nepali (नेपाली)</option>
+        <option value="spanish">Spanish (Español)</option>
+        <option value="french">French (Français)</option>
+        <option value="german">German (Deutsch)</option>
+        <option value="mandarin">Mandarin Chinese (中文)</option>
+        <option value="japanese">Japanese (日本語)</option>
+        <option value="korean">Korean (한국어)</option>
+        <option value="arabic">Arabic (العربية)</option>
+        <option value="hindi">Hindi (हिन्दी)</option>
+      </select>
+      <small style="color:#6b7280; display:block; margin-top:.3rem;" data-i18n="outputLanguageHint">
+        Your source content can be in any language, but all generated content (notes, podcast, quiz, games) will be in the selected language.
+      </small>
     </div>
 
-    <textarea id="note_text" rows="8" placeholder="Enter your text here…"
+    <textarea id="note_text" rows="8" data-i18n="enterText" placeholder="Enter your text here…"
               style="display:block; margin-bottom:.6rem;"></textarea>
     <input id="note_pdf" type="file" accept=".pdf" style="display:none; margin-bottom:.6rem;">
-    <input id="note_yt" type="text" placeholder="Paste YouTube link or transcript…"
+    <input id="note_yt" type="text" data-i18n="enterYoutubeURL" placeholder="Paste YouTube link or transcript…"
            style="display:none; margin-bottom:.6rem;">
 
-    <div class="muted" style="background:#e6f2ff; border:1px solid #dbeafe; padding:.6rem .75rem; border-radius:10px; margin:.5rem 0 1rem;">
+    <div class="muted" style="background:#e6f2ff; border:1px solid #dbeafe; padding:.6rem .75rem; border-radius:10px; margin:.5rem 0 1rem;" data-i18n="generatingHint">
       ⏳ This may take a minute depending on the file size or text length.
     </div>
 
-    <button id="genBtn" type="submit" class="btn primary">✨ Generate & Open Workspace</button>
+    <button id="genBtn" type="submit" class="btn primary" data-i18n="generateWorkspace">✨ Generate & Open Workspace</button>
   </form>
 
   <div id="notes_result" style="margin-top:1rem;"></div>
@@ -69,9 +102,9 @@
 </section>
 
 <section class="card">
-  <h3 style="margin-top:0">💾 Saved notes</h3>
+  <h3 style="margin-top:0" data-i18n="savedNotes">💾 Saved notes</h3>
   {% if (notes or [])|length == 0 %}
-    <p class="muted">No saved notes yet. Create some above 👆</p>
+    <p class="muted" data-i18n="noSavedNotes">No saved notes yet. Create some above 👆</p>
   {% else %}
     <div class="row" style="flex-direction:column; gap:.6rem; max-width:720px;">
       {% for n in notes %}
@@ -83,8 +116,8 @@
                   onclick="useSaved(this)">
             {{ title }}
           </button>
-          <button class="btn" onclick="renameNote('{{ title|e }}')">Rename</button>
-          <button class="btn danger" onclick="deleteNote('{{ title|e }}')">Delete</button>
+          <button class="btn" onclick="renameNote('{{ title|e }}')" data-i18n="renameBtn">Rename</button>
+          <button class="btn danger" onclick="deleteNote('{{ title|e }}')" data-i18n="deleteNote">Delete</button>
         </div>
       {% endfor %}
     </div>
@@ -105,6 +138,7 @@
   const txt     = document.getElementById('note_text');
   const pdf     = document.getElementById('note_pdf');
   const yt      = document.getElementById('note_yt');
+  const langSel = document.getElementById('output_language');
 
   function methodSel(){
     return (form.querySelector('input[name="method"]:checked') || {}).value;
@@ -172,9 +206,10 @@
         }
         const firstLine = source.split(/\n/)[0].trim();
         const title = firstLine ? firstLine.slice(0, 80) : 'Study Notes';
+        const language = langSel.value || 'english';
 
         updateProgress(30, 'Setting up workspace...', 'Preparing your content');
-        const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false });
+        const seed = await postJSON(WS.seed, { title, text: source, notes_html: '', prebuild_quiz: false, output_language: language });
         if (!seed || !seed.ok) { 
           progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
@@ -210,8 +245,9 @@
           return; 
         }
 
+        const language = langSel.value || 'english';
         updateProgress(60, 'Setting up workspace...', 'Preparing your content');
-        const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false });
+        const seed = await postJSON(WS.seed, { title: ex.title || 'YouTube Video', text: ex.source || '', notes_html: '', prebuild_quiz: false, output_language: language });
         if (!seed || !seed.ok) { 
           progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 
@@ -244,8 +280,9 @@
           return; 
         }
 
+        const language = langSel.value || 'english';
         updateProgress(50, 'Setting up workspace...', 'Preparing your content');
-        const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false });
+        const seed = await postJSON(WS.seed, { title: ex.title || 'Study Notes', text: ex.source || '', notes_html: '', prebuild_quiz: false, output_language: language });
         if (!seed || !seed.ok) { 
           progressContainer.style.display = 'none';
           resDiv.innerHTML = '<p style="color:#b91c1c">Failed to seed workspace.</p>'; 

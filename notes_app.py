@@ -363,11 +363,33 @@ Elaboration rubric (apply only when consistent with the source):
 """.strip()
 
 
-def build_messages(topic: str, clean_source: str, kw_line: str):
+def build_messages(topic: str, clean_source: str, kw_line: str, language: str = "english"):
+    """Build messages for note generation with optional language specification."""
+    
+    # Map language codes to natural language instructions
+    language_map = {
+        "english": "in English",
+        "bahasa": "in Bahasa Indonesia",
+        "indonesian": "in Bahasa Indonesia",
+        "malay": "in Bahasa Malaysia (Melayu)",
+        "urdu": "in Urdu",
+        "nepali": "in Nepali",
+        "spanish": "in Spanish",
+        "french": "in French",
+        "german": "in German",
+        "mandarin": "in Mandarin Chinese",
+        "japanese": "in Japanese",
+        "korean": "in Korean",
+        "arabic": "in Arabic",
+        "hindi": "in Hindi"
+    }
+    
+    language_instruction = language_map.get(language.lower(), "in English")
+    
     user_prompt = f"""
 TITLE (do not say 'mind map'): {topic}
 
-Write **concise, faithful notes** that stay STRICTLY within this source.
+Write **concise, faithful notes** {language_instruction} that stay STRICTLY within this source.
 If the source includes multiple chapters, summarise ONLY the part that matches
 the TITLE and the TOPIC-LOCK KEYWORDS below.
 
@@ -412,7 +434,7 @@ SOURCE (cleaned; summarise faithfully; do not hallucinate):
 # -----------------------------
 # Summariser
 # -----------------------------
-def summarize_text(text: str) -> str:
+def summarize_text(text: str, language: str = "english") -> str:
     clean = sanitize_source_text(text)
     topic = infer_topic_title(clean, "Study Notes")
 
@@ -435,7 +457,7 @@ def summarize_text(text: str) -> str:
     kws = top_keywords(clean, k=16)
     kw_line = ", ".join(kws[:14])
 
-    msgs = build_messages(topic, clean, kw_line)
+    msgs = build_messages(topic, clean, kw_line, language)
     md = query_ollama_chat(msgs, fast=True)
 
     if looks_like_meta_or_exam(md) or output_drifted(md, kws, 3) or len(md or "") < 200:
@@ -447,7 +469,7 @@ def summarize_text(text: str) -> str:
 
     if violates_topic(md, topic, kws):
         anchor = ", ".join(kws[:8])
-        msgs = build_messages(f"{topic} — focus strictly on: {anchor}", clean, kw_line)
+        msgs = build_messages(f"{topic} — focus strictly on: {anchor}", clean, kw_line, language)
         md = query_ollama_chat(msgs, fast=True)
 
     md = ensure_min_highlights(md or "", min_count=6)
